@@ -1,9 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { svelteTesting } from '@testing-library/svelte/vite';
 import path from 'node:path';
 
 export default defineConfig({
-  plugins: [sveltekit()],
+  plugins: [sveltekit(), svelteTesting()],
   resolve: {
     alias: {
       '~': path.resolve(import.meta.dirname),

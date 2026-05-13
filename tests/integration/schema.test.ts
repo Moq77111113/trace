@@ -9,9 +9,12 @@ const db  = drizzle(sql, { schema });
 
 describe('schema', () => {
   it('inserts a project and retrieves it', async () => {
-    const [created] = await db.insert(schema.projects)
+    const inserted = await db.insert(schema.projects)
       .values({ name: `Test ${Date.now()}` })
       .returning();
+
+    expect(inserted).toHaveLength(1);
+    const created = inserted[0]!;
 
     const found = await db.query.projects.findFirst({ where: eq(schema.projects.id, created.id) });
 
@@ -20,9 +23,12 @@ describe('schema', () => {
   });
 
   it('enforces unique feature name per project (case insensitive)', async () => {
-    const [p] = await db.insert(schema.projects)
+    const inserted = await db.insert(schema.projects)
       .values({ name: `P ${Date.now()}` })
       .returning();
+
+    expect(inserted).toHaveLength(1);
+    const p = inserted[0]!;
 
     await db.insert(schema.features).values({ projectId: p.id, name: 'Login', content: 'Feature: Login' });
 
