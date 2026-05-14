@@ -26,29 +26,49 @@
 
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import type { HTMLButtonAttributes } from 'svelte/elements';
+  import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
 
-  type Props = HTMLButtonAttributes & ButtonVariants & {
-    loading?:  boolean;
-    children:  Snippet;
+  type Common = ButtonVariants & {
+    children: Snippet;
+    class?:   string;
   };
 
-  let {
-    variant,
-    size,
-    loading = false,
-    children,
-    disabled,
-    class: cls,
-    ...rest
-  }: Props = $props();
+  type AsButton = Common & HTMLButtonAttributes & {
+    href?:    never;
+    loading?: boolean;
+  };
 
-  const classes = $derived(button({ variant, size, class: cls }));
+  type AsLink = Common & HTMLAnchorAttributes & {
+    href:      string;
+    loading?:  never;
+    disabled?: never;
+    type?:     never;
+  };
+
+  type Props = AsButton | AsLink;
+
+  const props: Props = $props();
+
+  function isLink(p: Props): p is AsLink {
+    return p.href !== undefined;
+  }
+
+  const classes = $derived(
+    button({ variant: props.variant, size: props.size, class: props.class }),
+  );
 </script>
 
-<button class={classes} disabled={disabled || loading} {...rest}>
-  {#if loading}
-    <span class="animate-spin" aria-hidden="true">⟳</span>
-  {/if}
-  {@render children()}
-</button>
+{#if isLink(props)}
+  {@const { variant: _v, size: _s, class: _c, children, ...anchorRest } = props}
+  <a class={classes} {...anchorRest}>
+    {@render children()}
+  </a>
+{:else}
+  {@const { variant: _v, size: _s, class: _c, children, loading = false, disabled, ...buttonRest } = props}
+  <button class={classes} disabled={disabled || loading} {...buttonRest}>
+    {#if loading}
+      <span class="animate-spin" aria-hidden="true">⟳</span>
+    {/if}
+    {@render children()}
+  </button>
+{/if}

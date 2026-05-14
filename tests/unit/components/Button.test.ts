@@ -19,4 +19,13 @@ describe('Button', () => {
 
     expect(screen.getByRole('button')).toBeDisabled();
   });
+
+  it('renders as an anchor when href is provided', () => {
+    render(Button, { props: { href: '/projects/new', children: textSnippet('+ New project') } });
+
+    const link = screen.getByRole('link', { name: '+ New project' });
+    expect(link.tagName).toBe('A');
+    expect(link).toHaveAttribute('href', '/projects/new');
+    expect(link.className).toMatch(/bg-accent-500/);
+  });
 });
