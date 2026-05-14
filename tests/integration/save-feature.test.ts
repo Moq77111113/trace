@@ -1,0 +1,46 @@
+import { describe, it, expect } from 'vitest';
+import { createProject } from '$lib/server/projects/create';
+import { createFeature } from '$lib/server/features/create';
+import { saveFeature } from '$lib/server/features/save';
+
+const goodGherkin = (name: string) =>
+  `@smoke\nFeature: ${name}\n  Scenario: A\n    Given x\n`;
+const badGherkin = 'Feature Login\n  Scenrio: A\n';
+
+describe('saveFeature', () => {
+  it('saves valid content, bumps version, populates name + tags', async () => {
+    const p = await createProject({ name: `S ${Date.now()}` });
+    const f = await createFeature({ projectId: p.id, name: 'X' });
+
+    const r = await saveFeature({ featureId: f.id, content: goodGherkin('X'), expectedVersion: f.version, editor: 'alice' });
+
+    expect(r.conflict).toBe(false);
+    if (r.conflict) throw new Error('expected non-conflict result');
+    expect(r.feature.version).toBe(f.version + 1);
+    expect(r.feature.parseErrors).toBeNull();
+  });
+
+  it('rejects with conflict when expectedVersion is stale', async () => {
+    const p = await createProject({ name: `S2 ${Date.now()}` });
+    const f = await createFeature({ projectId: p.id, name: 'X' });
+
+    await saveFeature({ featureId: f.id, content: goodGherkin('X'), expectedVersion: f.version, editor: 'alice' });
+    const r2 = await saveFeature({ featureId: f.id, content: goodGherkin('X'), expectedVersion: f.version, editor: 'bob' });
+
+    expect(r2.conflict).toBe(true);
+    if (!r2.conflict) throw new Error('expected conflict result');
+    expect(r2.currentFeature.version).toBe(f.version + 1);
+  });
+
+  it('saves invalid content permissively with parseErrors set', async () => {
+    const p = await createProject({ name: `S3 ${Date.now()}` });
+    const f = await createFeature({ projectId: p.id, name: 'X' });
+
+    const r = await saveFeature({ featureId: f.id, content: badGherkin, expectedVersion: f.version, editor: 'alice' });
+
+    expect(r.conflict).toBe(false);
+    if (r.conflict) throw new Error('expected non-conflict result');
+    expect(r.feature.parseErrors).not.toBeNull();
+    expect(r.feature.parseErrors?.length ?? 0).toBeGreaterThan(0);
+  });
+});
