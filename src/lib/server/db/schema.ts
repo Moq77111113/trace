@@ -1,6 +1,6 @@
 import {
   pgTable, uuid, text, boolean, timestamp,
-  integer, jsonb, pgEnum, bigint, primaryKey,
+  integer, jsonb, pgEnum, bigint, primaryKey, uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { pk } from './columns';
 
@@ -19,9 +19,23 @@ export const projects = pgTable('projects', {
   updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const featureGroups = pgTable(
+  'feature_groups',
+  {
+    id:        pk(),
+    projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    name:      text('name').notNull(),
+    position:  integer('position').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('feature_groups_project_name_idx').on(t.projectId, t.name)],
+);
+
 export const features = pgTable('features', {
   id:          pk(),
   projectId:   uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  groupId:     uuid('group_id').references(() => featureGroups.id, { onDelete: 'set null' }),
   name:        text('name').notNull(),
   content:     text('content').notNull(),
   parseErrors: jsonb('parse_errors').$type<ParseError[] | null>(),

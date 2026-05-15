@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features } from '$lib/server/db/schema';
+import { features, featureGroups } from '$lib/server/db/schema';
 import { parse } from '$lib/gherkin/parse';
 import { syncFeatureTags } from './tags-sync';
 
@@ -11,6 +11,7 @@ type SaveInput = {
   content:         string;
   expectedVersion: number;
   editor:          string;
+  groupId?:        string | null;
 };
 
 export type SaveResult =
@@ -19,13 +20,12 @@ export type SaveResult =
 
 /**
  * Persists feature content under an optimistic version lock.
- * On version match: parses the Gherkin (errors are stored, never thrown),
- * refreshes the feature name when the source declares one, bumps the
- * version, and reconciles tag links. On mismatch: returns the current row
- * untouched so the caller can present a conflict UI.
- *
- * The `editor` field is reserved for the M6 audit log; it is accepted
- * here for forward compatibility but is not persisted on `features`.
+ * On version match: parses Gherkin, refreshes name, bumps version, reconciles tags,
+ * and updates groupId if provided (cross-project assignment is rejected before write).
+ * On mismatch: returns the current row untouched for the caller to present conflict UI.
+ * The `editor` field is reserved for the M6 audit log; not persisted on features.
+ * `groupId === undefined` preserves the current value (form did not send it).
+ * Explicit `null` means "ungrouped".
  */
 export async function saveFeature(input: SaveInput): Promise<SaveResult> {
   return db.transaction(async (tx) => {
@@ -34,6 +34,11 @@ export async function saveFeature(input: SaveInput): Promise<SaveResult> {
 
     if (current.version !== input.expectedVersion) {
       return { conflict: true, currentFeature: current };
+    }
+
+    if (input.groupId) {
+      const g = await tx.query.featureGroups.findFirst({ where: eq(featureGroups.id, input.groupId) });
+      if (!g || g.projectId !== current.projectId) throw new Error('saveFeature: invalid-group');
     }
 
     const parsed  = parse(input.content);
@@ -47,6 +52,7 @@ export async function saveFeature(input: SaveInput): Promise<SaveResult> {
         name:        newName,
         parseErrors: errors,
         version:     current.version + 1,
+        groupId:     input.groupId === undefined ? current.groupId : input.groupId,
         updatedAt:   new Date(),
       })
       .where(eq(features.id, input.featureId))

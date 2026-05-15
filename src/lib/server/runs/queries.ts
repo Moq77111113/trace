@@ -1,6 +1,25 @@
-import { asc, eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features, projects, runs, scenarioResults } from '$lib/server/db/schema';
+
+export async function listRunsForProject(projectId: string) {
+  return db
+    .select({
+      id:          runs.id,
+      status:      runs.status,
+      source:      runs.source,
+      executedBy:  runs.executedBy,
+      environment: runs.environment,
+      startedAt:   runs.startedAt,
+      finishedAt:  runs.finishedAt,
+      featureId:   features.id,
+      featureName: features.name,
+    })
+    .from(runs)
+    .innerJoin(features, eq(features.id, runs.featureId))
+    .where(eq(features.projectId, projectId))
+    .orderBy(desc(runs.startedAt));
+}
 
 export type RunPageData = Awaited<ReturnType<typeof loadRunPage>>;
 

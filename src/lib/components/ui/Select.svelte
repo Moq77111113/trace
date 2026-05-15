@@ -15,7 +15,7 @@
   </Bits.Trigger>
 
   <Bits.Portal>
-    <Bits.Content class="bg-surface-800 border border-surface-600 rounded-md shadow-lg min-w-32 p-1 z-50">
+    <Bits.Content class="bg-surface-800 border border-surface-600 rounded-md shadow-lg min-w-32 p-1 z-50 max-h-60 overflow-auto">
       {#each options as opt (opt.value)}
         <Bits.Item value={opt.value} class="px-2 py-1.5 text-sm text-surface-100 rounded-sm cursor-pointer hover:bg-surface-700 data-[highlighted]:bg-surface-700">
           {opt.label}

@@ -18,8 +18,9 @@ const fakeData = {
   },
   feature: {
     id:          'f1',
-    name:        'Login',
     projectId:   'p1',
+    groupId:     null,
+    name:        'Login',
     content:     'Feature: F\n',
     parseErrors: null,
     archived:    false,

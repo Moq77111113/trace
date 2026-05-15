@@ -24,12 +24,15 @@
     content:     string;
     version:     number;
     parseErrors: ParseErrors;
+    groupId:     string | null;
   };
 
   type ProjectTag = { name: string; count: number };
 
+  type Group = { id: string; name: string };
+
   type Props = {
-    data: { feature: Feature; projectTags: ProjectTag[] };
+    data: { feature: Feature; projectTags: ProjectTag[]; groups: Group[] };
     onSaved?: (feature: Feature) => void;
   };
 
@@ -41,6 +44,7 @@
   let initialContent = $state(untrack(() => data.feature.content));
   let content        = $state(untrack(() => data.feature.content));
   let version        = $state(untrack(() => data.feature.version));
+  let groupId        = $state<string>(untrack(() => data.feature.groupId ?? ''));
   let conflictOpen   = $state(false);
   let conflictWith   = $state<Feature | null>(null);
   let saving         = $state(false);
@@ -131,6 +135,7 @@
         initialContent = saved.content;
         content        = saved.content;
         version        = saved.version;
+        groupId        = saved.groupId ?? '';
         onSaved?.(saved);
         return;
       }
@@ -196,6 +201,15 @@
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
 
+      <label class="flex items-center gap-2 text-xs">
+        <span class="text-surface-400">Group:</span>
+        <select name="groupId" bind:value={groupId} class="bg-surface-700 border border-surface-600 rounded px-2 py-1 text-xs text-surface-100">
+          <option value="">Ungrouped</option>
+          {#each data.groups as g (g.id)}
+            <option value={g.id}>{g.name}</option>
+          {/each}
+        </select>
+      </label>
       <span class="text-xs text-surface-400">v{version}</span>
       <Button type="submit" loading={saving} disabled={!dirty || conflictOpen}>Save</Button>
     </div>

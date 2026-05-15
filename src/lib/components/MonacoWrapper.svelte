@@ -59,6 +59,7 @@
 	let editor: Monaco.editor.IStandaloneCodeEditor | null = null;
 	let monaco: typeof Monaco | null = null;
 	let providerHandle: Monaco.IDisposable | null = null;
+	let ready = $state(false);
 
 	function applyMarkers(): void {
 		if (!editor || !monaco) return;
@@ -139,6 +140,7 @@
 		}
 
 		applyMarkers();
+		ready = true;
 	});
 
 	onDestroy(() => {
@@ -159,7 +161,11 @@
 	});
 </script>
 
-<div
-	bind:this={containerEl}
-	class="w-full h-[640px] rounded-md border border-surface-600 overflow-hidden"
-></div>
+<div class="relative w-full h-[640px] rounded-md border border-surface-600 overflow-hidden bg-[#0d1117]">
+	<div bind:this={containerEl} class="absolute inset-0"></div>
+	{#if !ready}
+		<pre
+			class="absolute inset-0 m-0 px-[26px] pt-3 font-mono text-[13px] leading-[1.5] text-surface-200 whitespace-pre overflow-hidden pointer-events-none"
+		>{value}</pre>
+	{/if}
+</div>
