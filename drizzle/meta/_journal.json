@@ -15,6 +15,13 @@
       "when": 1778831899141,
       "tag": "0001_colorful_sugar_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778849500000,
+      "tag": "0002_partial_unique_features",
+      "breakpoints": true
     }
   ]
 }

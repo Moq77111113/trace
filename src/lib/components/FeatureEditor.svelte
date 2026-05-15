@@ -12,6 +12,7 @@
   import ErrorBadge     from './ErrorBadge.svelte';
   import Button         from '$lib/components/ui/Button.svelte';
   import Icon           from '$lib/components/ui/Icon.svelte';
+  import Modal          from '$lib/components/ui/Modal.svelte';
   import { parse }      from '$lib/gherkin/parse';
   import { buildSnippets, type Snippet } from '$lib/gherkin/snippets';
   import { ensureIdentity, getStoredIdentity } from '$lib/identity';
@@ -50,6 +51,15 @@
   let saving         = $state(false);
   let saveError      = $state<string | null>(null);
   let editor         = $state('');
+  let archiveOpen    = $state(false);
+  let archiving      = $state(false);
+  let archiveForm    = $state<HTMLFormElement | undefined>();
+
+  function confirmArchive(): void {
+    if (!archiveForm) return;
+    archiving = true;
+    archiveForm.requestSubmit();
+  }
 
   let editorApi = $state<EditorApi | null>(null);
 
@@ -210,7 +220,14 @@
           {/each}
         </select>
       </label>
+      <a
+        href={`/api/features/${data.feature.id}/export`}
+        class="text-xs text-surface-400 underline-offset-2 hover:underline hover:text-surface-200"
+      >
+        Download .feature
+      </a>
       <span class="text-xs text-surface-400">v{version}</span>
+      <Button type="button" variant="ghost" size="sm" onclick={() => (archiveOpen = true)}>Archive</Button>
       <Button type="submit" loading={saving} disabled={!dirty || conflictOpen}>Save</Button>
     </div>
   </header>
@@ -244,3 +261,21 @@
   onReload={reload}
   onCancel={() => { conflictOpen = false; conflictWith = null; }}
 />
+
+<form bind:this={archiveForm} method="POST" action="?/archive" use:enhance></form>
+
+<Modal
+  open={archiveOpen}
+  onOpenChange={(v) => (archiveOpen = v)}
+  title="Archive feature"
+>
+  <p>Archive <strong>{data.feature.name}</strong>?</p>
+  <p class="text-xs text-surface-400 mt-2">
+    It will be hidden from this project. Existing run history is preserved.
+  </p>
+
+  {#snippet footer()}
+    <Button variant="secondary" onclick={() => (archiveOpen = false)}>Cancel</Button>
+    <Button variant="danger" loading={archiving} onclick={confirmArchive}>Archive</Button>
+  {/snippet}
+</Modal>

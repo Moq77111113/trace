@@ -1,9 +1,10 @@
-import { error, fail, type RequestEvent } from '@sveltejs/kit';
+import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { featureTags, tags } from '$lib/server/db/schema';
 import { stringFields } from '$lib/server/forms';
+import { archiveFeature } from './archive';
 import { getFeature } from './queries';
 import { saveFeature } from './save';
 import { listGroups } from '$lib/server/groups/queries';
@@ -66,5 +67,12 @@ export const actions = {
     }
 
     return { feature: result.feature };
+  },
+
+  archive: async ({ params }: RequestEvent<Params>) => {
+    const result = await archiveFeature(params.fid);
+    if (!result.ok) throw error(404, 'Feature not found');
+
+    throw redirect(303, `/projects/${params.pid}`);
   },
 };
