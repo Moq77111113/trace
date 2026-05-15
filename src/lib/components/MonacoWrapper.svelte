@@ -1,6 +1,8 @@
 <script lang="ts" module>
 	export type EditorApi = {
 		insertAtCursor: (text: string) => void;
+		appendText:     (text: string) => void;
+		setText:        (text: string) => void;
 		focus:          () => void;
 	};
 
@@ -104,6 +106,23 @@
 				const selection = ed.getSelection();
 				if (!selection) return;
 				ed.executeEdits('snippet', [{ range: selection, text, forceMoveMarkers: true }]);
+				ed.focus();
+			},
+			appendText(text: string): void {
+				const model = ed.getModel();
+				if (!model) return;
+
+				const lastLine     = model.getLineCount();
+				const lastColumn   = model.getLineMaxColumn(lastLine);
+				const endsWithBlank = model.getLineLength(lastLine) === 0;
+				const prefix       = endsWithBlank ? '\n' : '\n\n';
+				const range        = { startLineNumber: lastLine, startColumn: lastColumn, endLineNumber: lastLine, endColumn: lastColumn };
+
+				ed.executeEdits('snippet-append', [{ range, text: prefix + text, forceMoveMarkers: true }]);
+				ed.focus();
+			},
+			setText(text: string): void {
+				ed.setValue(text);
 				ed.focus();
 			},
 			focus(): void {

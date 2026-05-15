@@ -14,6 +14,7 @@
   import Icon           from '$lib/components/ui/Icon.svelte';
   import { parse }      from '$lib/gherkin/parse';
   import { buildSnippets, type Snippet } from '$lib/gherkin/snippets';
+  import { ensureIdentity, getStoredIdentity } from '$lib/identity';
 
   type ParseErrors = { line: number; column?: number; message: string }[] | null;
 
@@ -29,12 +30,13 @@
 
   type Props = {
     data: { feature: Feature; projectTags: ProjectTag[] };
+    onSaved?: (feature: Feature) => void;
   };
 
   type SaveSuccess = { feature: Feature };
   type SaveFailure = { error?: string; conflict?: boolean; currentFeature?: Feature };
 
-  let { data }: Props = $props();
+  let { data, onSaved }: Props = $props();
 
   let initialContent = $state(untrack(() => data.feature.content));
   let content        = $state(untrack(() => data.feature.content));
@@ -55,7 +57,8 @@
 
   function insertSnippet(snippet: Snippet): void {
     if (!editorApi) return;
-    editorApi.insertAtCursor(snippet.content);
+    if (snippet.mode === 'replace') editorApi.setText(snippet.content);
+    else                            editorApi.appendText(snippet.content);
   }
 
   $effect(() => {
@@ -74,13 +77,10 @@
   );
 
   onMount(() => {
-    const stored = localStorage.getItem('trace.editor') ?? '';
-    if (stored) { editor = stored; return; }
-
-    const name = prompt('Your name (used to attribute saves and runs):');
-    if (name) {
-      editor = name.trim();
-      localStorage.setItem('trace.editor', editor);
+    editor = getStoredIdentity();
+    if (!editor) {
+      const entered = ensureIdentity();
+      if (entered) editor = entered;
     }
   });
 
@@ -131,6 +131,7 @@
         initialContent = saved.content;
         content        = saved.content;
         version        = saved.version;
+        onSaved?.(saved);
         return;
       }
 
