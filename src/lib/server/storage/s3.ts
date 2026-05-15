@@ -5,9 +5,10 @@ import {
 	DeleteObjectCommand
 } from '@aws-sdk/client-s3';
 import { Readable } from 'node:stream';
+import { env } from '$env/dynamic/private';
 
-function requireEnv(key: string): string {
-	const value = process.env[key];
+function requireEnv(key: keyof typeof env): string {
+	const value = env[key];
 	if (!value) throw new Error(`s3 adapter: ${key} is not set`);
 	return value;
 }

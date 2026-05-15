@@ -58,6 +58,7 @@ const fakeData = {
       updatedAt:    new Date(),
     },
   ],
+  attachmentsByScenario: {},
 };
 
 describe('LiveRun', () => {

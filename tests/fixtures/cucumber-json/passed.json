@@ -1,0 +1,13 @@
+[{
+  "id":   "login;successful-login",
+  "name": "Login",
+  "elements": [{
+    "id":   "login;successful-login",
+    "name": "Successful login",
+    "type": "scenario",
+    "steps": [
+      { "name": "user is on login page", "result": { "status": "passed", "duration": 120000000 } },
+      { "name": "valid credentials",     "result": { "status": "passed", "duration": 80000000  } }
+    ]
+  }]
+}]

@@ -1,0 +1,32 @@
+[{
+  "id":   "checkout",
+  "name": "Checkout",
+  "elements": [
+    {
+      "id":   "checkout;happy-path",
+      "name": "Happy path",
+      "type": "scenario",
+      "steps": [
+        { "name": "cart has items",    "result": { "status": "passed", "duration": 50000000 } },
+        { "name": "payment succeeds",  "result": { "status": "passed", "duration": 70000000 } }
+      ]
+    },
+    {
+      "id":   "checkout;declined-card",
+      "name": "Declined card",
+      "type": "scenario",
+      "steps": [
+        { "name": "cart has items",    "result": { "status": "passed", "duration": 40000000 } },
+        { "name": "payment is declined", "result": { "status": "failed", "duration": 30000000, "error_message": "PaymentError: card declined" } }
+      ]
+    },
+    {
+      "id":   "checkout;guest-flow",
+      "name": "Guest flow",
+      "type": "scenario",
+      "steps": [
+        { "name": "guest visits cart", "result": { "status": "skipped" } }
+      ]
+    }
+  ]
+}]
