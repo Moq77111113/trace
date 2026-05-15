@@ -4,15 +4,10 @@ import {
 	GetObjectCommand,
 	DeleteObjectCommand
 } from '@aws-sdk/client-s3';
-import { env } from '$env/dynamic/private';
 import { Readable } from 'node:stream';
 
-/**
- * Reads an environment variable or throws if unset.
- * Centralises the "fail fast on missing config" rule for the storage adapter.
- */
 function requireEnv(key: string): string {
-	const value = env[key];
+	const value = process.env[key];
 	if (!value) throw new Error(`s3 adapter: ${key} is not set`);
 	return value;
 }

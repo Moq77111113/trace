@@ -16,20 +16,16 @@ export default defineConfig({
     conditions: ['module', 'import', 'node', 'default'],
   },
   test: {
-    environment: 'jsdom',
-    setupFiles:  ['./tests/setup.ts'],
-    include:     ['tests/**/*.test.ts'],
-    coverage:    { provider: 'v8', reporter: ['text', 'html'] },
-
-    // Per-file env overrides via `// @vitest-environment node` (used in tests
-    // that exercise Node-only deps like the AWS SDK).
-    environmentMatchGlobs: [
-      ['tests/integration/storage/**', 'node'],
-    ],
+    environment:  'jsdom',
+    setupFiles:   ['./tests/setup.ts'],
+    globalSetup:  ['./tests/global-setup.ts'],
+    include:      ['tests/**/*.test.ts'],
+    coverage:     { provider: 'v8', reporter: ['text', 'html'] },
 
     // Forks pool: each test file runs in its own Node subprocess. Required for
     // the AWS SDK v3 (CJS/ESM interop fails under the default threads pool +
-    // Vite bundler).
+    // Vite bundler). Per-file env overrides use `// @vitest-environment node`
+    // at the top of the test file (see tests/integration/storage/s3.test.ts).
     pool: 'forks',
   },
 });
