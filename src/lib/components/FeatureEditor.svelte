@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { untrack } from 'svelte';
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
   import { DropdownMenu } from 'bits-ui';
@@ -15,7 +15,6 @@
   import Modal          from '$lib/components/ui/Modal.svelte';
   import { parse }      from '$lib/gherkin/parse';
   import { buildSnippets, type Snippet } from '$lib/gherkin/snippets';
-  import { ensureIdentity, getStoredIdentity } from '$lib/identity';
 
   type ParseErrors = { line: number; column?: number; message: string }[] | null;
 
@@ -50,7 +49,6 @@
   let conflictWith   = $state<Feature | null>(null);
   let saving         = $state(false);
   let saveError      = $state<string | null>(null);
-  let editor         = $state('');
   let archiveOpen    = $state(false);
   let archiving      = $state(false);
   let archiveForm    = $state<HTMLFormElement | undefined>();
@@ -89,14 +87,6 @@
         : { line: e.line, column: e.column, message: e.message },
     ),
   );
-
-  onMount(() => {
-    editor = getStoredIdentity();
-    if (!editor) {
-      const entered = ensureIdentity();
-      if (entered) editor = entered;
-    }
-  });
 
   function buildCompletion(
     model: Monaco.editor.ITextModel,
@@ -180,7 +170,6 @@
 
 <form method="POST" action="?/save" use:enhance={onSubmit}>
   <input type="hidden" name="version" value={version} />
-  <input type="hidden" name="editor"  value={editor} />
   <input type="hidden" name="content" value={content} />
 
   <header class="flex items-center gap-3 mb-3">

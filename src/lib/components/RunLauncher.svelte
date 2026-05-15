@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { flushSync, onMount } from 'svelte';
   import { enhance } from '$app/forms';
   import type { SubmitFunction } from '@sveltejs/kit';
   import Button from '$lib/components/ui/Button.svelte';
-  import { ensureIdentity, getStoredIdentity } from '$lib/identity';
 
   type Props = {
     projectId: string;
@@ -15,27 +13,8 @@
 
   type StartFailure = { error?: string };
 
-  let executedBy = $state('');
-  let starting   = $state(false);
-  let error      = $state<string | null>(null);
-  let formEl:     HTMLFormElement | undefined = $state();
-
-  onMount(() => {
-    executedBy = getStoredIdentity();
-  });
-
-  function handleClick(event: MouseEvent): void {
-    if (executedBy) return;
-
-    event.preventDefault();
-    const entered = ensureIdentity();
-    if (!entered) return;
-
-    flushSync(() => {
-      executedBy = entered;
-    });
-    formEl?.requestSubmit();
-  }
+  let starting = $state(false);
+  let error    = $state<string | null>(null);
 
   const onSubmit: SubmitFunction<never, StartFailure> = () => {
     starting = true;
@@ -62,22 +41,14 @@
 </script>
 
 <form
-  bind:this={formEl}
   method="POST"
   action="/projects/{projectId}/runs/new"
   use:enhance={onSubmit}
   class="inline-flex items-center gap-3"
 >
-  <input type="hidden" name="featureId"  value={featureId} />
-  <input type="hidden" name="executedBy" value={executedBy} />
+  <input type="hidden" name="featureId" value={featureId} />
 
-  <Button
-    type="submit"
-    variant="secondary"
-    disabled={disabled || starting}
-    loading={starting}
-    onclick={handleClick}
-  >
+  <Button type="submit" variant="secondary" disabled={disabled || starting} loading={starting}>
     Start run
   </Button>
 

@@ -3,9 +3,13 @@
   import { goto }   from '$app/navigation';
   import Icon       from '$lib/components/ui/Icon.svelte';
   import Select     from '$lib/components/ui/Select.svelte';
+  import UserMenu   from '$lib/components/UserMenu.svelte';
 
-  type Props = { projects: { id: string; name: string }[] };
-  let { projects }: Props = $props();
+  type Props = {
+    projects: { id: string; name: string }[];
+    user:     { id: string; email: string; name: string | null };
+  };
+  let { projects, user }: Props = $props();
 
   const currentProjectId = $derived(page.params.pid ?? '');
   const options          = $derived(projects.map((p) => ({ value: p.id, label: p.name })));
@@ -22,7 +26,5 @@
     {/if}
   </div>
 
-  <div class="text-xs text-surface-400">
-    <!-- User menu placeholder — wired in M6.4 -->
-  </div>
+  <UserMenu {user} />
 </header>

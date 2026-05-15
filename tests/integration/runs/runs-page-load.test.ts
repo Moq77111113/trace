@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
 import { features, featureGroups, projects, runs } from '$lib/server/db/schema';
-import { load } from '../../../src/routes/projects/[pid]/runs/+page.server';
+import { load } from '../../../src/routes/(app)/projects/[pid]/runs/+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];
 

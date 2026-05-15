@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { db } from '$lib/server/db/client';
 import { attachments, features, projects, runs, scenarioResults } from '$lib/server/db/schema';
 import { putObject, deleteObject } from '$lib/server/storage/s3';
-import { GET } from '../../../src/routes/api/attachments/[aid]/+server';
+import { GET } from '../../../src/routes/(public)/api/attachments/[aid]/+server';
 
 type AttachmentEvent = Parameters<typeof GET>[0];
 

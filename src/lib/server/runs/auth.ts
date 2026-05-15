@@ -1,10 +1,24 @@
-import type { RequestEvent } from '@sveltejs/kit';
+import { error, type RequestEvent } from '@sveltejs/kit';
+import { authenticateCi } from '$lib/server/api-keys';
+import { userDisplayName } from '$lib/auth/format';
 
-/**
- * D1: ingest is open. `executedBy` falls back to the `X-CI-Source` header
- * (default `'ci'`). D2/M6 swaps this for API-key resolution without touching
- * the ingest function signature.
- */
+export function resolveLiveExecutor(event: RequestEvent): string {
+	if (!event.locals.user) throw error(401, 'unauthorized');
+	return userDisplayName(event.locals.user);
+}
+
 export async function resolveCiExecutor(event: RequestEvent): Promise<string> {
-  return event.request.headers.get('x-ci-source')?.trim() || 'ci';
+	const projectId =
+		event.request.headers.get('x-project-id') ?? event.url.searchParams.get('project');
+	if (!projectId) throw error(400, 'X-Project-Id header (or ?project=) required');
+
+	try {
+		const { tokenName } = await authenticateCi(
+			event.request.headers.get('authorization'),
+			projectId
+		);
+		return tokenName;
+	} catch (e) {
+		throw error(401, e instanceof Error ? e.message : 'unauthorized');
+	}
 }

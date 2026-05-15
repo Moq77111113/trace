@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { featureTags, tags } from '$lib/server/db/schema';
 import { stringFields } from '$lib/server/forms';
+import { resolveLiveExecutor } from '$lib/server/runs/auth';
 import { archiveFeature } from './archive';
 import { getFeature } from './queries';
 import { saveFeature } from './save';
@@ -14,7 +15,6 @@ type Params = { pid: string; fid: string };
 const saveBody = z.object({
   content: z.string().max(200_000),
   version: z.coerce.number().int().nonnegative(),
-  editor:  z.string().trim().max(100).optional(),
   groupId: z.string().uuid().nullable().optional(),
 });
 
@@ -44,15 +44,14 @@ export const load = async ({ params }: { params: Params }) => {
 };
 
 export const actions = {
-  save: async ({ request, params }: RequestEvent<Params>) => {
+  save: async (event: RequestEvent<Params>) => {
+    const { request, params } = event;
     const data    = stringFields(await request.formData());
     const groupId = data.groupId === '' || data.groupId === undefined ? null : data.groupId;
     const parsed  = saveBody.safeParse({ ...data, groupId });
     if (!parsed.success) return fail(400, { error: parsed.error.message });
 
-    const editor = parsed.data.editor && parsed.data.editor.length > 0
-      ? parsed.data.editor
-      : 'anonymous';
+    const editor = resolveLiveExecutor(event);
 
     const result = await saveFeature({
       featureId:       params.fid,
