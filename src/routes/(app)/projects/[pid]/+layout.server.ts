@@ -2,6 +2,7 @@ import { db } from '$lib/server/db/client';
 import { projects } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
+import { listFeaturesByGroup } from '$lib/server/features/queries';
 import type { LayoutServerLoad } from './$types';
 
 export const load = (async ({ params }) => {
@@ -10,5 +11,7 @@ export const load = (async ({ params }) => {
   });
   if (!project) throw error(404, 'Project not found');
 
-  return { project };
+  const tree = await listFeaturesByGroup(params.pid);
+
+  return { project, tree };
 }) satisfies LayoutServerLoad;

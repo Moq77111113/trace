@@ -57,20 +57,20 @@ const fakeData = {
 };
 
 describe('RunReadonly', () => {
-  it('renders feature name, status badge, error message and attachment list', () => {
+  it('renders feature name, status pill, error message and attachment list', () => {
     render(RunReadonly, { props: { data: fakeData } });
 
     expect(screen.getByText('Login')).toBeInTheDocument();
-    expect(screen.getAllByText('FAILED').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Expected red banner')).toBeInTheDocument();
+    expect(screen.getAllByText('failed').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Expected red banner/)).toBeInTheDocument();
     expect(screen.getByText(/shot\.png/)).toBeInTheDocument();
     expect(screen.getByText(/console\.log/)).toBeInTheDocument();
   });
 
-  it('opens the snapshot modal when "View snapshot" is clicked', async () => {
+  it('opens the snapshot modal when Snapshot is clicked', async () => {
     render(RunReadonly, { props: { data: fakeData } });
 
-    await fireEvent.click(screen.getByRole('button', { name: /view snapshot/i }));
+    await fireEvent.click(screen.getByRole('button', { name: /snapshot/i }));
 
     expect(screen.getByText(/exact Gherkin/i)).toBeInTheDocument();
   });

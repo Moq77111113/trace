@@ -1,43 +1,238 @@
 @import 'tailwindcss';
 
+/* ─────────────────────────────────────────────────────────────────
+   Trace · Design tokens
+   Identity: Linear-restraint × Gleam-vibrance.
+   One brand accent (magenta-pink), the rest neutral.
+   Status semantics: pass · fail · skip · pending · running · flake.
+   Daltonien-friendly: shape carries status as much as color.
+   ───────────────────────────────────────────────────────────────── */
+
+:root,
+[data-theme='light'] {
+  --bg:         oklch(0.992 0.003 85);
+  --canvas:     oklch(0.972 0.004 85);
+  --surface:    oklch(1.000 0.000 0);
+  --surface-2:  oklch(0.962 0.004 85);
+  --overlay:    oklch(1.000 0.000 0 / 0.72);
+
+  --border:        oklch(0.918 0.005 85);
+  --border-strong: oklch(0.850 0.006 85);
+  --border-focus:  oklch(0.70 0.20 350 / 0.40);
+
+  --ink:        oklch(0.160 0.008 85);
+  --ink-2:      oklch(0.400 0.008 85);
+  --ink-3:      oklch(0.560 0.008 85);
+  --ink-mute:   oklch(0.700 0.005 85);
+
+  --accent:          oklch(0.66 0.22 350);
+  --accent-hover:    oklch(0.60 0.23 350);
+  --accent-press:    oklch(0.54 0.23 350);
+  --accent-fg:       oklch(0.99 0 0);
+  --accent-soft:     oklch(0.95 0.04 350);
+  --accent-soft-ink: oklch(0.40 0.18 350);
+  --accent-ring:     oklch(0.66 0.22 350 / 0.22);
+
+  --pass:      oklch(0.60 0.15 150);
+  --pass-soft: oklch(0.94 0.04 150);
+  --pass-ink:  oklch(0.36 0.12 150);
+  --fail:      oklch(0.60 0.20 28);
+  --fail-soft: oklch(0.95 0.04 28);
+  --fail-ink:  oklch(0.42 0.18 28);
+  --skip:      oklch(0.60 0.02 85);
+  --skip-soft: oklch(0.94 0.005 85);
+  --skip-ink:  oklch(0.36 0.005 85);
+  --pending:      oklch(0.70 0.005 85);
+  --pending-soft: oklch(0.96 0.003 85);
+  --pending-ink:  oklch(0.42 0.005 85);
+  --run:      oklch(0.62 0.15 235);
+  --run-soft: oklch(0.94 0.04 235);
+  --run-ink:  oklch(0.40 0.15 235);
+  --flake:      oklch(0.70 0.15 75);
+  --flake-soft: oklch(0.95 0.04 75);
+  --flake-ink:  oklch(0.46 0.13 75);
+
+  --shadow-1: 0 0 0 0.5px oklch(0 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.04);
+  --shadow-2: 0 0 0 0.5px oklch(0 0 0 / 0.05), 0 1px 2px oklch(0 0 0 / 0.04), 0 6px 16px oklch(0 0 0 / 0.06);
+  --shadow-pop: 0 0 0 0.5px oklch(0 0 0 / 0.06), 0 4px 12px oklch(0 0 0 / 0.10), 0 16px 40px oklch(0 0 0 / 0.10);
+
+  --code-bg:      oklch(0.972 0.004 85);
+  --code-keyword: oklch(0.55 0.18 350);
+  --code-string:  oklch(0.46 0.13 150);
+  --code-tag:     oklch(0.50 0.14 235);
+  --code-comment: oklch(0.62 0.008 85);
+  --code-number:  oklch(0.50 0.16 75);
+  --code-text:    oklch(0.20 0.008 85);
+}
+
+[data-theme='dark'] {
+  --bg:        oklch(0.158 0.006 260);
+  --canvas:    oklch(0.130 0.005 260);
+  --surface:   oklch(0.190 0.007 260);
+  --surface-2: oklch(0.220 0.008 260);
+  --overlay:   oklch(0.158 0.006 260 / 0.72);
+
+  --border:        oklch(0.260 0.009 260);
+  --border-strong: oklch(0.340 0.010 260);
+  --border-focus:  oklch(0.74 0.21 350 / 0.50);
+
+  --ink:      oklch(0.965 0.005 260);
+  --ink-2:    oklch(0.780 0.006 260);
+  --ink-3:    oklch(0.580 0.010 260);
+  --ink-mute: oklch(0.440 0.010 260);
+
+  --accent:          oklch(0.74 0.21 350);
+  --accent-hover:    oklch(0.79 0.21 350);
+  --accent-press:    oklch(0.68 0.22 350);
+  --accent-fg:       oklch(0.13 0.02 350);
+  --accent-soft:     oklch(0.30 0.10 350);
+  --accent-soft-ink: oklch(0.86 0.12 350);
+  --accent-ring:     oklch(0.74 0.21 350 / 0.30);
+
+  --pass:      oklch(0.74 0.16 150);
+  --pass-soft: oklch(0.28 0.07 150);
+  --pass-ink:  oklch(0.88 0.13 150);
+  --fail:      oklch(0.72 0.18 28);
+  --fail-soft: oklch(0.30 0.10 28);
+  --fail-ink:  oklch(0.88 0.14 28);
+  --skip:      oklch(0.62 0.012 260);
+  --skip-soft: oklch(0.26 0.005 260);
+  --skip-ink:  oklch(0.78 0.008 260);
+  --pending:      oklch(0.50 0.008 260);
+  --pending-soft: oklch(0.24 0.006 260);
+  --pending-ink:  oklch(0.72 0.008 260);
+  --run:      oklch(0.74 0.16 235);
+  --run-soft: oklch(0.28 0.09 235);
+  --run-ink:  oklch(0.86 0.13 235);
+  --flake:      oklch(0.80 0.16 75);
+  --flake-soft: oklch(0.30 0.10 75);
+  --flake-ink:  oklch(0.88 0.14 75);
+
+  --shadow-1: 0 0 0 0.5px oklch(0 0 0 / 0.30), 0 1px 2px oklch(0 0 0 / 0.30);
+  --shadow-2: 0 0 0 0.5px oklch(0 0 0 / 0.35), 0 1px 2px oklch(0 0 0 / 0.30), 0 8px 18px oklch(0 0 0 / 0.40);
+  --shadow-pop: 0 0 0 0.5px oklch(0 0 0 / 0.40), 0 8px 24px oklch(0 0 0 / 0.50), 0 24px 56px oklch(0 0 0 / 0.55);
+
+  --code-bg:      oklch(0.158 0.006 260);
+  --code-keyword: oklch(0.82 0.16 350);
+  --code-string:  oklch(0.80 0.14 150);
+  --code-tag:     oklch(0.78 0.14 235);
+  --code-comment: oklch(0.50 0.010 260);
+  --code-number:  oklch(0.82 0.14 75);
+  --code-text:    oklch(0.92 0.005 260);
+}
+
+/* Accent alternatives — tweakable per surface */
+[data-accent='pink']  { --accent: oklch(0.66 0.22 350); --accent-hover: oklch(0.60 0.23 350); --accent-press: oklch(0.54 0.23 350); --accent-soft: oklch(0.95 0.04 350); --accent-soft-ink: oklch(0.40 0.18 350); --accent-ring: oklch(0.66 0.22 350 / 0.22); }
+[data-accent='amber'] { --accent: oklch(0.66 0.16 60);  --accent-hover: oklch(0.60 0.17 60);  --accent-press: oklch(0.54 0.18 60);  --accent-soft: oklch(0.95 0.04 60);  --accent-soft-ink: oklch(0.40 0.14 60);  --accent-ring: oklch(0.66 0.16 60 / 0.22); }
+[data-accent='cyan']  { --accent: oklch(0.66 0.13 210); --accent-hover: oklch(0.60 0.14 210); --accent-press: oklch(0.54 0.15 210); --accent-soft: oklch(0.94 0.04 210); --accent-soft-ink: oklch(0.40 0.12 210); --accent-ring: oklch(0.66 0.13 210 / 0.22); }
+[data-accent='lime']  { --accent: oklch(0.68 0.18 130); --accent-hover: oklch(0.62 0.18 130); --accent-press: oklch(0.56 0.18 130); --accent-soft: oklch(0.94 0.05 130); --accent-soft-ink: oklch(0.40 0.16 130); --accent-ring: oklch(0.68 0.18 130 / 0.22); }
+
+[data-theme='dark'][data-accent='pink']  { --accent: oklch(0.74 0.21 350); --accent-hover: oklch(0.79 0.21 350); --accent-press: oklch(0.68 0.22 350); --accent-soft: oklch(0.30 0.10 350); --accent-soft-ink: oklch(0.86 0.12 350); --accent-ring: oklch(0.74 0.21 350 / 0.30); --accent-fg: oklch(0.13 0.02 350); }
+[data-theme='dark'][data-accent='amber'] { --accent: oklch(0.78 0.16 70);  --accent-hover: oklch(0.83 0.16 70);  --accent-press: oklch(0.72 0.17 70);  --accent-soft: oklch(0.28 0.08 70);  --accent-soft-ink: oklch(0.88 0.13 70);  --accent-ring: oklch(0.78 0.16 70 / 0.30); --accent-fg: oklch(0.18 0.04 70); }
+[data-theme='dark'][data-accent='cyan']  { --accent: oklch(0.78 0.13 210); --accent-hover: oklch(0.83 0.13 210); --accent-press: oklch(0.72 0.14 210); --accent-soft: oklch(0.28 0.08 210); --accent-soft-ink: oklch(0.86 0.11 210); --accent-ring: oklch(0.78 0.13 210 / 0.30); --accent-fg: oklch(0.16 0.04 210); }
+[data-theme='dark'][data-accent='lime']  { --accent: oklch(0.82 0.18 130); --accent-hover: oklch(0.86 0.18 130); --accent-press: oklch(0.76 0.18 130); --accent-soft: oklch(0.28 0.09 130); --accent-soft-ink: oklch(0.88 0.15 130); --accent-ring: oklch(0.82 0.18 130 / 0.30); --accent-fg: oklch(0.16 0.04 130); }
+
+/* ── Tailwind theme bridge — expose tokens as utility classes ──── */
 @theme {
-  /* Surface scale — dark-first, oklch */
-  --color-surface-50:  oklch(0.97 0.004 260);
-  --color-surface-100: oklch(0.93 0.006 260);
-  --color-surface-200: oklch(0.82 0.008 260);
-  --color-surface-300: oklch(0.68 0.010 260);
-  --color-surface-400: oklch(0.55 0.012 260);
-  --color-surface-500: oklch(0.42 0.012 260);
-  --color-surface-600: oklch(0.32 0.012 260);
-  --color-surface-700: oklch(0.26 0.012 260);
-  --color-surface-800: oklch(0.21 0.012 260);
-  --color-surface-900: oklch(0.16 0.012 260);
+  --color-bg:            var(--bg);
+  --color-canvas:        var(--canvas);
+  --color-surface:       var(--surface);
+  --color-surface-2:     var(--surface-2);
 
-  /* Accent (blue) */
-  --color-accent-400: oklch(0.72 0.16 255);
-  --color-accent-500: oklch(0.60 0.20 252);
-  --color-accent-600: oklch(0.50 0.20 250);
+  --color-border:        var(--border);
+  --color-border-strong: var(--border-strong);
 
-  /* Semantic state colors */
-  --color-state-passed:  oklch(0.72 0.18 145);
-  --color-state-failed:  oklch(0.65 0.22  27);
-  --color-state-skipped: oklch(0.65 0.02 260);
-  --color-state-running: oklch(0.78 0.15  75);
-  --color-state-pending: oklch(0.55 0.02 260);
+  --color-ink:           var(--ink);
+  --color-ink-2:         var(--ink-2);
+  --color-ink-3:         var(--ink-3);
+  --color-ink-mute:      var(--ink-mute);
 
-  /* Radii — three values total, no more */
+  --color-accent:        var(--accent);
+  --color-accent-hover:  var(--accent-hover);
+  --color-accent-fg:     var(--accent-fg);
+  --color-accent-soft:   var(--accent-soft);
+  --color-accent-soft-ink: var(--accent-soft-ink);
+
+  --color-pass:          var(--pass);
+  --color-pass-soft:     var(--pass-soft);
+  --color-pass-ink:      var(--pass-ink);
+  --color-fail:          var(--fail);
+  --color-fail-soft:     var(--fail-soft);
+  --color-fail-ink:      var(--fail-ink);
+  --color-skip:          var(--skip);
+  --color-skip-soft:     var(--skip-soft);
+  --color-skip-ink:      var(--skip-ink);
+  --color-pending:       var(--pending);
+  --color-pending-soft:  var(--pending-soft);
+  --color-pending-ink:   var(--pending-ink);
+  --color-run:           var(--run);
+  --color-run-soft:      var(--run-soft);
+  --color-run-ink:       var(--run-ink);
+  --color-flake:         var(--flake);
+  --color-flake-soft:    var(--flake-soft);
+  --color-flake-ink:     var(--flake-ink);
+
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
+  --radius-xl: 10px;
 
-  /* Typography */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
+/* ── Base ─────────────────────────────────────────────────────── */
 html,
+body { height: 100%; margin: 0; }
+
 body {
-  background: var(--color-surface-900);
-  color:      var(--color-surface-100);
-  font-family: var(--font-sans);
+  font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--canvas);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01', 'ss03', 'cv01';
+}
+
+::selection { background: var(--accent-ring); color: var(--ink); }
+
+/* ── Animations — used by Status (running) and Skeleton ───────── */
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes runpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes skshim   { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── Status SVG color binding (data-s) ────────────────────────── */
+[data-s='pass']    { color: var(--pass); }
+[data-s='fail']    { color: var(--fail); }
+[data-s='skip']    { color: var(--skip); }
+[data-s='pending'] { color: var(--pending); }
+[data-s='running'] { color: var(--run); }
+[data-s='flake']   { color: var(--flake); }
+
+/* ── Table descendant styling (Table primitive scopes via [data-tbl]) ── */
+[data-tbl] thead {
+  background: var(--surface-2);
+}
+[data-tbl] thead th {
+  padding: 9px 14px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  text-align: left;
+}
+[data-tbl] tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
+[data-tbl] tbody tr:hover td {
+  background: var(--surface-2);
 }

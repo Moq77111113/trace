@@ -2,4 +2,6 @@
   let { name }: { name: string } = $props();
 </script>
 
-<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono text-state-running bg-surface-800 border border-surface-700">@{name}</span>
+<span
+  class="inline-flex items-center font-mono text-[10.5px] leading-[1.4] px-1.5 rounded-sm bg-surface-2 text-ink-2 border border-border before:content-['@'] before:text-ink-3 before:mr-[1px]"
+>{name}</span>

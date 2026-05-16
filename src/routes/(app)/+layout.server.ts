@@ -14,5 +14,10 @@ export const load = (async ({ locals, url }) => {
     orderBy: (p, { asc }) => [asc(p.name)],
   });
 
-  return { user: locals.user, projects: all };
+  return {
+    user:     locals.user,
+    projects: all,
+    theme:    locals.theme,
+    accent:   locals.accent,
+  };
 }) satisfies LayoutServerLoad;

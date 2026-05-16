@@ -73,9 +73,9 @@ describe('LiveRun', () => {
   it('renders the scenario list and focuses the first PENDING scenario', () => {
     render(LiveRun, { props: { data: fakeData } });
 
-    expect(screen.getByText('A')).toBeInTheDocument();
+    expect(screen.getAllByText('A').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('B')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: /A/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /A/ })).toBeInTheDocument();
   });
 
   it('clicking Pass calls PATCH and auto-advances to the next PENDING', async () => {
@@ -87,7 +87,7 @@ describe('LiveRun', () => {
       '/api/runs/r1/scenarios/s1',
       expect.objectContaining({ method: 'PATCH' }),
     );
-    expect(screen.getByRole('heading', { level: 3, name: /B/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /B/ })).toBeInTheDocument();
   });
 
   it('P key marks the focused scenario as PASSED', async () => {

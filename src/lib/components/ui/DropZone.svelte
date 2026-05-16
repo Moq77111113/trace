@@ -1,7 +1,12 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  type Props = { onDrop: (files: File[]) => void; accept?: string; multiple?: boolean; children?: Snippet };
+  type Props = {
+    onDrop: (files: File[]) => void;
+    accept?: string;
+    multiple?: boolean;
+    children?: Snippet;
+  };
   let { onDrop, accept = '*', multiple = true, children }: Props = $props();
 
   let hover  = $state(false);
@@ -27,8 +32,8 @@
   ondragover={(e) => { e.preventDefault(); hover = true; }}
   ondragleave={() => (hover = false)}
   ondrop={handleDrop}
-  class="rounded-md border border-dashed p-4 text-center text-sm cursor-pointer transition
-         {hover ? 'border-accent-500 bg-accent-500/10 text-surface-100' : 'border-surface-600 bg-surface-800 text-surface-400 hover:bg-surface-700'}"
+  class="rounded-md border border-dashed p-4 text-center text-[12.5px] cursor-pointer transition-colors
+         {hover ? 'border-accent bg-accent-soft text-ink' : 'border-border-strong bg-surface text-ink-3 hover:bg-surface-2 hover:text-ink-2'}"
 >
   {#if children}{@render children()}{:else}Drop files here or click to browse{/if}
 

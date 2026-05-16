@@ -15,24 +15,55 @@
 		const EditorWorker = (await import('monaco-editor/esm/vs/editor/editor.worker?worker')).default;
 		self.MonacoEnvironment = { getWorker: () => new EditorWorker() };
 
-		const { gherkinLanguage, gherkinThemeRules } = await import('$lib/gherkin/monarch-grammar');
+		const { gherkinLanguage, gherkinLightRules, gherkinDarkRules } = await import(
+			'$lib/gherkin/monarch-grammar'
+		);
 		monaco.languages.register({ id: 'gherkin' });
 		monaco.languages.setMonarchTokensProvider('gherkin', gherkinLanguage);
+
+		monaco.editor.defineTheme('trace-light', {
+			base:    'vs',
+			inherit: false,
+			rules:   gherkinLightRules,
+			colors: {
+				'editor.background':          '#ffffff',
+				'editor.foreground':          '#322f2a',
+				'editorLineNumber.foreground': '#b0aea4',
+				'editorLineNumber.activeForeground': '#67635a',
+				'editor.selectionBackground': '#f5d6ea',
+				'editor.lineHighlightBackground': '#f6f5f1',
+				'editorCursor.foreground':    '#322f2a'
+			}
+		});
 		monaco.editor.defineTheme('trace-dark', {
-			base: 'vs-dark',
-			inherit: true,
-			rules: gherkinThemeRules,
-			colors: { 'editor.background': '#0d1117' }
+			base:    'vs-dark',
+			inherit: false,
+			rules:   gherkinDarkRules,
+			colors: {
+				'editor.background':          '#1f222b',
+				'editor.foreground':          '#e8e9eb',
+				'editorLineNumber.foreground': '#5a5e66',
+				'editorLineNumber.activeForeground': '#a8aab0',
+				'editor.selectionBackground': '#4a2941',
+				'editor.lineHighlightBackground': '#262932',
+				'editorCursor.foreground':    '#e8e9eb'
+			}
 		});
 
 		registered = true;
 		return monaco;
+	}
+
+	function currentTheme(): 'trace-dark' | 'trace-light' {
+		if (typeof document === 'undefined') return 'trace-light';
+		return document.documentElement.dataset.theme === 'dark' ? 'trace-dark' : 'trace-light';
 	}
 </script>
 
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import type * as Monaco from 'monaco-editor';
+	import Skeleton from '$lib/components/ui/Skeleton.svelte';
 
 	type Marker = { line: number; column?: number; message: string };
 
@@ -59,7 +90,10 @@
 	let editor: Monaco.editor.IStandaloneCodeEditor | null = null;
 	let monaco: typeof Monaco | null = null;
 	let providerHandle: Monaco.IDisposable | null = null;
+	let themeObserver: MutationObserver | null = null;
 	let ready = $state(false);
+
+	const skeletonLineWidths = ['65%', '40%', '55%', '70%', '30%', '50%', '60%', '45%', '38%', '52%'];
 
 	function applyMarkers(): void {
 		if (!editor || !monaco) return;
@@ -83,6 +117,11 @@
 		);
 	}
 
+	function refreshTheme(): void {
+		if (!monaco) return;
+		monaco.editor.setTheme(currentTheme());
+	}
+
 	onMount(async () => {
 		const m = await ensureRegistered();
 		monaco = m;
@@ -90,13 +129,15 @@
 		const ed = m.editor.create(containerEl, {
 			value,
 			language: 'gherkin',
-			theme: 'trace-dark',
-			minimap: { enabled: false },
+			theme:    currentTheme(),
+			minimap:  { enabled: false },
 			fontSize: 13,
-			fontFamily: 'JetBrains Mono, ui-monospace, monospace',
+			fontFamily: '"Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace',
 			automaticLayout: true,
 			scrollBeyondLastLine: false,
-			padding: { top: 12 }
+			padding: { top: 14 },
+			renderLineHighlight: 'none',
+			scrollbar: { vertical: 'auto', horizontal: 'auto', useShadows: false }
 		});
 		editor = ed;
 
@@ -113,11 +154,11 @@
 				const model = ed.getModel();
 				if (!model) return;
 
-				const lastLine     = model.getLineCount();
-				const lastColumn   = model.getLineMaxColumn(lastLine);
+				const lastLine      = model.getLineCount();
+				const lastColumn    = model.getLineMaxColumn(lastLine);
 				const endsWithBlank = model.getLineLength(lastLine) === 0;
-				const prefix       = endsWithBlank ? '\n' : '\n\n';
-				const range        = { startLineNumber: lastLine, startColumn: lastColumn, endLineNumber: lastLine, endColumn: lastColumn };
+				const prefix        = endsWithBlank ? '\n' : '\n\n';
+				const range         = { startLineNumber: lastLine, startColumn: lastColumn, endLineNumber: lastLine, endColumn: lastColumn };
 
 				ed.executeEdits('snippet-append', [{ range, text: prefix + text, forceMoveMarkers: true }]);
 				ed.focus();
@@ -139,12 +180,16 @@
 			});
 		}
 
+		themeObserver = new MutationObserver(refreshTheme);
+		themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
 		applyMarkers();
 		ready = true;
 	});
 
 	onDestroy(() => {
 		providerHandle?.dispose();
+		themeObserver?.disconnect();
 		editor?.dispose();
 		api = null;
 	});
@@ -161,11 +206,16 @@
 	});
 </script>
 
-<div class="relative w-full h-[640px] rounded-md border border-surface-600 overflow-hidden bg-[#0d1117]">
+<div class="relative w-full h-full min-h-[480px] bg-surface">
 	<div bind:this={containerEl} class="absolute inset-0"></div>
 	{#if !ready}
-		<pre
-			class="absolute inset-0 m-0 px-[26px] pt-3 font-mono text-[13px] leading-[1.5] text-surface-200 whitespace-pre overflow-hidden pointer-events-none"
-		>{value}</pre>
+		<div
+			class="absolute inset-0 px-6 pt-3.5 flex flex-col gap-[8px] pointer-events-none bg-surface"
+			aria-hidden="true"
+		>
+			{#each skeletonLineWidths as w (w)}
+				<Skeleton width={w} height="14px" />
+			{/each}
+		</div>
 	{/if}
 </div>

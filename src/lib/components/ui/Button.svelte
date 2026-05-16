@@ -2,26 +2,40 @@
   import { cva, type VariantProps } from 'class-variance-authority';
 
   export const button = cva(
-    'inline-flex items-center justify-center gap-2 font-medium rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed',
+    'inline-flex items-center justify-center gap-2 font-medium rounded-md border whitespace-nowrap transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
     {
       variants: {
         variant: {
-          primary:   'bg-accent-500 text-white hover:bg-accent-600',
-          secondary: 'bg-surface-700 text-surface-100 hover:bg-surface-600 border border-surface-600',
-          ghost:     'bg-transparent text-surface-100 hover:bg-surface-700',
-          danger:    'bg-state-failed text-white hover:opacity-90',
+          primary:   'bg-accent text-accent-fg border-transparent hover:bg-accent-hover shadow-[0_1px_2px_var(--accent-ring),inset_0_-1px_0_oklch(0_0_0/0.08)]',
+          secondary: 'bg-surface text-ink border-border hover:bg-surface-2 hover:border-border-strong',
+          ghost:     'bg-transparent text-ink border-transparent hover:bg-surface',
+          danger:    'bg-surface text-fail-ink border-border hover:bg-fail-soft hover:border-fail/30',
+          pass:      'bg-pass-soft text-pass-ink border-pass/30 hover:bg-pass/15',
+          fail:      'bg-fail-soft text-fail-ink border-fail/30 hover:bg-fail/15',
+          skip:      'bg-skip-soft text-skip-ink border-skip/30 hover:bg-skip/15'
         },
         size: {
-          sm: 'h-7 px-2.5 text-xs',
-          md: 'h-9 px-4 text-sm',
-          lg: 'h-11 px-5 text-base',
+          sm: 'h-[26px] px-2.5 text-[12px]',
+          md: 'h-[30px] px-3   text-[12.5px]',
+          lg: 'h-[34px] px-3.5 text-[13px]'
         },
+        iconOnly: {
+          true:  'gap-0 p-0',
+          false: ''
+        }
       },
-      defaultVariants: { variant: 'primary', size: 'md' },
-    },
+      compoundVariants: [
+        { iconOnly: true, size: 'sm', class: 'w-[26px]' },
+        { iconOnly: true, size: 'md', class: 'w-[30px]' },
+        { iconOnly: true, size: 'lg', class: 'w-[34px]' }
+      ],
+      defaultVariants: { variant: 'secondary', size: 'md', iconOnly: false }
+    }
   );
 
   export type ButtonVariants = VariantProps<typeof button>;
+  export type ButtonVariant = NonNullable<ButtonVariants['variant']>;
+  export type ButtonSize = NonNullable<ButtonVariants['size']>;
 </script>
 
 <script lang="ts">
@@ -29,21 +43,17 @@
   import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
 
   type Common = ButtonVariants & {
-    children: Snippet;
     class?:   string;
+    children: Snippet;
   };
 
-  type AsButton = Common & HTMLButtonAttributes & {
-    href?:    never;
-    loading?: boolean;
-  };
-
-  type AsLink = Common & HTMLAnchorAttributes & {
-    href:      string;
-    loading?:  never;
-    disabled?: never;
-    type?:     never;
-  };
+  type AsButton = Common & HTMLButtonAttributes & { href?: never };
+  type AsLink = Common &
+    HTMLAnchorAttributes & {
+      href: string;
+      disabled?: never;
+      type?: never;
+    };
 
   type Props = AsButton | AsLink;
 
@@ -54,21 +64,23 @@
   }
 
   const classes = $derived(
-    button({ variant: props.variant, size: props.size, class: props.class }),
+    button({
+      variant:  props.variant,
+      size:     props.size,
+      iconOnly: props.iconOnly,
+      class:    props.class
+    })
   );
 </script>
 
 {#if isLink(props)}
-  {@const { variant: _v, size: _s, class: _c, children, ...anchorRest } = props}
+  {@const { variant: _v, size: _s, iconOnly: _i, class: _c, children, ...anchorRest } = props}
   <a class={classes} {...anchorRest}>
     {@render children()}
   </a>
 {:else}
-  {@const { variant: _v, size: _s, class: _c, children, loading = false, disabled, ...buttonRest } = props}
-  <button class={classes} disabled={disabled || loading} {...buttonRest}>
-    {#if loading}
-      <span class="animate-spin" aria-hidden="true">⟳</span>
-    {/if}
+  {@const { variant: _v, size: _s, iconOnly: _i, class: _c, children, ...buttonRest } = props}
+  <button class={classes} {...buttonRest}>
     {@render children()}
   </button>
 {/if}

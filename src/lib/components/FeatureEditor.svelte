@@ -9,7 +9,7 @@
   import MonacoWrapper, { type EditorApi } from './MonacoWrapper.svelte';
   import ConflictModal  from './ConflictModal.svelte';
   import DirtyIndicator from './DirtyIndicator.svelte';
-  import ErrorBadge     from './ErrorBadge.svelte';
+  import Pill           from '$lib/components/ui/Pill.svelte';
   import Button         from '$lib/components/ui/Button.svelte';
   import Icon           from '$lib/components/ui/Icon.svelte';
   import Modal          from '$lib/components/ui/Modal.svelte';
@@ -28,7 +28,6 @@
   };
 
   type ProjectTag = { name: string; count: number };
-
   type Group = { id: string; name: string };
 
   type Props = {
@@ -168,29 +167,40 @@
   }
 </script>
 
-<form method="POST" action="?/save" use:enhance={onSubmit}>
+<form method="POST" action="?/save" use:enhance={onSubmit} class="flex flex-col min-h-0 flex-1">
   <input type="hidden" name="version" value={version} />
   <input type="hidden" name="content" value={content} />
 
-  <header class="flex items-center gap-3 mb-3">
-    <h2 class="text-base font-semibold">
-      {data.feature.name} <DirtyIndicator {dirty} />
-    </h2>
-    <ErrorBadge count={parsed.errors.length} />
-    <div class="ml-auto flex items-center gap-2">
+  <header class="flex items-center gap-2.5 px-4 py-2 border-b border-border bg-bg max-md:gap-2 max-md:px-3">
+    <span class="font-mono text-[12px] text-ink-2 flex items-center gap-1">
+      <span class="text-ink-3">{data.feature.name.split('/').slice(0, -1).join('/')}</span>
+      {#if data.feature.name.includes('/')}<span class="text-ink-3">/</span>{/if}
+      <span class="text-ink font-medium">{data.feature.name.split('/').pop()}</span>
+    </span>
+    <DirtyIndicator {dirty} />
+
+    {#if parsed.errors.length > 0}
+      <Pill kind="fail" outline>{parsed.errors.length} parse error{parsed.errors.length === 1 ? '' : 's'}</Pill>
+    {:else}
+      <Pill kind="pass" outline>valid</Pill>
+    {/if}
+
+    <div class="ml-auto flex items-center gap-2 flex-wrap">
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger class="inline-flex items-center gap-1 h-9 px-3 text-sm rounded-md bg-surface-700 text-surface-100 hover:bg-surface-600 border border-surface-600 transition">
-          Insert <Icon name="ChevronDown" size={14} />
+        <DropdownMenu.Trigger
+          class="inline-flex items-center gap-1.5 h-[30px] px-3 text-[12.5px] font-medium rounded-md bg-surface text-ink border border-border hover:bg-surface-2 hover:border-border-strong cursor-pointer"
+        >
+          Insert <Icon name="ChevronDown" size={13} />
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content
             sideOffset={4}
             align="end"
-            class="min-w-[180px] bg-surface-800 border border-surface-600 rounded-md shadow-xl py-1 z-50"
+            class="min-w-[200px] bg-surface border border-border rounded-lg shadow-[var(--shadow-pop)] p-1 z-50"
           >
             {#each snippets as snippet (snippet.key)}
               <DropdownMenu.Item
-                class="px-3 py-1.5 text-sm text-surface-100 hover:bg-surface-700 focus:bg-surface-700 outline-none cursor-pointer"
+                class="px-2.5 py-1.5 text-[12.5px] text-ink-2 rounded-sm cursor-pointer data-[highlighted]:bg-surface-2 data-[highlighted]:text-ink outline-none"
                 onSelect={() => insertSnippet(snippet)}
               >
                 {snippet.label}
@@ -200,32 +210,37 @@
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
 
-      <label class="flex items-center gap-2 text-xs">
-        <span class="text-surface-400">Group:</span>
-        <select name="groupId" bind:value={groupId} class="bg-surface-700 border border-surface-600 rounded px-2 py-1 text-xs text-surface-100">
+      <label class="inline-flex items-center gap-2 text-[12px] text-ink-3">
+        <span>Group</span>
+        <select
+          name="groupId"
+          bind:value={groupId}
+          class="h-[30px] px-2.5 text-[12.5px] rounded-md bg-surface text-ink border border-border hover:border-border-strong cursor-pointer"
+        >
           <option value="">Ungrouped</option>
           {#each data.groups as g (g.id)}
             <option value={g.id}>{g.name}</option>
           {/each}
         </select>
       </label>
+
       <a
         href={`/api/features/${data.feature.id}/export`}
-        class="text-xs text-surface-400 underline-offset-2 hover:underline hover:text-surface-200"
+        class="inline-flex items-center gap-1.5 h-[30px] px-3 text-[12.5px] text-ink-2 rounded-md hover:bg-surface-2 hover:text-ink"
       >
-        Download .feature
+        <Icon name="Download" size={13} /> Export
       </a>
-      <span class="text-xs text-surface-400">v{version}</span>
+      <span class="text-[12px] text-ink-3 tabular-nums font-mono">v{version}</span>
       <Button type="button" variant="ghost" size="sm" onclick={() => (archiveOpen = true)}>Archive</Button>
-      <Button type="submit" loading={saving} disabled={!dirty || conflictOpen}>Save</Button>
+      <Button type="submit" variant="primary" disabled={saving || !dirty || conflictOpen}>Save</Button>
     </div>
   </header>
 
   {#if saveError}
-    <p class="mb-3 text-xs text-state-failed" role="alert">{saveError}</p>
+    <p class="px-4 py-2 text-[12px] text-fail-ink bg-fail-soft border-b border-fail/30" role="alert">{saveError}</p>
   {/if}
 
-  <div class="relative">
+  <div class="relative flex-1 min-h-0">
     <MonacoWrapper
       value={content}
       onChange={onMonacoChange}
@@ -235,8 +250,8 @@
     />
 
     {#if empty}
-      <div class="pointer-events-none absolute right-4 top-4 text-xs text-surface-400 italic bg-surface-800/85 px-2.5 py-1.5 rounded-md border border-surface-700">
-        Empty — use <span class="not-italic font-semibold text-surface-100">Insert</span> above to start
+      <div class="pointer-events-none absolute right-4 top-4 text-[11.5px] text-ink-3 italic bg-surface/85 backdrop-blur-sm px-2.5 py-1.5 rounded-md border border-border">
+        Empty — use <span class="not-italic font-semibold text-ink">Insert</span> above to start
       </div>
     {/if}
   </div>
@@ -253,18 +268,14 @@
 
 <form bind:this={archiveForm} method="POST" action="?/archive" use:enhance></form>
 
-<Modal
-  open={archiveOpen}
-  onOpenChange={(v) => (archiveOpen = v)}
-  title="Archive feature"
->
+<Modal open={archiveOpen} onOpenChange={(v) => (archiveOpen = v)} title="Archive feature">
   <p>Archive <strong>{data.feature.name}</strong>?</p>
-  <p class="text-xs text-surface-400 mt-2">
+  <p class="text-[12px] text-ink-3 mt-2">
     It will be hidden from this project. Existing run history is preserved.
   </p>
 
   {#snippet footer()}
-    <Button variant="secondary" onclick={() => (archiveOpen = false)}>Cancel</Button>
-    <Button variant="danger" loading={archiving} onclick={confirmArchive}>Archive</Button>
+    <Button variant="ghost" onclick={() => (archiveOpen = false)}>Cancel</Button>
+    <Button variant="danger" disabled={archiving} onclick={confirmArchive}>Archive</Button>
   {/snippet}
 </Modal>

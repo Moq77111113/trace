@@ -3,6 +3,7 @@
 
   type Props = Omit<HTMLTextareaAttributes, 'value'> & {
     value?: string;
+    class?: string;
   };
 
   let {
@@ -13,7 +14,7 @@
 </script>
 
 <textarea
-  class="w-full px-3 py-2 text-sm rounded-md bg-surface-900 border border-surface-600 text-surface-100 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:border-accent-500 focus:ring-accent-500/30 resize-vertical {cls}"
+  class="w-full min-h-[64px] px-2.5 py-2 text-[12.5px] leading-relaxed rounded-md bg-surface text-ink placeholder:text-ink-3 border border-border hover:border-border-strong focus:outline-none focus:ring-[3px] focus:ring-[var(--accent-ring)] focus:border-accent resize-y {cls}"
   bind:value
   {...rest}
 ></textarea>

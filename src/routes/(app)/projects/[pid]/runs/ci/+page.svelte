@@ -2,6 +2,7 @@
   import { page } from '$app/state';
   import Button from '$lib/components/ui/Button.svelte';
   import Input  from '$lib/components/ui/Input.svelte';
+  import Icon   from '$lib/components/ui/Icon.svelte';
 
   const projectId = $derived(page.params.pid ?? '');
   let env = $state('staging');
@@ -26,35 +27,53 @@
   }
 </script>
 
-<section class="max-w-3xl">
-  <a href="/projects/{page.params.pid}/runs" class="inline-flex items-center gap-1 text-xs text-surface-400 hover:text-surface-200 mb-3">← Back to runs</a>
-  <h2 class="text-base font-semibold mb-2">CI ingestion</h2>
-  <p class="text-sm text-surface-300 mb-6">
-    POST your <code class="text-surface-100">cucumber.json</code> from CI after each test job.
-    One feature per call. The server matches by <code class="text-surface-100">Feature:</code> name (case-insensitive) within this project.
-  </p>
+<div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
+  <section class="max-w-3xl">
+    <a
+      href="/projects/{page.params.pid}/runs"
+      class="inline-flex items-center gap-1.5 text-[12px] text-ink-3 hover:text-ink mb-3"
+    >
+      ← Back to runs
+    </a>
 
-  <label class="block text-xs uppercase tracking-wide text-surface-400 mb-1" for="env-input">Environment label</label>
-  <Input id="env-input" bind:value={env} class="mb-4 max-w-xs" />
+    <h1 class="text-[20px] font-semibold tracking-tight mb-1">CI ingestion</h1>
+    <p class="text-[13px] text-ink-3 max-w-[56ch] mb-6">
+      POST your <code class="font-mono text-ink-2">cucumber.json</code> from CI after each test job.
+      One feature per call. The server matches by <code class="font-mono text-ink-2">Feature:</code>
+      name (case-insensitive) within this project.
+    </p>
 
-  <pre class="px-3 py-3 bg-surface-900 border border-surface-700 rounded text-xs font-mono whitespace-pre-wrap text-surface-200 select-all">{curlExample}</pre>
+    <label class="block text-[11px] uppercase tracking-[0.07em] text-ink-3 mb-1.5 font-medium" for="env-input">
+      Environment label
+    </label>
+    <div class="max-w-xs mb-4">
+      <Input id="env-input" bind:value={env} />
+    </div>
 
-  <div class="mt-2 flex items-center gap-3">
-    <Button variant="secondary" onclick={copy}>Copy</Button>
-    <span class="text-xs text-state-passed" aria-live="polite">{copied ? 'Copied' : ''}</span>
-  </div>
+    <pre
+      class="px-3 py-3 bg-canvas border border-border rounded-md text-[12px] font-mono whitespace-pre-wrap text-ink-2 select-all"
+    >{curlExample}</pre>
 
-  <h3 class="text-xs uppercase tracking-wide text-surface-400 mt-10 mb-2">Supported emitters</h3>
-  <ul class="text-sm space-y-1 text-surface-200 list-disc list-inside">
-    <li><code>@cucumber/cucumber</code> (Node): <code>--format json:cucumber.json</code></li>
-    <li>cucumber-jvm (Java/Maven): <code>--plugin json:target/cucumber.json</code></li>
-    <li>godog (Go): <code>-f cucumber</code></li>
-    <li>pytest-bdd (Python): <code>--cucumberjson</code></li>
-    <li>SpecFlow (.NET): official cucumber JSON plugin</li>
-  </ul>
+    <div class="mt-3 flex items-center gap-3">
+      <Button variant="secondary" onclick={copy}>
+        <Icon name="Copy" size={13} /> Copy
+      </Button>
+      <span class="text-[12px] text-pass-ink tabular-nums" aria-live="polite">{copied ? 'Copied' : ''}</span>
+    </div>
 
-  <h3 class="text-xs uppercase tracking-wide text-surface-400 mt-10 mb-2">Response shape</h3>
-  <pre class="px-3 py-3 bg-surface-900 border border-surface-700 rounded text-xs font-mono whitespace-pre-wrap text-surface-200">{`{
+    <h2 class="text-[11px] uppercase tracking-[0.07em] text-ink-3 mt-10 mb-2 font-medium">Supported emitters</h2>
+    <ul class="text-[13px] space-y-1 text-ink-2 list-disc list-inside marker:text-ink-3">
+      <li><code class="font-mono">@cucumber/cucumber</code> (Node): <code class="font-mono">--format json:cucumber.json</code></li>
+      <li>cucumber-jvm (Java/Maven): <code class="font-mono">--plugin json:target/cucumber.json</code></li>
+      <li>godog (Go): <code class="font-mono">-f cucumber</code></li>
+      <li>pytest-bdd (Python): <code class="font-mono">--cucumberjson</code></li>
+      <li>SpecFlow (.NET): official cucumber JSON plugin</li>
+    </ul>
+
+    <h2 class="text-[11px] uppercase tracking-[0.07em] text-ink-3 mt-10 mb-2 font-medium">Response shape</h2>
+    <pre
+      class="px-3 py-3 bg-canvas border border-border rounded-md text-[12px] font-mono whitespace-pre-wrap text-ink-2"
+    >{`{
   "run_id":            "<uuid>",
   "status":            "PASSED" | "FAILED" | "SKIPPED",
   "scenarios_matched": <int>,
@@ -62,10 +81,11 @@
   "warnings":          ["..."]
 }`}</pre>
 
-  <h3 class="text-xs uppercase tracking-wide text-surface-400 mt-10 mb-2">Error codes</h3>
-  <ul class="text-sm space-y-1 text-surface-200">
-    <li><code>400</code> — missing project header, invalid JSON, or unparseable cucumber payload</li>
-    <li><code>404</code> — no feature in the project matches the <code>Feature:</code> name</li>
-    <li><code>500</code> — DB/storage failure</li>
-  </ul>
-</section>
+    <h2 class="text-[11px] uppercase tracking-[0.07em] text-ink-3 mt-10 mb-2 font-medium">Error codes</h2>
+    <ul class="text-[13px] space-y-1 text-ink-2">
+      <li><code class="font-mono">400</code> — missing project header, invalid JSON, or unparseable cucumber payload</li>
+      <li><code class="font-mono">404</code> — no feature in the project matches the <code class="font-mono">Feature:</code> name</li>
+      <li><code class="font-mono">500</code> — DB/storage failure</li>
+    </ul>
+  </section>
+</div>

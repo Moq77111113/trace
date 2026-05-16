@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import type { SubmitFunction } from '@sveltejs/kit';
   import Button from '$lib/components/ui/Button.svelte';
+  import Icon   from '$lib/components/ui/Icon.svelte';
 
   type Props = {
     projectId: string;
@@ -48,11 +49,11 @@
 >
   <input type="hidden" name="featureId" value={featureId} />
 
-  <Button type="submit" variant="secondary" disabled={disabled || starting} loading={starting}>
-    Start run
+  <Button type="submit" variant="primary" disabled={disabled || starting}>
+    <Icon name="Play" size={13} /> Start run
   </Button>
 
   {#if error}
-    <span class="text-xs text-state-failed" role="alert">{error}</span>
+    <span class="text-[12px] text-fail-ink" role="alert">{error}</span>
   {/if}
 </form>

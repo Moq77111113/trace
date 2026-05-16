@@ -1,71 +1,120 @@
 <script lang="ts">
   import Button from '$lib/components/ui/Button.svelte';
   import Input  from '$lib/components/ui/Input.svelte';
-  import Badge  from '$lib/components/ui/Badge.svelte';
+  import Pill   from '$lib/components/ui/Pill.svelte';
+  import Icon   from '$lib/components/ui/Icon.svelte';
 
   let { data, form } = $props();
+
+  let copied = $state(false);
+  let copyTimer: ReturnType<typeof setTimeout> | undefined;
+
+  async function copyKey() {
+    if (!form?.createdKey) return;
+    await navigator.clipboard.writeText(form.createdKey.key);
+    copied = true;
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => (copied = false), 1500);
+  }
 </script>
 
-<section class="max-w-2xl">
-  <h2 class="text-lg font-semibold mb-1">API keys</h2>
-  <p class="text-sm text-surface-400 mb-6">
-    Bearer tokens for CI ingestion. Project-scoped. The raw secret is shown <strong>once</strong> on creation — store it immediately.
-  </p>
+<div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
+  <div class="grid grid-cols-[220px_1fr] gap-7 max-w-[1100px] max-lg:grid-cols-[200px_1fr] max-lg:gap-6 max-md:grid-cols-[1fr] max-md:gap-4">
+    <nav class="flex flex-col gap-px max-md:flex-row max-md:overflow-x-auto max-md:-mx-4 max-md:px-4 max-md:pb-2">
+      <a
+        href="#api-keys"
+        aria-current="page"
+        class="flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md bg-surface text-ink font-medium shadow-[var(--shadow-1)]"
+      >
+        <Icon name="Key" size={13} /> API keys
+      </a>
+    </nav>
 
-  {#if form?.createdKey}
-    <div class="p-4 mb-6 bg-surface-800 border border-state-running rounded">
-      <strong class="block mb-1 text-sm">Copy this key now — it will not be shown again.</strong>
-      <pre class="select-all text-xs font-mono break-all bg-surface-900 p-2 rounded">{form.createdKey.key}</pre>
-    </div>
-  {/if}
+    <section>
+      <h1 class="text-[16px] font-semibold tracking-tight mb-1">API keys</h1>
+      <p class="text-[13px] text-ink-3 max-w-[56ch] mb-4">
+        Bearer tokens for CI ingestion. Project-scoped. The raw secret is shown
+        <strong class="text-ink-2 font-medium">once</strong> on creation — store it immediately.
+      </p>
 
-  {#if form?.error}
-    <p class="text-sm text-state-failed mb-4">{form.error}</p>
-  {/if}
+      {#if form?.createdKey}
+        <div class="bg-accent-soft border border-accent/25 rounded-lg px-3.5 py-3 mb-3.5 flex items-center gap-3 text-[12.5px] max-md:flex-wrap">
+          <Icon name="Key" size={14} class="text-accent-soft-ink shrink-0" />
+          <strong class="text-accent-soft-ink whitespace-nowrap">Copy now — shown once.</strong>
+          <code
+            class="flex-1 text-[12px] text-accent-soft-ink px-2.5 py-1.5 bg-accent/5 border border-accent/20 rounded-md font-mono select-all break-all max-md:order-3 max-md:w-full"
+          >{form.createdKey.key}</code>
+          <Button variant="secondary" size="sm" onclick={copyKey}>
+            <Icon name="Copy" size={12} /> {copied ? 'Copied' : 'Copy'}
+          </Button>
+        </div>
+      {/if}
 
-  <form method="POST" action="?/create" class="flex flex-wrap items-end gap-2 mb-8">
-    <label class="flex flex-col gap-1 text-xs text-surface-300 flex-1 min-w-[160px]">
-      Name
-      <Input name="name" placeholder="prod-ci" required />
-    </label>
+      {#if form?.error}
+        <p class="text-[12px] text-fail-ink mb-3">{form.error}</p>
+      {/if}
 
-    <label class="flex flex-col gap-1 text-xs text-surface-300">
-      Expires (optional)
-      <Input name="expiresAt" type="date" />
-    </label>
+      <form method="POST" action="?/create" class="flex flex-wrap items-end gap-2 mb-7">
+        <label class="flex flex-col gap-1 text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium flex-1 min-w-[160px]">
+          Name
+          <Input name="name" placeholder="prod-ci" required />
+        </label>
 
-    <Button type="submit" variant="primary">Create key</Button>
-  </form>
+        <label class="flex flex-col gap-1 text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium">
+          Expires (optional)
+          <Input name="expiresAt" type="date" />
+        </label>
 
-  {#if data.keys.length === 0}
-    <p class="text-sm text-surface-400">No API keys yet.</p>
-  {:else}
-    <ul class="divide-y divide-surface-700 text-sm border border-surface-700 rounded">
-      {#each data.keys as k (k.id)}
-        <li class="py-3 px-4 flex items-center justify-between gap-3">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="font-medium truncate">{k.name}</span>
-              {#if !k.enabled}<Badge variant="failed">revoked</Badge>{/if}
-              {#if k.enabled && k.expiresAt && k.expiresAt.getTime() < Date.now()}
-                <Badge variant="failed">expired</Badge>
+        <Button type="submit" variant="primary">
+          <Icon name="Plus" size={13} /> Create key
+        </Button>
+      </form>
+
+      {#if data.keys.length === 0}
+        <p class="text-[13px] text-ink-3">No API keys yet.</p>
+      {:else}
+        <div class="bg-surface border border-border rounded-xl overflow-hidden">
+          {#each data.keys as k (k.id)}
+            {@const expired = k.enabled && k.expiresAt && k.expiresAt.getTime() < Date.now()}
+            <div class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 items-center px-4 py-3 border-t border-border first:border-t-0 max-lg:grid-cols-[1fr_auto_auto] max-md:grid-cols-[1fr_auto] max-md:gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-[13px] truncate">{k.name}</span>
+                  {#if !k.enabled}<Pill kind="fail">revoked</Pill>{/if}
+                  {#if expired}<Pill kind="fail">expired</Pill>{/if}
+                </div>
+                <div class="font-mono text-[12px] text-ink-3 mt-0.5">{k.start ?? '—'}</div>
+              </div>
+              <span class="text-[12px] text-ink-3 tabular-nums max-lg:hidden">
+                created {k.createdAt.toLocaleDateString()}
+              </span>
+              <span class="text-[12px] text-ink-3 tabular-nums max-lg:hidden max-md:hidden">
+                {#if k.lastRequest}
+                  used {k.lastRequest.toLocaleDateString()}
+                {:else}
+                  never used
+                {/if}
+              </span>
+              <span class="text-[12px] text-ink-3 tabular-nums max-md:hidden">
+                {#if k.expiresAt}
+                  expires {k.expiresAt.toLocaleDateString()}
+                {:else}
+                  no expiry
+                {/if}
+              </span>
+
+              {#if k.enabled}
+                <form method="POST" action="?/revoke">
+                  <input type="hidden" name="id" value={k.id} />
+                  <Button type="submit" variant="danger" size="sm">Revoke</Button>
+                </form>
+              {:else}
+                <span></span>
               {/if}
             </div>
-            <div class="text-xs text-surface-400 mt-0.5">
-              {k.start ?? '—'} · created {k.createdAt.toLocaleDateString()}
-              {#if k.lastRequest} · last used {k.lastRequest.toLocaleString()}{/if}
-              {#if k.expiresAt} · expires {k.expiresAt.toLocaleDateString()}{/if}
-            </div>
-          </div>
-
-          {#if k.enabled}
-            <form method="POST" action="?/revoke">
-              <input type="hidden" name="id" value={k.id} />
-              <Button type="submit" variant="danger" size="sm">Revoke</Button>
-            </form>
-          {/if}
-        </li>
-      {/each}
-    </ul>
-  {/if}
-</section>
+          {/each}
+        </div>
+      {/if}
+    </section>
+  </div>
+</div>

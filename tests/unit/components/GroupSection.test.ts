@@ -8,7 +8,7 @@ describe('GroupSection', () => {
       props: { title: 'Auth', count: 3, draggable: true, collapsed: false, onToggle: () => {} },
     });
     expect(screen.getByText('Auth')).toBeInTheDocument();
-    expect(screen.getByText('(3)')).toBeInTheDocument();
+    expect(screen.getByText(/3 features/)).toBeInTheDocument();
   });
 
   it('renders the drag handle only when draggable', () => {

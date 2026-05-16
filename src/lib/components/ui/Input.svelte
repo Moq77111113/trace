@@ -4,6 +4,7 @@
   type Props = Omit<HTMLInputAttributes, 'value'> & {
     invalid?: boolean;
     value?:   string;
+    class?:   string;
   };
 
   let {
@@ -13,12 +14,9 @@
     ...rest
   }: Props = $props();
 
-  const base   = 'h-9 px-3 text-sm rounded-md bg-surface-900 border text-surface-100 placeholder:text-surface-400 focus:outline-none focus:ring-2';
-  const border = $derived(
-    invalid
-      ? 'border-state-failed focus:ring-state-failed/40'
-      : 'border-surface-600 focus:border-accent-500 focus:ring-accent-500/30',
-  );
+  const base =
+    'w-full h-[30px] px-2.5 text-[12.5px] rounded-md bg-surface text-ink placeholder:text-ink-3 border focus:outline-none focus:ring-[3px] focus:ring-[var(--accent-ring)] focus:border-accent';
+  const border = $derived(invalid ? 'border-fail' : 'border-border hover:border-border-strong');
 </script>
 
 <input class="{base} {border} {cls}" bind:value {...rest} />

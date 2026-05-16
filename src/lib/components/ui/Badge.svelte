@@ -1,35 +1,43 @@
 <script lang="ts" module>
-  import { cva, type VariantProps } from 'class-variance-authority';
+  import type { PillKind } from './Pill.svelte';
 
-  export const badge = cva(
-    'inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium',
-    {
-      variants: {
-        variant: {
-          passed:           'bg-state-passed/20  text-state-passed',
-          failed:           'bg-state-failed/20  text-state-failed',
-          skipped:          'bg-state-skipped/20 text-state-skipped',
-          running:          'bg-state-running/20 text-state-running',
-          pending:          'bg-surface-700      text-surface-300',
-          'source-manual':  'bg-surface-700      text-surface-200',
-          'source-ci':      'bg-accent-500/20    text-accent-400',
-          neutral:          'bg-surface-700      text-surface-200',
-        },
-      },
-      defaultVariants: { variant: 'neutral' },
-    },
-  );
+  export type BadgeVariant =
+    | 'passed'
+    | 'failed'
+    | 'skipped'
+    | 'running'
+    | 'pending'
+    | 'flake'
+    | 'source-manual'
+    | 'source-ci'
+    | 'neutral';
 
-  export type BadgeVariants = VariantProps<typeof badge>;
+  function toPillKind(variant: BadgeVariant | undefined): PillKind {
+    if (variant === 'passed')        return 'pass';
+    if (variant === 'failed')        return 'fail';
+    if (variant === 'skipped')       return 'skip';
+    if (variant === 'running')       return 'running';
+    if (variant === 'pending')       return 'pending';
+    if (variant === 'flake')         return 'flake';
+    if (variant === 'source-ci')     return 'brand';
+    if (variant === 'source-manual') return 'neutral';
+    return 'neutral';
+  }
 </script>
 
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import Pill from './Pill.svelte';
 
-  type Props = BadgeVariants & { children: Snippet };
-  let { variant, children }: Props = $props();
+  type Props = {
+    variant?: BadgeVariant;
+    glyph?:   boolean;
+    children: Snippet;
+  };
+
+  let { variant, glyph = true, children }: Props = $props();
 </script>
 
-<span class={badge({ variant })}>
+<Pill kind={toPillKind(variant)} {glyph}>
   {@render children()}
-</span>
+</Pill>

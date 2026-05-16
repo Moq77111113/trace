@@ -49,8 +49,8 @@ export function statusSymbol(status: PreviewRowStatus): string {
 
 const STATUS_ROW_BG: Record<PreviewRowStatus, string> = {
   'new':          '',
-  'collision':    'bg-state-running/5',
-  'parse-error':  'bg-state-failed/5',
+  'collision':    'bg-flake-soft/40',
+  'parse-error':  'bg-fail-soft/40',
 };
 
 export function statusRowClass(status: PreviewRowStatus): string {
@@ -58,9 +58,9 @@ export function statusRowClass(status: PreviewRowStatus): string {
 }
 
 const STATUS_TEXT: Record<PreviewRowStatus, string> = {
-  'new':          'text-state-passed',
-  'collision':    'text-state-running',
-  'parse-error':  'text-state-failed',
+  'new':          'text-pass-ink',
+  'collision':    'text-flake-ink',
+  'parse-error':  'text-fail-ink',
 };
 
 export function statusTextClass(status: PreviewRowStatus): string {
