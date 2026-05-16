@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { listExecutionsForExport } from '$lib/server/executions/queries';
 import { parseExecutionFilters } from '$lib/server/executions/filters';
-import { EXPORT_ROW_CAP, executionsCsvFilename, toExecutionsCsv } from '$lib/executions/csv';
+import { EXPORT_ROW_CAP, executionsCsvFilename, toExecutionsCsv } from '$lib/features/csv-export/lib/csv';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, url }) => {

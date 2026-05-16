@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { csvField, executionsCsvFilename, toExecutionsCsv } from '$lib/executions/csv';
+import { csvField, executionsCsvFilename, toExecutionsCsv } from '$lib/features/csv-export/lib/csv';
 import type { ExecutionExportRow } from '$lib/server/executions/queries';
 
 describe('csvField', () => {

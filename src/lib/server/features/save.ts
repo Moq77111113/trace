@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features, featureGroups } from '$lib/server/db/schema';
-import { parse } from '$lib/gherkin/parse';
+import { parse } from '$lib/shared/gherkin/parse';
 import { syncFeatureTags } from './tags-sync';
 
 type Feature = typeof features.$inferSelect;

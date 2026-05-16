@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { db } from '$lib/server/db/client';
 import { features, projects } from '$lib/server/db/schema';
 import { createTestApiKey } from '../_helpers/api-key';
-import { POST } from '../../../src/routes/(public)/api/executions/ingest/+server';
+import { POST, type IngestSuccess } from '../../../src/routes/(public)/api/executions/ingest/+server';
 
 type IngestEvent = Parameters<typeof POST>[0];
 
@@ -43,10 +43,10 @@ function buildEvent(body: string, headers: Record<string, string> = {}, searchPa
   return { request, url } as unknown as IngestEvent;
 }
 
-async function invoke(event: IngestEvent) {
+async function invoke<TBody = IngestSuccess>(event: IngestEvent): Promise<{ status: number; body: TBody | { message: string } }> {
   try {
     const res = await POST(event);
-    return { status: res.status, body: await res.json() as Record<string, unknown> };
+    return { status: res.status, body: await res.json() as TBody };
   } catch (e) {
     if (e && typeof e === 'object' && 'status' in e) {
       const err = e as { status: number; body: { message: string } };
@@ -54,6 +54,11 @@ async function invoke(event: IngestEvent) {
     }
     throw e;
   }
+}
+
+function expectSuccess(body: IngestSuccess | { message: string }): IngestSuccess {
+  if ('message' in body) throw new Error(`expected success, got error: ${body.message}`);
+  return body;
 }
 
 describe('POST /api/executions/ingest', () => {
@@ -89,7 +94,7 @@ describe('POST /api/executions/ingest', () => {
 
     expect(res.status).toBe(201);
 
-    const runId = res.body.run_id as string;
+    const runId = expectSuccess(res.body).run_id;
     const { db }             = await import('$lib/server/db/client');
     const { executions }     = await import('$lib/server/db/schema');
     const { eq }             = await import('drizzle-orm');
@@ -109,7 +114,7 @@ describe('POST /api/executions/ingest', () => {
 
     expect(res.status).toBe(201);
 
-    const runId = res.body.run_id as string;
+    const runId = expectSuccess(res.body).run_id;
     const { db }         = await import('$lib/server/db/client');
     const { executions } = await import('$lib/server/db/schema');
     const { eq }         = await import('drizzle-orm');

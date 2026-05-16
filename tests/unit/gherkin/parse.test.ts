@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parse } from '$lib/gherkin/parse';
+import { parse } from '$lib/shared/gherkin/parse';
 
 describe('parse', () => {
 	it('extracts feature name', () => {

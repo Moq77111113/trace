@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractScenarioSteps } from '$lib/gherkin/steps';
+import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
 
 describe('extractScenarioSteps', () => {
   it('returns the steps of the named scenario', () => {

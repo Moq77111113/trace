@@ -6,7 +6,7 @@ import { renameGroup, groupRenameInput } from '$lib/server/groups/rename';
 import { reorderGroups, groupReorderInput } from '$lib/server/groups/reorder';
 import { getProjectDashboardStats } from '$lib/server/projects/queries';
 import { stringFields } from '$lib/server/forms';
-import { appendCrumb } from '$lib/breadcrumbs';
+import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { PageServerLoad } from './$types';
 

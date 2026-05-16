@@ -1,6 +1,6 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { authenticateCi } from '$lib/server/api-keys';
-import { userDisplayName } from '$lib/auth/format';
+import { userDisplayName } from '$lib/features/auth/lib/format';
 
 export function resolveLiveExecutor(event: RequestEvent): string {
 	if (!event.locals.user) throw error(401, 'unauthorized');

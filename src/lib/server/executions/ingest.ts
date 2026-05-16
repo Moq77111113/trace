@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db/client';
 import { executions, features, scenarioResults } from '$lib/server/db/schema';
 import type { IngestedExecution } from './cucumber-json/types';
-import type { CiMetadata } from '$lib/executions/ci-metadata';
+import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 import type { InferSelectModel } from 'drizzle-orm';
 import { and, eq, sql } from 'drizzle-orm';
 

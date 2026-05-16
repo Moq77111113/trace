@@ -2,8 +2,16 @@ import { error, json } from '@sveltejs/kit';
 import { parseCucumberJson } from '$lib/server/executions/cucumber-json/parse';
 import { ingestExecution } from '$lib/server/executions/ingest';
 import { resolveCiExecutor } from '$lib/server/executions/auth';
-import { readCiMetadata } from '$lib/executions/ci-metadata';
+import { readCiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 import type { RequestHandler } from './$types';
+
+export type IngestSuccess = {
+  run_id:            string;
+  status:            string;
+  scenarios_matched: number;
+  scenarios_unknown: string[];
+  warnings:          string[];
+};
 
 export const POST = (async (event) => {
   const projectId   = event.request.headers.get('x-project-id') ?? event.url.searchParams.get('project');

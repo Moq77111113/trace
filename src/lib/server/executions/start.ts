@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { executions, features, scenarioResults } from '$lib/server/db/schema';
-import { parse } from '$lib/gherkin/parse';
+import { parse } from '$lib/shared/gherkin/parse';
 
 export type StartRunInput = {
   featureId:    string;

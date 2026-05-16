@@ -6,7 +6,7 @@ import { featureTags, tags } from '$lib/server/db/schema';
 import { stringFields } from '$lib/server/forms';
 import { resolveLiveExecutor } from '$lib/server/executions/auth';
 import { listRecentExecutionsForFeature } from '$lib/server/executions/queries';
-import { appendCrumb, type Crumb } from '$lib/breadcrumbs';
+import { appendCrumb, type Crumb } from '$lib/shared/lib/breadcrumbs';
 import { archiveFeature } from './archive';
 import { getFeature } from './queries';
 import { saveFeature } from './save';

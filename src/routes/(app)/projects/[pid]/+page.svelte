@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button       from '$lib/components/ui/Button.svelte';
-  import Icon         from '$lib/components/ui/Icon.svelte';
-  import EmptyState   from '$lib/components/ui/EmptyState.svelte';
-  import PageTitle    from '$lib/components/PageTitle.svelte';
-  import DashStats        from '$lib/entities/project/ui/DashStats.svelte';
+  import Button       from '$lib/shared/ui/Button.svelte';
+  import Icon         from '$lib/shared/ui/Icon.svelte';
+  import EmptyState   from '$lib/shared/ui/EmptyState.svelte';
+  import PageTitle    from '$lib/shared/ui/PageTitle.svelte';
+  import ProjectStats        from '$lib/entities/project/ui/ProjectStats.svelte';
   import NewGroupButton   from '$lib/features/feature-groups/ui/NewGroupButton.svelte';
   import GroupList        from '$lib/features/feature-groups/ui/GroupList.svelte';
 
@@ -30,7 +30,7 @@
     </div>
   </header>
 
-  <DashStats stats={data.stats} flakyCount={data.flakeFeatureIds.size} />
+  <ProjectStats stats={data.stats} flakyCount={data.flakeFeatureIds.size} />
 
   {#if isEmpty}
     <EmptyState title="No features yet" />

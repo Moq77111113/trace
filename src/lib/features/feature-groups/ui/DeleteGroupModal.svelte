@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Button from '$lib/components/ui/Button.svelte';
-  import Modal  from '$lib/components/ui/Modal.svelte';
+  import Button from '$lib/shared/ui/Button.svelte';
+  import Modal  from '$lib/shared/ui/Modal.svelte';
   import { enhance } from '$app/forms';
 
   export type DeleteGroupTarget = { id: string; name: string; count: number };

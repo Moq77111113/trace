@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { features, featureGroups } from '$lib/server/db/schema';
-import { featureTemplate } from '$lib/gherkin/snippets';
+import { featureTemplate } from '$lib/shared/gherkin/snippets';
 
 export const featureCreateInput = z.object({
   projectId: z.uuid({version: 'v7'}),

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import BrandMark from '$lib/components/BrandMark.svelte';
-	import PageTitle from '$lib/components/PageTitle.svelte';
-	import Button    from '$lib/components/ui/Button.svelte';
-	import Input     from '$lib/components/ui/Input.svelte';
+	import BrandMark from '$lib/shared/brand/BrandMark.svelte';
+	import PageTitle from '$lib/shared/ui/PageTitle.svelte';
+	import Button    from '$lib/shared/ui/Button.svelte';
+	import Input     from '$lib/shared/ui/Input.svelte';
 	import * as m    from '$lib/paraglide/messages';
 
 	let { data, form } = $props();

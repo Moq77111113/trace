@@ -2,7 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { createFeature, featureCreateInput } from '$lib/server/features/create';
 import { listGroups } from '$lib/server/groups/queries';
 import { stringFields } from '$lib/server/forms';
-import { appendCrumb } from '$lib/breadcrumbs';
+import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { Actions, PageServerLoad } from './$types';
 

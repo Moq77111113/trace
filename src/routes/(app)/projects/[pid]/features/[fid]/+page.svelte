@@ -1,10 +1,10 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { page } from '$app/state';
-  import FeatureEditor    from '$lib/components/FeatureEditor.svelte';
-  import ExecutionLauncher      from '$lib/components/ExecutionLauncher.svelte';
-  import FeatureExecutionsAside from '$lib/components/FeatureExecutionsAside.svelte';
-  import PageTitle        from '$lib/components/PageTitle.svelte';
+  import FeatureEditor    from '$lib/features/feature-editor/ui/FeatureEditor.svelte';
+  import ExecutionLauncher      from '$lib/features/execution-launcher/ui/ExecutionLauncher.svelte';
+  import FeatureExecutionsAside from '$lib/widgets/feature-executions-aside/ui/FeatureExecutionsAside.svelte';
+  import PageTitle        from '$lib/shared/ui/PageTitle.svelte';
 
   let { data } = $props();
 

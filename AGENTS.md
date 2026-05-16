@@ -60,3 +60,67 @@ commits, run `pnpm check` between scopes.
 
 For ambiguous work (new abstractions, public-API design, architectural choices),
 brainstorm with the user first — alignment before code.
+
+---
+
+## Layering — Feature-Sliced Design (FSD)
+
+`src/lib` is organised in four layers. Each layer may only depend on layers below it:
+
+```
+widgets/   →  features/   →  entities/   →  shared/
+```
+
+SvelteKit owns the top two FSD layers (`app`, `pages`) via `src/routes`. A route
+file may import from any `$lib` layer — it's the composition root.
+
+### What goes where
+
+| Layer        | What it holds                                                                   | Examples                                                       |
+| ------------ | ------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `shared/`    | Framework-agnostic primitives, brand assets, infra helpers. No domain meaning.  | `ui/Button`, `brand/BrandMark`, `gherkin/parse`, `i18n/plural` |
+| `entities/`  | Domain nouns: how an `execution` / `feature` / `project` is shown and read.     | `entities/execution/ui/ExecutionsTable`, `lib/format`          |
+| `features/`  | A single user-meaningful action or interactive flow. Verbs.                     | `features/csv-export`, `features/live-execution`               |
+| `widgets/`   | Page-level composed chrome with no single user action. Orchestrates the rest.   | `widgets/sidebar`, `widgets/topbar`, `widgets/command-palette` |
+
+### Slice anatomy
+
+A slice (e.g. `features/live-execution/`) is split into segments:
+
+| Segment   | Holds                                                                  |
+| --------- | ---------------------------------------------------------------------- |
+| `ui/`     | Svelte components. The visual surface.                                 |
+| `model/`  | `.svelte.ts` factories / controllers with `$state`. The stateful core. |
+| `api/`    | HTTP / server calls. No UI imports.                                    |
+| `lib/`    | Pure functions: format, parse, helpers tied to the slice.              |
+
+Not every slice needs every segment. A small read-only slice may only have `ui/`.
+
+```
+features/live-execution/
+  ui/
+    LiveExecution.svelte
+    ScenarioPanel.svelte
+    FinishConfirmModal.svelte
+  model/
+    controller.svelte.ts        // $state factory / class
+  api/
+    mark.ts
+```
+
+### Hard rules
+
+- **Imports go one direction only**: a `widgets/` file may import from `features/`,
+  `entities/`, `shared/`. A `features/` file may NOT import from `widgets/`. An
+  `entities/` file may NOT import from `features/` or `widgets/`. A `shared/` file
+  may NOT import from any of the above.
+- **No new code in `src/lib/components/`**. The flat dump is gone — pick a layer.
+- **No large page.svelte**. If a `+page.svelte` grows past ~60 lines of body
+  template, the next composed chunk becomes a slice in `features/` or `widgets/`.
+  Keep `+page.svelte` to data-fetching glue and a small composition tree.
+- **No monolithic feature components**. If a component approaches ~200 LoC,
+  split it: sub-components in the same `ui/` folder, state lifted into `model/`.
+  A Svelte 5 `$state` class in `model/<slice>.svelte.ts` is the house store —
+  see `features/live-execution/model/controller.svelte.ts` for the pattern.
+- **Pure transforms** in `lib/` (or `entities/<x>/lib/format.ts`), never inline
+  in components. Stateful behaviour in `model/` factories.

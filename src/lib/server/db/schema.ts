@@ -6,7 +6,7 @@ import {
 import { sql } from 'drizzle-orm';
 import { pk } from './columns';
 import { user } from './auth.schema';
-import type { CiMetadata } from '$lib/executions/ci-metadata';
+import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 
 export const executionSource = pgEnum('execution_source', ['MANUAL', 'CI']);
 export const executionStatus = pgEnum('execution_status', ['IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED', 'ABORTED']);

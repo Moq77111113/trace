@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Button from '$lib/components/ui/Button.svelte';
-  import { EXPORT_ROW_CAP } from '$lib/executions/csv';
+  import Button from '$lib/shared/ui/Button.svelte';
+  import { EXPORT_ROW_CAP } from '$lib/features/csv-export/lib/csv';
 
   type Props = {
     href:  string;

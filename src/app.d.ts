@@ -1,5 +1,5 @@
 import type { Session } from '$lib/server/auth';
-import type { Accent, Theme } from '$lib/theme';
+import type { Accent, Theme } from '$lib/shared/lib/theme';
 
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces

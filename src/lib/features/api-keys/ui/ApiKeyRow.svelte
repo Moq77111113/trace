@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Button from '$lib/components/ui/Button.svelte';
-  import Pill   from '$lib/components/ui/Pill.svelte';
-  import Icon   from '$lib/components/ui/Icon.svelte';
+  import Button from '$lib/shared/ui/Button.svelte';
+  import Pill   from '$lib/shared/ui/Pill.svelte';
+  import Icon   from '$lib/shared/ui/Icon.svelte';
   import type { ApiKeyRow as ApiKeyRowData } from '$lib/server/api-keys';
 
   type Props = { k: ApiKeyRowData };

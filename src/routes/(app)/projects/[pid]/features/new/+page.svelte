@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Input     from '$lib/components/ui/Input.svelte';
-  import Button    from '$lib/components/ui/Button.svelte';
-  import PageTitle from '$lib/components/PageTitle.svelte';
+  import Input     from '$lib/shared/ui/Input.svelte';
+  import Button    from '$lib/shared/ui/Button.svelte';
+  import PageTitle from '$lib/shared/ui/PageTitle.svelte';
   import * as m    from '$lib/paraglide/messages';
 
   let { data, form } = $props();

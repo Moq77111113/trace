@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { featureGroups, features } from '$lib/server/db/schema';
 import type { DbTx } from '$lib/server/db/client';
-import { parse } from '$lib/gherkin/parse';
+import { parse } from '$lib/shared/gherkin/parse';
 import { syncFeatureTags } from './tags-sync';
 
 type Input = {

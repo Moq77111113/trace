@@ -3,7 +3,7 @@ import { loadExecutionPage } from '$lib/server/executions/queries';
 import { finishExecution } from '$lib/server/executions/finish';
 import { rerunFailed } from '$lib/server/executions/rerun-failed';
 import { resolveLiveExecutor } from '$lib/server/executions/auth';
-import { appendCrumb } from '$lib/breadcrumbs';
+import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { Actions, PageServerLoad } from './$types';
 

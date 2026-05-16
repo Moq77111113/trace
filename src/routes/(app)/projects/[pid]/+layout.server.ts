@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { listFeaturesByGroup } from '$lib/server/features/queries';
 import { listFlakeFeatureIds } from '$lib/server/executions/queries';
-import { appendCrumb } from '$lib/breadcrumbs';
+import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { LayoutServerLoad } from './$types';
 

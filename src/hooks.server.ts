@@ -5,12 +5,13 @@ import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { auth } from '$lib/server/auth';
 import { bootstrapAdminFromEnv } from '$lib/server/instance/bootstrap-admin';
+import { toDateOrNull } from '$lib/shared/lib/date';
 import {
 	ACCENT_COOKIE,
 	THEME_COOKIE,
 	parseAccent,
 	parseTheme
-} from '$lib/theme';
+} from '$lib/shared/lib/theme';
 
 void bootstrapAdminFromEnv(env.TRACE_BOOTSTRAP_ADMIN_EMAIL).catch((err) => {
 	console.error('bootstrap admin failed:', err);
@@ -22,12 +23,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	event.locals.session = session ?? null;
 	if (session) {
 		const u = session.user as typeof session.user & { role?: string; welcomedAt?: Date | string | null };
-		const welcomedAt =
-			u.welcomedAt instanceof Date
-				? u.welcomedAt
-				: typeof u.welcomedAt === 'string'
-					? new Date(u.welcomedAt)
-					: null;
+		const welcomedAt = toDateOrNull(u.welcomedAt);
 		event.locals.user = {
 			id:         u.id,
 			email:      u.email,

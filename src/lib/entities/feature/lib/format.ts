@@ -1,4 +1,4 @@
-import type { PillKind } from '$lib/components/ui/Pill.svelte';
+import type { PillKind } from '$lib/shared/ui/Pill.svelte';
 
 type FeatureLike = {
   parseErrors?:         { line: number; column?: number; message: string }[] | null;

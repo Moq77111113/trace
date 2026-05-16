@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
-import LiveExecution from '$lib/components/LiveExecution.svelte';
+import LiveExecution from '$lib/features/live-execution/ui/LiveExecution.svelte';
 
 const fakeData = {
   mode: 'live' as const,

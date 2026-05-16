@@ -6,7 +6,7 @@ import {
 import { parseExecutionFilters } from '$lib/server/executions/filters';
 import { listFeatures } from '$lib/server/features/queries';
 import { listGroups } from '$lib/server/groups/queries';
-import { appendCrumb } from '$lib/breadcrumbs';
+import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { PageServerLoad } from './$types';
 

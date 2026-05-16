@@ -1,8 +1,8 @@
 import { and, count, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
-import { projectArchiveFilename } from '$lib/import/format';
-import { appendCrumb } from '$lib/breadcrumbs';
+import { projectArchiveFilename } from '$lib/features/feature-import/lib/format';
+import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { PageServerLoad } from './$types';
 

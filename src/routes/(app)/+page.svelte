@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Pill        from '$lib/components/ui/Pill.svelte';
-  import Button      from '$lib/components/ui/Button.svelte';
-  import Icon        from '$lib/components/ui/Icon.svelte';
-  import EmptyState  from '$lib/components/ui/EmptyState.svelte';
-  import PageTitle   from '$lib/components/PageTitle.svelte';
-  import WelcomeCard from '$lib/components/WelcomeCard.svelte';
+  import Pill        from '$lib/shared/ui/Pill.svelte';
+  import Button      from '$lib/shared/ui/Button.svelte';
+  import Icon        from '$lib/shared/ui/Icon.svelte';
+  import EmptyState  from '$lib/shared/ui/EmptyState.svelte';
+  import PageTitle   from '$lib/shared/ui/PageTitle.svelte';
+  import WelcomeCard from '$lib/widgets/welcome-card/ui/WelcomeCard.svelte';
   import { invalidateAll } from '$app/navigation';
-  import { toStatusKind } from '$lib/components/ui/Status.svelte';
-  import { plural } from '$lib/i18n/plural';
-  import { relativeTime } from '$lib/i18n/relative-time';
+  import { toStatusKind } from '$lib/shared/ui/Status.svelte';
+  import { plural } from '$lib/shared/i18n/plural';
+  import { relativeTime } from '$lib/shared/i18n/relative-time';
   import * as m from '$lib/paraglide/messages';
 
   let { data } = $props();

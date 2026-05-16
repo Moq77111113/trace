@@ -1,7 +1,7 @@
 <script lang="ts">
-  import EmptyState from '$lib/components/ui/EmptyState.svelte';
-  import Icon       from '$lib/components/ui/Icon.svelte';
-  import PageTitle  from '$lib/components/PageTitle.svelte';
+  import EmptyState from '$lib/shared/ui/EmptyState.svelte';
+  import Icon       from '$lib/shared/ui/Icon.svelte';
+  import PageTitle  from '$lib/shared/ui/PageTitle.svelte';
   import * as m     from '$lib/paraglide/messages';
 
   let { data } = $props();

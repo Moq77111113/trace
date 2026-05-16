@@ -1,8 +1,8 @@
 import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, sql, type SQL } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { attachments, executions, features, projects, scenarioResults } from '$lib/server/db/schema';
-import type { CiMetadata } from '$lib/executions/ci-metadata';
-import { EXPORT_ROW_CAP } from '$lib/executions/csv';
+import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
+import { EXPORT_ROW_CAP } from '$lib/features/csv-export/lib/csv';
 
 export type ExecutionStatusFilter = 'PASSED' | 'FAILED' | 'SKIPPED' | 'ABORTED' | 'IN_PROGRESS';
 export type ExecutionSourceFilter = 'MANUAL' | 'CI';

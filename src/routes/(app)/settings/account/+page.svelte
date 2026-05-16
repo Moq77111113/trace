@@ -1,12 +1,12 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { goto } from '$app/navigation';
-  import Button    from '$lib/components/ui/Button.svelte';
-  import Icon      from '$lib/components/ui/Icon.svelte';
-  import PageTitle from '$lib/components/PageTitle.svelte';
-  import { applyTheme, applyAccent } from '$lib/theme.client';
-  import { ACCENTS, type Accent, type Theme } from '$lib/theme';
-  import { createAuthApi } from '$lib/auth/api';
+  import Button    from '$lib/shared/ui/Button.svelte';
+  import Icon      from '$lib/shared/ui/Icon.svelte';
+  import PageTitle from '$lib/shared/ui/PageTitle.svelte';
+  import { applyTheme, applyAccent } from '$lib/shared/lib/theme.client';
+  import { ACCENTS, type Accent, type Theme } from '$lib/shared/lib/theme';
+  import { createAuthApi } from '$lib/features/auth/api/client';
   import { locales, getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
   import * as m from '$lib/paraglide/messages';
 

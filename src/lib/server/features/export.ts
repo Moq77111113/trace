@@ -1,8 +1,8 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { featureGroups, features } from '$lib/server/db/schema';
-import { featureFilename } from '$lib/import/format';
-import { prependGroupMeta } from '$lib/import/group-meta';
+import { featureFilename } from '$lib/features/feature-import/lib/format';
+import { prependGroupMeta } from '$lib/features/feature-import/lib/group-meta';
 
 export type ExportedFeature = {
   filename: string;

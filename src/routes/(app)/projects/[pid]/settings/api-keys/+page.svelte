@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Button             from '$lib/components/ui/Button.svelte';
-  import Input              from '$lib/components/ui/Input.svelte';
-  import Icon               from '$lib/components/ui/Icon.svelte';
-  import PageTitle          from '$lib/components/PageTitle.svelte';
+  import Button             from '$lib/shared/ui/Button.svelte';
+  import Input              from '$lib/shared/ui/Input.svelte';
+  import Icon               from '$lib/shared/ui/Icon.svelte';
+  import PageTitle          from '$lib/shared/ui/PageTitle.svelte';
   import ApiKeyRow          from '$lib/features/api-keys/ui/ApiKeyRow.svelte';
   import CreatedKeyBanner   from '$lib/features/api-keys/ui/CreatedKeyBanner.svelte';
   import * as m             from '$lib/paraglide/messages';

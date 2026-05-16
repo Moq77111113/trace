@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Sidebar from '$lib/components/Sidebar.svelte';
-  import Topbar  from '$lib/components/Topbar.svelte';
+  import Sidebar from '$lib/widgets/sidebar/ui/Sidebar.svelte';
+  import Topbar  from '$lib/widgets/topbar/ui/Topbar.svelte';
   import * as m  from '$lib/paraglide/messages';
 
   let { data, children } = $props();

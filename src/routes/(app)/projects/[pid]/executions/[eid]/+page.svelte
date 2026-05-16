@@ -1,7 +1,7 @@
 <script lang="ts">
-  import LiveExecution     from '$lib/components/LiveExecution.svelte';
-  import ExecutionReadonly from '$lib/components/ExecutionReadonly.svelte';
-  import PageTitle   from '$lib/components/PageTitle.svelte';
+  import LiveExecution     from '$lib/features/live-execution/ui/LiveExecution.svelte';
+  import ExecutionReadonly from '$lib/features/execution-replay/ui/ExecutionReadonly.svelte';
+  import PageTitle   from '$lib/shared/ui/PageTitle.svelte';
   import * as m      from '$lib/paraglide/messages';
 
   let { data } = $props();

@@ -6,7 +6,7 @@ import { user, projects } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/server/instance/require-admin';
 import { getInstanceSettings, openSignup, closeSignup } from '$lib/server/instance/settings';
 import { seedDemoProject } from '$lib/server/onboarding/seed';
-import { appendCrumb } from '$lib/breadcrumbs';
+import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 
 const DEMO_NAME = 'Trace Demo';

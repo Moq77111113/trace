@@ -1,20 +1,20 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import Button    from '$lib/components/ui/Button.svelte';
-  import DropZone  from '$lib/components/ui/DropZone.svelte';
-  import Select    from '$lib/components/ui/Select.svelte';
-  import Pill      from '$lib/components/ui/Pill.svelte';
-  import PageTitle from '$lib/components/PageTitle.svelte';
+  import Button    from '$lib/shared/ui/Button.svelte';
+  import DropZone  from '$lib/shared/ui/DropZone.svelte';
+  import Select    from '$lib/shared/ui/Select.svelte';
+  import Pill      from '$lib/shared/ui/Pill.svelte';
+  import PageTitle from '$lib/shared/ui/PageTitle.svelte';
   import * as m    from '$lib/paraglide/messages';
-  import { createImportApi }          from '$lib/import/api';
-  import { ImportPreviewController } from '$lib/import/preview.svelte';
+  import { createImportApi }          from '$lib/features/feature-import/api/client';
+  import { ImportPreviewController } from '$lib/features/feature-import/model/preview.svelte';
   import {
     decisionOptionsFor,
     statusRowClass,
     statusSymbol,
     statusTextClass,
     type Decision,
-  } from '$lib/import/format';
+  } from '$lib/features/feature-import/lib/format';
 
   let { data } = $props();
 

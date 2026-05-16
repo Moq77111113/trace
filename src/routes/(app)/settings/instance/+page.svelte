@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Button    from '$lib/components/ui/Button.svelte';
-	import Input     from '$lib/components/ui/Input.svelte';
-	import Pill      from '$lib/components/ui/Pill.svelte';
-	import PageTitle from '$lib/components/PageTitle.svelte';
-	import { plural } from '$lib/i18n/plural';
+	import Button    from '$lib/shared/ui/Button.svelte';
+	import Input     from '$lib/shared/ui/Input.svelte';
+	import Pill      from '$lib/shared/ui/Pill.svelte';
+	import PageTitle from '$lib/shared/ui/PageTitle.svelte';
+	import { plural } from '$lib/shared/i18n/plural';
 	import * as m    from '$lib/paraglide/messages';
 	import type { PageData, ActionData } from './$types';
 

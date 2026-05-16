@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
-import { parse } from '$lib/gherkin/parse';
-import { extractGroupName } from '$lib/import/group-meta';
+import { parse } from '$lib/shared/gherkin/parse';
+import { extractGroupName } from '$lib/features/feature-import/lib/group-meta';
 import { putPreview } from './buffer';
 import type { BatchPreview, ImportBuffer, PreviewRow, PreviewRowStatus } from './types';
 

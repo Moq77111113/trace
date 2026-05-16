@@ -1,4 +1,4 @@
-import type { ParseError } from '$lib/gherkin/types';
+import type { ParseError } from '$lib/shared/gherkin/types';
 
 export type PreviewRowStatus = 'new' | 'collision' | 'parse-error';
 

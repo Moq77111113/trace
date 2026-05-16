@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Pill        from '$lib/components/ui/Pill.svelte';
-  import Icon        from '$lib/components/ui/Icon.svelte';
-  import Input       from '$lib/components/ui/Input.svelte';
-  import GroupSection from '$lib/entities/feature-group/ui/GroupSection.svelte';
+  import Pill        from '$lib/shared/ui/Pill.svelte';
+  import Icon        from '$lib/shared/ui/Icon.svelte';
+  import Input       from '$lib/shared/ui/Input.svelte';
+  import GroupSection from '$lib/features/feature-groups/ui/GroupSection.svelte';
   import FeatureRow,  { type FeatureRowData } from '$lib/entities/feature/ui/FeatureRow.svelte';
   import DeleteGroupModal, { type DeleteGroupTarget } from './DeleteGroupModal.svelte';
   import { enhance } from '$app/forms';

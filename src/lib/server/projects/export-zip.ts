@@ -3,8 +3,8 @@ import { ZipArchive } from 'archiver';
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { projects, featureGroups, features } from '$lib/server/db/schema';
-import { featureFilename, projectArchiveFilename } from '$lib/import/format';
-import { prependGroupMeta } from '$lib/import/group-meta';
+import { featureFilename, projectArchiveFilename } from '$lib/features/feature-import/lib/format';
+import { prependGroupMeta } from '$lib/features/feature-import/lib/group-meta';
 
 export type ProjectArchive = {
   stream:   Readable;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatBranchCommit, readCiMetadata, shortCommit } from '$lib/executions/ci-metadata';
+import { formatBranchCommit, readCiMetadata, shortCommit } from '$lib/entities/execution/lib/ci-metadata';
 
 describe('readCiMetadata', () => {
   function fromMap(map: Record<string, string>) {

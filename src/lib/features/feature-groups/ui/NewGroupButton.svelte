@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Button  from '$lib/components/ui/Button.svelte';
-  import Icon    from '$lib/components/ui/Icon.svelte';
-  import Modal   from '$lib/components/ui/Modal.svelte';
-  import Input   from '$lib/components/ui/Input.svelte';
+  import Button  from '$lib/shared/ui/Button.svelte';
+  import Icon    from '$lib/shared/ui/Icon.svelte';
+  import Modal   from '$lib/shared/ui/Modal.svelte';
+  import Input   from '$lib/shared/ui/Input.svelte';
   import { enhance } from '$app/forms';
 
   let open  = $state(false);

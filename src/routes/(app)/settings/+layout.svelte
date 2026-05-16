@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import Icon     from '$lib/components/ui/Icon.svelte';
+  import Icon     from '$lib/shared/ui/Icon.svelte';
   import * as m   from '$lib/paraglide/messages';
 
   let { data, children } = $props();

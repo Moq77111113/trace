@@ -1,12 +1,12 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import BrandMark        from '$lib/components/BrandMark.svelte';
-  import ErrorArt404      from '$lib/components/ErrorArt404.svelte';
-  import ErrorArt5xx      from '$lib/components/ErrorArt5xx.svelte';
-  import ErrorArtGeneric  from '$lib/components/ErrorArtGeneric.svelte';
-  import PageTitle from '$lib/components/PageTitle.svelte';
-  import Button    from '$lib/components/ui/Button.svelte';
-  import Pill      from '$lib/components/ui/Pill.svelte';
+  import BrandMark        from '$lib/shared/brand/BrandMark.svelte';
+  import ErrorArt404      from '$lib/shared/brand/ErrorArt404.svelte';
+  import ErrorArt5xx      from '$lib/shared/brand/ErrorArt5xx.svelte';
+  import ErrorArtGeneric  from '$lib/shared/brand/ErrorArtGeneric.svelte';
+  import PageTitle from '$lib/shared/ui/PageTitle.svelte';
+  import Button    from '$lib/shared/ui/Button.svelte';
+  import Pill      from '$lib/shared/ui/Pill.svelte';
   import * as m    from '$lib/paraglide/messages';
   import { categorizeError, errorCopy } from './error-page';
 

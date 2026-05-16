@@ -4,7 +4,7 @@ import {
 	THEME_COOKIE,
 	parseAccent,
 	parseTheme
-} from '$lib/theme';
+} from '$lib/shared/lib/theme';
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 

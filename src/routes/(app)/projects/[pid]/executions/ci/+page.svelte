@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page }  from '$app/state';
-  import PageTitle        from '$lib/components/PageTitle.svelte';
+  import PageTitle        from '$lib/shared/ui/PageTitle.svelte';
   import CiKeyEmptyState  from '$lib/features/ci-ingest/ui/CiKeyEmptyState.svelte';
   import CiCurlSnippet    from '$lib/features/ci-ingest/ui/CiCurlSnippet.svelte';
   import CiReference      from '$lib/features/ci-ingest/ui/CiReference.svelte';

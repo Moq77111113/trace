@@ -1,15 +1,15 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import EmptyState               from '$lib/components/ui/EmptyState.svelte';
-  import PageTitle                from '$lib/components/PageTitle.svelte';
-  import ExecutionsFilters        from '$lib/entities/execution/ui/ExecutionsFilters.svelte';
-  import ExecutionsTable          from '$lib/entities/execution/ui/ExecutionsTable.svelte';
-  import ExecutionsPager          from '$lib/entities/execution/ui/ExecutionsPager.svelte';
+  import EmptyState               from '$lib/shared/ui/EmptyState.svelte';
+  import PageTitle                from '$lib/shared/ui/PageTitle.svelte';
+  import ExecutionsFilters        from '$lib/widgets/executions-history/ui/ExecutionsFilters.svelte';
+  import ExecutionsTable          from '$lib/widgets/executions-history/ui/ExecutionsTable.svelte';
+  import ExecutionsPager          from '$lib/widgets/executions-history/ui/ExecutionsPager.svelte';
   import ExecutionsExportButton   from '$lib/features/csv-export/ui/ExecutionsExportButton.svelte';
   import * as m                   from '$lib/paraglide/messages';
-  import { hasAnyExecutionFilter } from '$lib/executions/format';
-  import { createExecutionsFilterNav } from '$lib/executions/filter-nav';
+  import { hasAnyExecutionFilter } from '$lib/entities/execution/lib/format';
+  import { createExecutionsFilterNav } from '$lib/widgets/executions-history/lib/filter-nav';
 
   let { data } = $props();
 

@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { stringFields } from '$lib/server/forms';
 import { createProject, projectInput } from '$lib/server/projects/create';
-import { appendCrumb } from '$lib/breadcrumbs';
+import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { Actions, PageServerLoad } from './$types';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractGroupName, prependGroupMeta } from '$lib/import/group-meta';
+import { extractGroupName, prependGroupMeta } from '$lib/features/feature-import/lib/group-meta';
 
 describe('extractGroupName', () => {
   it('captures the name from a meta line before Feature:', () => {

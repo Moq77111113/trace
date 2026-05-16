@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features, featureGroups, executions, scenarioResults } from '$lib/server/db/schema';
-import type { ScenarioCounts } from '$lib/executions/format';
+import type { ScenarioCounts } from '$lib/entities/execution/lib/format';
 
 export async function listFeatures(projectId: string) {
   const ranked = db.$with('ranked_runs').as(

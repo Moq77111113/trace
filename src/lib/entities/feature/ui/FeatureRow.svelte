@@ -16,10 +16,10 @@
 </script>
 
 <script lang="ts">
-  import Icon    from '$lib/components/ui/Icon.svelte';
-  import Pill    from '$lib/components/ui/Pill.svelte';
-  import DistBar from '$lib/components/DistBar.svelte';
-  import { relativeTime }      from '$lib/i18n/relative-time';
+  import Icon    from '$lib/shared/ui/Icon.svelte';
+  import Pill    from '$lib/shared/ui/Pill.svelte';
+  import DistBar from '$lib/entities/execution/ui/DistBar.svelte';
+  import { relativeTime }      from '$lib/shared/i18n/relative-time';
   import { featureStatusPill } from '$lib/entities/feature/lib/format';
   import * as m from '$lib/paraglide/messages';
 

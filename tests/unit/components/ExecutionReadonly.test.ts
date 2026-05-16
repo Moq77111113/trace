@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
-import ExecutionReadonly from '$lib/components/ExecutionReadonly.svelte';
+import ExecutionReadonly from '$lib/features/execution-replay/ui/ExecutionReadonly.svelte';
 
 const fakeData = {
   mode: 'readonly' as const,

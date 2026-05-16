@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
-import GroupSection from '$lib/entities/feature-group/ui/GroupSection.svelte';
+import GroupSection from '$lib/features/feature-groups/ui/GroupSection.svelte';
 
 describe('GroupSection', () => {
   it('renders title and feature count', () => {

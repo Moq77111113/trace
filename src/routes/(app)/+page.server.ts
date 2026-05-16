@@ -2,7 +2,7 @@ import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features, projects } from '$lib/server/db/schema';
 import { listProjectsWithStats, listRecentExecutions } from '$lib/server/projects/queries';
-import { appendCrumb } from '$lib/breadcrumbs';
+import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { PageServerLoad } from './$types';
 
