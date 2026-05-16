@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { page } from '$app/state';
+  import { untrack }     from 'svelte';
+  import { page }        from '$app/state';
   import Icon            from './ui/Icon.svelte';
   import CommandPalette  from './CommandPalette.svelte';
   import { applyTheme }  from '$lib/theme.client';
   import { isTypingTarget } from '$lib/runs/format';
   import type { Theme }  from '$lib/theme';
+  import * as m          from '$lib/paraglide/messages';
 
   type Crumb = { label: string; href?: string };
   type Props = {
@@ -12,11 +14,9 @@
     onToggleSidebar?: () => void;
   };
 
-  // svelte-ignore state_referenced_locally
   let { theme: initialTheme, onToggleSidebar }: Props = $props();
 
-  // svelte-ignore state_referenced_locally
-  let currentTheme = $state<Theme>(initialTheme);
+  let currentTheme = $state<Theme>(untrack(() => initialTheme));
 
   let paletteOpen = $state(false);
 
@@ -50,14 +50,17 @@
     const out: Crumb[] = [];
 
     if (!project) {
-      if (pathname === '/') out.push({ label: 'Projects' });
+      if (pathname === '/') out.push({ label: m.nav_projects() });
       else if (pathname.startsWith('/projects/new')) {
-        out.push({ label: 'Projects', href: '/' });
-        out.push({ label: 'New project' });
+        out.push({ label: m.nav_projects(), href: '/' });
+        out.push({ label: m.breadcrumb_new_project() });
       } else if (pathname.startsWith('/account')) {
-        out.push({ label: 'Account' });
+        out.push({ label: m.nav_account() });
+      } else if (pathname.startsWith('/settings/instance')) {
+        out.push({ label: m.nav_settings(), href: '/' });
+        out.push({ label: m.nav_instance() });
       } else {
-        out.push({ label: 'Home', href: '/' });
+        out.push({ label: m.nav_home(), href: '/' });
       }
       return out;
     }
@@ -66,26 +69,26 @@
     out.push({ label: project.name, href: base });
 
     if (pathname === base) {
-      out.push({ label: 'Overview' });
+      out.push({ label: m.nav_overview() });
     } else if (pathname.startsWith(`${base}/features/new`)) {
-      out.push({ label: 'Features', href: base });
-      out.push({ label: 'New feature' });
+      out.push({ label: m.nav_features(), href: base });
+      out.push({ label: m.breadcrumb_new_feature() });
     } else if (pathname.startsWith(`${base}/features/`) && feature) {
-      out.push({ label: 'Features', href: base });
+      out.push({ label: m.nav_features(), href: base });
       out.push({ label: feature.name });
     } else if (pathname.match(new RegExp(`^${base}/runs/[^/]+`))) {
       const rid = pathname.split('/').pop() ?? '';
-      out.push({ label: 'Runs', href: `${base}/runs` });
+      out.push({ label: m.nav_runs(), href: `${base}/runs` });
       out.push({ label: rid.slice(0, 8) });
     } else if (pathname.startsWith(`${base}/runs`)) {
-      out.push({ label: 'Runs' });
+      out.push({ label: m.nav_runs() });
     } else if (pathname.startsWith(`${base}/import`)) {
-      out.push({ label: 'Import' });
+      out.push({ label: m.nav_import() });
     } else if (pathname.startsWith(`${base}/export`)) {
-      out.push({ label: 'Export' });
+      out.push({ label: m.nav_export() });
     } else if (pathname.startsWith(`${base}/settings/api-keys`)) {
-      out.push({ label: 'Settings' });
-      out.push({ label: 'API keys' });
+      out.push({ label: m.nav_settings() });
+      out.push({ label: m.nav_api_keys() });
     }
 
     return out;
@@ -100,7 +103,7 @@
       type="button"
       class="hidden max-md:inline-grid w-[30px] h-[30px] place-items-center border border-transparent bg-transparent rounded-md text-ink-2 cursor-pointer hover:bg-surface hover:text-ink hover:border-border shrink-0"
       onclick={onToggleSidebar}
-      aria-label="Toggle sidebar"
+      aria-label={m.nav_toggle_sidebar()}
     >
       <Icon name="Menu" size={16} />
     </button>
@@ -123,10 +126,10 @@
     type="button"
     class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 border border-border rounded-md bg-surface w-60 text-[12.5px] text-ink-3 cursor-pointer hover:border-border-strong hover:text-ink-2"
     onclick={() => (paletteOpen = true)}
-    aria-label="Open search"
+    aria-label={m.nav_open_search()}
   >
     <Icon name="Search" size={13} />
-    <span>Search features</span>
+    <span>{m.nav_search_features()}</span>
     <kbd class="ml-auto text-[10.5px] font-medium px-1.5 py-px border border-border rounded-sm text-ink-3 bg-canvas">⌘K</kbd>
   </button>
 
@@ -134,7 +137,7 @@
     type="button"
     class="md:hidden w-[30px] h-[30px] grid place-items-center border border-transparent bg-transparent rounded-md text-ink-2 cursor-pointer hover:bg-surface hover:text-ink hover:border-border"
     onclick={() => (paletteOpen = true)}
-    aria-label="Open search"
+    aria-label={m.nav_open_search()}
   >
     <Icon name="Search" size={15} />
   </button>
@@ -143,8 +146,8 @@
     type="button"
     class="w-[30px] h-[30px] grid place-items-center border border-transparent bg-transparent rounded-md text-ink-2 cursor-pointer hover:bg-surface hover:text-ink hover:border-border"
     onclick={flipTheme}
-    aria-label="Toggle theme"
-    title={currentTheme === 'light' ? 'Switch to dark' : 'Switch to light'}
+    aria-label={m.nav_toggle_theme()}
+    title={currentTheme === 'light' ? m.nav_theme_switch_to_dark() : m.nav_theme_switch_to_light()}
   >
     <Icon name={currentTheme === 'light' ? 'Moon' : 'Sun'} size={15} />
   </button>

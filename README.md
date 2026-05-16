@@ -1,42 +1,47 @@
-# sv
+# trace
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+> Self-hostable BDD test management. Write Gherkin, run scenarios, witness what your tests actually did.
 
-## Creating a project
+A small companion to Cucumber — editor, run viewer with scenario notes, CI ingest,
+import/export, EN/FR. One Node process, one Postgres, no SaaS.
 
-If you're seeing this, you've probably already done this step. Congrats!
+**Status:** MVP. Closed-by-default signup, first-admin claim, demo seed on install.
 
-```sh
-# create a new project
-npx sv create my-app
-```
+License: [MIT](./LICENSE).
 
-To recreate this project with the same configuration:
+---
 
-```sh
-# recreate this project
-pnpm dlx sv@0.15.3 create --template minimal --types ts --add tailwindcss="plugins:none" drizzle="database:postgresql+postgresql:postgres.js+docker:no" better-auth="demo:password" paraglide="languageTags:en, fr+demo:no" mcp="ide:claude-code+setup:local" --install pnpm ./
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Quickstart
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+docker compose up -d db
+pnpm install && pnpm db:push
+pnpm dev
 ```
 
-## Building
+Set `TRACE_BOOTSTRAP_ADMIN_EMAIL` in `.env` — the first sign-up with that address
+becomes admin. From there, open a signup window in instance settings to invite the
+rest of the team. See [`.env.example`](./.env.example) for the full list of variables.
 
-To create a production version of your app:
+## CI ingest
 
 ```sh
-npm run build
+curl -X POST https://your.trace/api/runs/ingest \
+  -H 'X-Project-Id: <pid>' \
+  -H 'X-Environment: ci' \
+  -H 'X-CI-Source: github-actions' \
+  --data-binary @cucumber.json
 ```
 
-You can preview the production build with `npm run preview`.
+Project API keys are created from **Project · Settings · API keys**.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Stack
+
+SvelteKit · Postgres + Drizzle · Better Auth · Paraglide (i18n) · Tailwind 4 · Monaco.
+
+## Contributing
+
+Bugs and PRs welcome. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for branch rules,
+the i18n workflow, and codebase conventions.
+
+AI agents (Claude / Copilot / Cursor) — start with [`AGENTS.md`](./AGENTS.md).

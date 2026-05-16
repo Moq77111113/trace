@@ -1,9 +1,13 @@
 <script lang="ts">
-  import Input  from '$lib/components/ui/Input.svelte';
-  import Button from '$lib/components/ui/Button.svelte';
+  import Input     from '$lib/components/ui/Input.svelte';
+  import Button    from '$lib/components/ui/Button.svelte';
+  import PageTitle from '$lib/components/PageTitle.svelte';
+  import * as m    from '$lib/paraglide/messages';
 
   let { data, form } = $props();
 </script>
+
+<PageTitle title={m.page_title_new_feature()} />
 
 <div class="flex-1 min-h-0 overflow-auto p-7 max-md:p-4">
   <section class="max-w-md">

@@ -1,24 +1,28 @@
 <script lang="ts">
-  import Input    from '$lib/components/ui/Input.svelte';
-  import Textarea from '$lib/components/ui/Textarea.svelte';
-  import Button   from '$lib/components/ui/Button.svelte';
+  import Input     from '$lib/components/ui/Input.svelte';
+  import Textarea  from '$lib/components/ui/Textarea.svelte';
+  import Button    from '$lib/components/ui/Button.svelte';
+  import PageTitle from '$lib/components/PageTitle.svelte';
+  import * as m    from '$lib/paraglide/messages';
 
   let { form } = $props();
 </script>
 
+<PageTitle title={m.page_title_new_project()} />
+
 <div class="flex-1 min-h-0 overflow-auto p-7 max-md:p-4">
   <section class="max-w-md">
-    <h1 class="text-[20px] font-semibold tracking-tight mb-1">New project</h1>
-    <p class="text-[13px] text-ink-3 mb-5">Set up a workspace for a set of feature files.</p>
+    <h1 class="text-[20px] font-semibold tracking-tight mb-1">{m.page_title_new_project()}</h1>
+    <p class="text-[13px] text-ink-3 mb-5">{m.new_project_subtitle()}</p>
 
     <form method="POST" class="flex flex-col gap-3.5">
       <label class="flex flex-col gap-1 text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium">
-        Name
+        {m.new_project_name()}
         <Input id="name" name="name" required value={form?.values?.name ?? ''} />
       </label>
 
       <label class="flex flex-col gap-1 text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium">
-        Description
+        {m.new_project_description()}
         <Textarea id="description" name="description" rows={3} value={form?.values?.description ?? ''} />
       </label>
 
@@ -27,7 +31,7 @@
       {/if}
 
       <div class="mt-1">
-        <Button type="submit" variant="primary">Create project</Button>
+        <Button type="submit" variant="primary">{m.new_project_submit()}</Button>
       </div>
     </form>
   </section>

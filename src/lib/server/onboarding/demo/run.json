@@ -1,0 +1,10 @@
+{
+  "featureFile": "04-sla-breach.feature",
+  "source": "MANUAL",
+  "executedBy": "Demo Operator",
+  "environment": "demo-staging",
+  "scenarios": [
+    { "name": "A \"Normal\" priority ticket breaches SLA after 5 business days untouched", "status": "PASSED", "durationMs": 4100, "logs": "SLA scanner processed 1248 tickets in 2.1 s", "errorMessage": null, "note": null },
+    { "name": "Comments reset the inactivity clock",                                        "status": "FAILED", "durationMs": 3300, "logs": null, "errorMessage": "expected unflagged, got flagged — clock-reset logic ignored comments older than 24 h", "note": "Threshold bug — comments within 24 h reset the clock, older ones should still count. Filed BUG-2041." }
+  ]
+}

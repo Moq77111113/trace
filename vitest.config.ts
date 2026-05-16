@@ -27,5 +27,10 @@ export default defineConfig({
     // Vite bundler). Per-file env overrides use `// @vitest-environment node`
     // at the top of the test file (see tests/integration/storage/s3.test.ts).
     pool: 'forks',
+    // Tests share a single postgres container; instance-level state
+    // (user.role admins, instance_settings singleton) cannot be partitioned by
+    // unique per-test names. Serialize file execution so that gate/onboarding
+    // assertions about global state remain deterministic.
+    fileParallelism: false,
   },
 });

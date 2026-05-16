@@ -7,7 +7,13 @@ declare global {
 	namespace App {
 		interface Locals {
 			session: Session | null;
-			user: { id: string; email: string; name: string | null } | null;
+			user: {
+				id: string;
+				email: string;
+				name: string | null;
+				role: 'admin' | 'user';
+				welcomedAt: Date | null;
+			} | null;
 			theme: Theme;
 			accent: Accent;
 		}

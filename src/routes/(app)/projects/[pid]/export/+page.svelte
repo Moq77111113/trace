@@ -1,9 +1,13 @@
 <script lang="ts">
   import EmptyState from '$lib/components/ui/EmptyState.svelte';
   import Icon       from '$lib/components/ui/Icon.svelte';
+  import PageTitle  from '$lib/components/PageTitle.svelte';
+  import * as m     from '$lib/paraglide/messages';
 
   let { data } = $props();
 </script>
+
+<PageTitle title={`${m.page_title_export()} · ${data.project.name}`} />
 
 <div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
   <section class="max-w-xl">

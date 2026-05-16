@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { createApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
+import * as m from '$lib/paraglide/messages';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load = (async ({ params }) => ({
@@ -23,12 +24,12 @@ export const actions = {
 
     const parsed = CreateForm.safeParse(Object.fromEntries(await request.formData()));
     if (!parsed.success) {
-      return fail(400, { error: parsed.error.issues[0]?.message ?? 'invalid form' });
+      return fail(400, { error: parsed.error.issues[0]?.message ?? m.error_invalid_input() });
     }
 
     const expiresAt = parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : null;
     if (expiresAt && Number.isNaN(expiresAt.getTime())) {
-      return fail(400, { error: 'Invalid expiry date' });
+      return fail(400, { error: m.error_invalid_expiry() });
     }
 
     const created = await createApiKey({
@@ -44,13 +45,13 @@ export const actions = {
   revoke: async ({ request, params }) => {
     const parsed = RevokeForm.safeParse(Object.fromEntries(await request.formData()));
     if (!parsed.success) {
-      return fail(400, { error: parsed.error.issues[0]?.message ?? 'invalid id' });
+      return fail(400, { error: parsed.error.issues[0]?.message ?? m.error_invalid_input() });
     }
 
     try {
       await revokeApiKey(parsed.data.id, params.pid);
     } catch (e) {
-      return fail(400, { error: e instanceof Error ? e.message : 'revoke failed' });
+      return fail(400, { error: e instanceof Error ? e.message : m.error_revoke_failed() });
     }
 
     return { revoked: true };

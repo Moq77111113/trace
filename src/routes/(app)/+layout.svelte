@@ -1,6 +1,7 @@
 <script lang="ts">
   import Sidebar from '$lib/components/Sidebar.svelte';
   import Topbar  from '$lib/components/Topbar.svelte';
+  import * as m  from '$lib/paraglide/messages';
 
   let { data, children } = $props();
 
@@ -29,7 +30,7 @@
   {#if sidebarOpen}
     <button
       type="button"
-      aria-label="Close sidebar"
+      aria-label={m.nav_toggle_sidebar()}
       class="hidden max-md:block fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] cursor-pointer"
       onclick={closeSidebar}
     ></button>

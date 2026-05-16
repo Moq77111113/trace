@@ -6,6 +6,7 @@
   import GroupSection from '$lib/components/groups/GroupSection.svelte';
   import Modal        from '$lib/components/ui/Modal.svelte';
   import Input        from '$lib/components/ui/Input.svelte';
+  import PageTitle    from '$lib/components/PageTitle.svelte';
   import { enhance }  from '$app/forms';
   import { browser }  from '$app/environment';
   import { dndzone, type DndEvent } from 'svelte-dnd-action';
@@ -96,6 +97,8 @@
     if (browser) localStorage.setItem(storageKey, JSON.stringify([...next]));
   }
 </script>
+
+<PageTitle title={data.project.name} />
 
 <div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
   <header class="flex items-end justify-between gap-4 mb-4 max-md:flex-col max-md:items-stretch">

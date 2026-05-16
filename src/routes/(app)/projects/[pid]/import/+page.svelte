@@ -1,9 +1,11 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import Button   from '$lib/components/ui/Button.svelte';
-  import DropZone from '$lib/components/ui/DropZone.svelte';
-  import Select   from '$lib/components/ui/Select.svelte';
-  import Pill     from '$lib/components/ui/Pill.svelte';
+  import Button    from '$lib/components/ui/Button.svelte';
+  import DropZone  from '$lib/components/ui/DropZone.svelte';
+  import Select    from '$lib/components/ui/Select.svelte';
+  import Pill      from '$lib/components/ui/Pill.svelte';
+  import PageTitle from '$lib/components/PageTitle.svelte';
+  import * as m    from '$lib/paraglide/messages';
   import { createImportApi }          from '$lib/import/api';
   import { ImportPreviewController } from '$lib/import/preview.svelte';
   import {
@@ -29,6 +31,8 @@
     { value: 'import', label: 'Import all (non-runnable)' },
   ];
 </script>
+
+<PageTitle title={`${m.page_title_import()} · ${data.project.name}`} />
 
 <div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
   <section class="max-w-5xl">

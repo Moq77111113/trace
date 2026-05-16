@@ -17,6 +17,7 @@
   import Folder        from 'lucide-svelte/icons/folder';
   import GripVertical  from 'lucide-svelte/icons/grip-vertical';
   import History       from 'lucide-svelte/icons/history';
+  import LifeBuoy      from 'lucide-svelte/icons/life-buoy';
   import Home          from 'lucide-svelte/icons/home';
   import Inbox         from 'lucide-svelte/icons/inbox';
   import Key           from 'lucide-svelte/icons/key';
@@ -58,6 +59,7 @@
     Folder,
     GripVertical,
     History,
+    LifeBuoy,
     Home,
     Inbox,
     Key,

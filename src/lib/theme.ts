@@ -5,7 +5,7 @@ export const ACCENTS = ['pink', 'amber', 'cyan', 'lime'] as const;
 export type Accent = (typeof ACCENTS)[number];
 
 export const DEFAULT_THEME: Theme = 'light';
-export const DEFAULT_ACCENT: Accent = 'pink';
+export const DEFAULT_ACCENT: Accent = 'amber';
 
 export const THEME_COOKIE = 'trace_theme';
 export const ACCENT_COOKIE = 'trace_accent';

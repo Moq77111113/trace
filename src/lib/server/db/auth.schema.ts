@@ -1,6 +1,9 @@
+// Manually extended with role + welcomedAt — re-apply after pnpm auth:schema regen.
 import { relations } from 'drizzle-orm';
-import { pgTable, uuid, text, timestamp, boolean, integer, index } from 'drizzle-orm/pg-core';
+import { pgEnum, pgTable, uuid, text, timestamp, boolean, integer, index } from 'drizzle-orm/pg-core';
 import { pk } from './columns';
+
+export const userRole = pgEnum('user_role', ['admin', 'user']);
 
 export const user = pgTable('user', {
 	id: pk(),
@@ -8,6 +11,8 @@ export const user = pgTable('user', {
 	email: text('email').notNull().unique(),
 	emailVerified: boolean('email_verified').default(false).notNull(),
 	image: text('image'),
+	role: userRole('role').notNull().default('user'),
+	welcomedAt: timestamp('welcomed_at', { withTimezone: true }),
 	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 	updatedAt: timestamp('updated_at', { withTimezone: true })
 		.defaultNow()

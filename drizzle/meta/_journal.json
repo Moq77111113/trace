@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1778653288590,
-      "tag": "0000_eminent_ben_parker",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1778831899141,
-      "tag": "0001_colorful_sugar_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1778849500000,
-      "tag": "0002_partial_unique_features",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1778851874329,
-      "tag": "0003_bored_major_mapleleaf",
+      "when": 1778919815306,
+      "tag": "0000_aberrant_skullbuster",
       "breakpoints": true
     }
   ]

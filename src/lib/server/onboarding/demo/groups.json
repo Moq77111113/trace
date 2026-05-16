@@ -1,0 +1,4 @@
+[
+  { "name": "Ticket lifecycle",    "position": 0, "features": ["01-ticket-lifecycle-create.feature", "02-ticket-lifecycle-transitions.feature"] },
+  { "name": "Notifications & SLA", "position": 1, "features": ["03-notifications-assignment.feature", "04-sla-breach.feature"] }
+]

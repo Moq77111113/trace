@@ -1,31 +1,62 @@
-## Project Configuration
+# AGENTS
 
-- **Language**: TypeScript
-- **Package Manager**: pnpm
-- **Add-ons**: tailwindcss, drizzle, better-auth, paraglide, mcp
+Conventions for AI agents (Claude, Copilot, Cursor, …) working in this repo.
+Humans: see [`CONTRIBUTING.md`](./CONTRIBUTING.md) — most of the codebase rules live there.
+
+This file covers the agent-specific bits: things humans pick up by osmosis but agents
+need stated.
 
 ---
 
-You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+## Hard rules
 
-## Available Svelte MCP Tools:
+- **Match the commit pattern** `{type}({scope}): {short}`. No AI signatures, no `--amend`
+  unless the user asks, no `git add -f`, no skipping hooks (`--no-verify`).
+- **Don't commit documentation** (README, AGENTS, CONTRIBUTING, LICENSE, design notes)
+  unless the user explicitly asks. Flag the diff and let them commit.
+- **All user-facing strings go through Paraglide** — see CONTRIBUTING.md for the recipe.
+  Adding a literal string in a component or `+page.server.ts` is a bug.
+- **No `svelte-ignore` comments** to silence warnings — use `untrack(() => ...)`.
+- **No new `any`**, no new `eslint-disable`.
 
-### 1. list-sections
+---
 
-Use this FIRST to discover all available documentation sections. Returns a structured list with titles, use_cases, and paths.
-When asked about Svelte or SvelteKit topics, ALWAYS use this tool at the start of the chat to find relevant sections.
+## Framework design (lead-dev rule)
 
-### 2. get-documentation
+This is a framework codebase: surfaces other devs extend or call — components, server
+kernels, CLI flags, codegen, archetypes. Filter every new surface through this:
 
-Retrieves full documentation content for specific sections. Accepts single or multiple sections.
-After calling the list-sections tool, you MUST analyze the returned documentation sections (especially the use_cases field) and then use the get-documentation tool to fetch ALL documentation sections that are relevant for the user's task.
+- Can a mid-level dev use this correctly **without thinking**? If no, reject the shape.
+- Every easy misuse is a design bug. Kill it by the shape of the tool, not by
+  docs / review / convention.
+- The right path must be copy-pasteable. No naming decisions, no pattern choice,
+  no DDD understanding required.
 
-### 3. svelte-autofixer
+Ergonomics wins at developer-facing surfaces (HTTP, SDK, CLI, components, test DSL).
+Purity stays in internal layers (domain, event log, CI internals).
 
-Analyzes Svelte code and returns issues and suggestions.
-You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
+When proposing a new surface in brainstorming, *surface this filter explicitly*:
+identify the natural misuse, kill it by the shape, simplify the right path to absurdity.
 
-### 4. playground-link
+---
 
-Generates a Svelte Playground link with the provided code.
-After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
+## Svelte MCP
+
+When writing Svelte / SvelteKit code, use the official Svelte MCP server:
+
+1. `list-sections` first — discover the doc sections relevant to the task.
+2. `get-documentation` — fetch the ones you need.
+3. `svelte-autofixer` — run on any component you write; keep calling until it's silent.
+4. `playground-link` — only if the user asks, and never for code already written to
+   a project file.
+
+---
+
+## Pacing
+
+For mechanical features (wiring up a clear spec, adding a CRUD route, renaming a
+surface), skip the brainstorming-skill / 1000-line-plan ritual. Tight loops, small
+commits, run `pnpm check` between scopes.
+
+For ambiguous work (new abstractions, public-API design, architectural choices),
+brainstorm with the user first — alignment before code.

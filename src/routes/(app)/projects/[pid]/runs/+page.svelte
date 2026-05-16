@@ -5,6 +5,8 @@
   import Pill       from '$lib/components/ui/Pill.svelte';
   import Table      from '$lib/components/ui/Table.svelte';
   import Select     from '$lib/components/ui/Select.svelte';
+  import PageTitle  from '$lib/components/PageTitle.svelte';
+  import * as m     from '$lib/paraglide/messages';
   import { formatRunDuration } from '$lib/runs/format';
   import { toStatusKind } from '$lib/components/ui/Status.svelte';
   import { createRunsFilterNav } from '$lib/runs/filter-nav';
@@ -58,6 +60,8 @@
     Boolean(data.filters.groupId),
   );
 </script>
+
+<PageTitle title={m.page_title_runs()} />
 
 <div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
   <header class="flex items-end justify-between gap-4 mb-4 max-md:flex-col max-md:items-stretch">

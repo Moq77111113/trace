@@ -1,8 +1,10 @@
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
+import { env } from '$env/dynamic/private';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { auth } from '$lib/server/auth';
+import { bootstrapAdminFromEnv } from '$lib/server/instance/bootstrap-admin';
 import {
 	ACCENT_COOKIE,
 	THEME_COOKIE,
@@ -10,13 +12,32 @@ import {
 	parseTheme
 } from '$lib/theme';
 
+void bootstrapAdminFromEnv(env.TRACE_BOOTSTRAP_ADMIN_EMAIL).catch((err) => {
+	console.error('bootstrap admin failed:', err);
+});
+
 const authHandle: Handle = async ({ event, resolve }) => {
 	const session = await auth.api.getSession({ headers: event.request.headers });
 
 	event.locals.session = session ?? null;
-	event.locals.user = session
-		? { id: session.user.id, email: session.user.email, name: session.user.name ?? null }
-		: null;
+	if (session) {
+		const u = session.user as typeof session.user & { role?: string; welcomedAt?: Date | string | null };
+		const welcomedAt =
+			u.welcomedAt instanceof Date
+				? u.welcomedAt
+				: typeof u.welcomedAt === 'string'
+					? new Date(u.welcomedAt)
+					: null;
+		event.locals.user = {
+			id:         u.id,
+			email:      u.email,
+			name:       u.name ?? null,
+			role:       u.role === 'admin' ? 'admin' : 'user',
+			welcomedAt,
+		};
+	} else {
+		event.locals.user = null;
+	}
 
 	return resolve(event);
 };

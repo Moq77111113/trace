@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import Button from '$lib/components/ui/Button.svelte';
-  import Input  from '$lib/components/ui/Input.svelte';
-  import Icon   from '$lib/components/ui/Icon.svelte';
+  import { page }  from '$app/state';
+  import Button    from '$lib/components/ui/Button.svelte';
+  import Input     from '$lib/components/ui/Input.svelte';
+  import Icon      from '$lib/components/ui/Icon.svelte';
+  import PageTitle from '$lib/components/PageTitle.svelte';
+  import * as m    from '$lib/paraglide/messages';
 
   const projectId = $derived(page.params.pid ?? '');
   let env = $state('staging');
@@ -26,6 +28,8 @@
     copyTimer = setTimeout(() => (copied = false), 1500);
   }
 </script>
+
+<PageTitle title={m.page_title_runs_ci()} />
 
 <div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
   <section class="max-w-3xl">
