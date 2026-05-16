@@ -18,7 +18,10 @@ declare global {
 			accent: Accent;
 		}
 
-		// interface Error {}
+		interface Error {
+			message: string;
+			errorId?: string;
+		}
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}

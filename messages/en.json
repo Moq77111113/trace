@@ -148,5 +148,24 @@
 	"error_invalid_expiry": "Invalid expiry date.",
 	"error_budget_must_be_positive": "Seat budget must be a positive integer.",
 	"error_invalid_date": "Invalid date.",
-	"error_revoke_failed": "Could not revoke the key."
+	"error_revoke_failed": "Could not revoke the key.",
+
+	"error_page_title_404": "Not found",
+	"error_page_title_5xx": "Something broke",
+	"error_page_title_generic": "Error",
+	"error_page_404_eyebrow": "404 · wrong turn",
+	"error_page_404_heading": "Nothing routes here.",
+	"error_page_404_body": "This path doesn't match any feature, run or project on this instance.",
+	"error_page_5xx_eyebrow": "{status} · server fault",
+	"error_page_5xx_heading": "Trace tripped over itself.",
+	"error_page_5xx_body": "The request didn't make it through. Check the server logs — this trace is for you.",
+	"error_page_other_eyebrow": "{status}",
+	"error_page_other_heading": "Request refused.",
+	"error_page_other_body": "Trace returned this status without further detail.",
+	"error_page_message_label": "message",
+	"error_page_id_label": "id",
+	"error_page_path_label": "path",
+	"error_page_cta_projects": "Back to projects",
+	"error_page_cta_home": "Go home",
+	"error_page_cta_retry": "Retry"
 }

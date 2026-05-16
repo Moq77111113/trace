@@ -148,5 +148,24 @@
 	"error_invalid_expiry": "Date d'expiration invalide.",
 	"error_budget_must_be_positive": "Le nombre de places doit être un entier positif.",
 	"error_invalid_date": "Date invalide.",
-	"error_revoke_failed": "Impossible de révoquer la clé."
+	"error_revoke_failed": "Impossible de révoquer la clé.",
+
+	"error_page_title_404": "Introuvable",
+	"error_page_title_5xx": "Erreur serveur",
+	"error_page_title_generic": "Erreur",
+	"error_page_404_eyebrow": "404 · mauvais embranchement",
+	"error_page_404_heading": "Aucune route ici.",
+	"error_page_404_body": "Ce chemin ne correspond à aucune fonctionnalité, exécution ou projet de cette instance.",
+	"error_page_5xx_eyebrow": "{status} · panne serveur",
+	"error_page_5xx_heading": "Trace s'est pris les pieds dedans.",
+	"error_page_5xx_body": "La requête n'est pas passée. Vérifiez les logs serveur — cette trace est pour vous.",
+	"error_page_other_eyebrow": "{status}",
+	"error_page_other_heading": "Requête refusée.",
+	"error_page_other_body": "Trace a renvoyé ce statut sans plus de détail.",
+	"error_page_message_label": "message",
+	"error_page_id_label": "id",
+	"error_page_path_label": "chemin",
+	"error_page_cta_projects": "Retour aux projets",
+	"error_page_cta_home": "Accueil",
+	"error_page_cta_retry": "Réessayer"
 }
