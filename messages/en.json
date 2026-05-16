@@ -53,10 +53,30 @@
 
 	"execution_rerun_failed": "Re-run {count} failed",
 
+	"execution_abort_cta": "Abort run",
+	"execution_abort_aborting": "Aborting…",
+	"execution_abort_modal_title": "Abort this run?",
+	"execution_abort_modal_body_one": "{count} scenario is still pending. It will be marked SKIPPED and the run will be closed as ABORTED.",
+	"execution_abort_modal_body_other": "{count} scenarios are still pending. They will be marked SKIPPED and the run will be closed as ABORTED.",
+	"execution_abort_modal_cancel": "Cancel",
+	"execution_abort_modal_confirm": "Abort run",
+	"execution_abort_error": "Could not abort the run.",
+
 	"feature_aside_open_live_execution": "Open live run",
 	"feature_aside_view_execution": "View run",
 	"feature_aside_no_executions_yet": "No runs yet",
 	"feature_aside_no_executions_hint": "Start one with the button above.",
+
+	"dash_stats_label": "Project health",
+	"dash_tile_pass_rate": "Pass rate · 7d",
+	"dash_tile_pass_rate_hint": "Passed / finished runs",
+	"dash_tile_runs_today": "Runs today",
+	"dash_tile_runs_today_hint": "Started since midnight",
+	"dash_tile_flaky": "Flaky features",
+	"dash_tile_flaky_hint": "Pass + fail in last 10 runs",
+	"dash_tile_median": "Median run · 7d",
+	"dash_tile_median_hint": "Across finished runs",
+	"dash_feature_flake": "flake",
 
 	"home_subtitle": "All projects you can access.",
 	"home_empty_title": "No projects yet",

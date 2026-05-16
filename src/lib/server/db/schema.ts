@@ -6,9 +6,10 @@ import {
 import { sql } from 'drizzle-orm';
 import { pk } from './columns';
 import { user } from './auth.schema';
+import type { CiMetadata } from '$lib/executions/ci-metadata';
 
 export const executionSource = pgEnum('execution_source', ['MANUAL', 'CI']);
-export const executionStatus = pgEnum('execution_status', ['IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED']);
+export const executionStatus = pgEnum('execution_status', ['IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED', 'ABORTED']);
 export const scenarioStatus  = pgEnum('scenario_status',  ['PENDING', 'PASSED', 'FAILED', 'SKIPPED']);
 
 export type ParseError = { line: number; column?: number; message: string };
@@ -100,6 +101,7 @@ export const executions = pgTable(
     status:                executionStatus('status').notNull().default('IN_PROGRESS'),
     startedAt:             timestamp('started_at',  { withTimezone: true }).notNull().defaultNow(),
     finishedAt:            timestamp('finished_at', { withTimezone: true }),
+    ciMetadata:            jsonb('ci_metadata').$type<CiMetadata>(),
   },
   (t) => [index('executions_feature_started_idx').on(t.featureId, sql`${t.startedAt} DESC`)],
 );

@@ -36,6 +36,36 @@ export function extractScenarioSteps(content: string, scenarioName: string): Sce
   return [];
 }
 
+export function extractScenarioTags(content: string, scenarioName: string): string[] {
+  if (!content.trim() || !scenarioName) return [];
+
+  let doc;
+  try {
+    doc = new Parser(builder, matcher).parse(content);
+  } catch {
+    return [];
+  }
+
+  const feature = doc.feature;
+  if (!feature) return [];
+
+  for (const child of feature.children ?? []) {
+    if (!child.scenario) continue;
+    if (child.scenario.name !== scenarioName) continue;
+
+    return (child.scenario.tags ?? []).map(tagName);
+  }
+
+  return [];
+}
+
+type RawTag = { name?: string };
+
+function tagName(raw: unknown): string {
+  const n = (raw as RawTag).name ?? '';
+  return n.startsWith('@') ? n.slice(1) : n;
+}
+
 type FeatureLike = { children?: readonly { background?: { steps?: readonly unknown[] } }[] };
 
 function collectBackgroundSteps(feature: FeatureLike): ScenarioStep[] {

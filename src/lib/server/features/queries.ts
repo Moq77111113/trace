@@ -1,6 +1,7 @@
-import { and, asc, desc, eq, ne, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, featureGroups, executions } from '$lib/server/db/schema';
+import { features, featureGroups, executions, scenarioResults } from '$lib/server/db/schema';
+import type { ScenarioCounts } from '$lib/executions/format';
 
 export async function listFeatures(projectId: string) {
   const ranked = db.$with('ranked_runs').as(
@@ -47,6 +48,8 @@ type FeatureRow = {
   version:              number;
   updatedAt:            Date;
   latestFinishedStatus: (typeof executions.status.enumValues)[number] | null;
+  lastRunAt:            Date | null;
+  latestCounts:         ScenarioCounts | null;
 };
 
 type GroupRow = typeof featureGroups.$inferSelect;
@@ -62,10 +65,11 @@ export async function listFeaturesByGroup(projectId: string): Promise<FeaturesBy
   const ranked = db.$with('ranked_runs').as(
     db
       .select({
-        featureId:  executions.featureId,
-        status:     executions.status,
-        finishedAt: executions.finishedAt,
-        rn:         sql<number>`ROW_NUMBER() OVER (
+        featureId:   executions.featureId,
+        executionId: executions.id,
+        status:      executions.status,
+        finishedAt:  executions.finishedAt,
+        rn: sql<number>`ROW_NUMBER() OVER (
           PARTITION BY ${executions.featureId}
           ORDER BY ${executions.finishedAt} DESC NULLS LAST
         )`.as('rn'),
@@ -74,8 +78,18 @@ export async function listFeaturesByGroup(projectId: string): Promise<FeaturesBy
       .where(ne(executions.status, 'IN_PROGRESS')),
   );
 
+  const lastStarted = db.$with('last_started').as(
+    db
+      .select({
+        featureId:     executions.featureId,
+        lastStartedAt: sql<Date>`MAX(${executions.startedAt})`.as('last_started_at'),
+      })
+      .from(executions)
+      .groupBy(executions.featureId),
+  );
+
   const rows = await db
-    .with(ranked)
+    .with(ranked, lastStarted)
     .select({
       id:                   features.id,
       projectId:            features.projectId,
@@ -85,11 +99,42 @@ export async function listFeaturesByGroup(projectId: string): Promise<FeaturesBy
       version:              features.version,
       updatedAt:            features.updatedAt,
       latestFinishedStatus: ranked.status,
+      latestExecutionId:    ranked.executionId,
+      lastRunAt:            lastStarted.lastStartedAt,
     })
     .from(features)
-    .leftJoin(ranked, and(eq(ranked.featureId, features.id), eq(ranked.rn, 1)))
+    .leftJoin(ranked,      and(eq(ranked.featureId,      features.id), eq(ranked.rn, 1)))
+    .leftJoin(lastStarted,     eq(lastStarted.featureId, features.id))
     .where(and(eq(features.projectId, projectId), eq(features.archived, false)))
     .orderBy(asc(features.name));
+
+  const latestExecutionIds = rows
+    .map((r) => r.latestExecutionId)
+    .filter((id): id is string => id !== null);
+
+  const countsByExecution = new Map<string, ScenarioCounts>();
+  if (latestExecutionIds.length > 0) {
+    const countRows = await db
+      .select({
+        executionId: scenarioResults.executionId,
+        passed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'PASSED'  THEN 1 ELSE 0 END), 0)::int`,
+        failed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'FAILED'  THEN 1 ELSE 0 END), 0)::int`,
+        skipped: sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'SKIPPED' THEN 1 ELSE 0 END), 0)::int`,
+        pending: sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'PENDING' THEN 1 ELSE 0 END), 0)::int`,
+      })
+      .from(scenarioResults)
+      .where(inArray(scenarioResults.executionId, latestExecutionIds))
+      .groupBy(scenarioResults.executionId);
+
+    for (const c of countRows) {
+      countsByExecution.set(c.executionId, {
+        passed:  c.passed,
+        failed:  c.failed,
+        skipped: c.skipped,
+        pending: c.pending,
+      });
+    }
+  }
 
   const groups = await db
     .select()
@@ -100,13 +145,17 @@ export async function listFeaturesByGroup(projectId: string): Promise<FeaturesBy
   const byGroup = new Map<string, FeatureRow[]>();
   const ungrouped: FeatureRow[] = [];
   for (const r of rows) {
-    const { groupId, ...rest } = r;
+    const { groupId, latestExecutionId, ...rest } = r;
+    const row: FeatureRow = {
+      ...rest,
+      latestCounts: latestExecutionId ? countsByExecution.get(latestExecutionId) ?? null : null,
+    };
     if (groupId) {
       const arr = byGroup.get(groupId) ?? [];
-      arr.push(rest);
+      arr.push(row);
       byGroup.set(groupId, arr);
     } else {
-      ungrouped.push(rest);
+      ungrouped.push(row);
     }
   }
 

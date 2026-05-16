@@ -1,0 +1,1 @@
+ALTER TABLE "executions" ADD COLUMN "ci_metadata" jsonb;

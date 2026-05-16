@@ -2,6 +2,7 @@ import { error, json } from '@sveltejs/kit';
 import { parseCucumberJson } from '$lib/server/executions/cucumber-json/parse';
 import { ingestExecution } from '$lib/server/executions/ingest';
 import { resolveCiExecutor } from '$lib/server/executions/auth';
+import { readCiMetadata } from '$lib/executions/ci-metadata';
 import type { RequestHandler } from './$types';
 
 export const POST = (async (event) => {
@@ -9,6 +10,7 @@ export const POST = (async (event) => {
   if (!projectId) throw error(400, 'X-Project-Id header (or ?project=) required');
 
   const environment = event.request.headers.get('x-environment');
+  const ciMetadata  = readCiMetadata((name) => event.request.headers.get(name));
   const executedBy  = await resolveCiExecutor(event);
 
   const payload = await event.request.json().catch(() => null);
@@ -22,7 +24,7 @@ export const POST = (async (event) => {
   }
 
   try {
-    const result = await ingestExecution({ projectId, executedBy, environment, parsed });
+    const result = await ingestExecution({ projectId, executedBy, environment, ciMetadata, parsed });
     return json({
       run_id:            result.execution.id,
       status:            result.execution.status,

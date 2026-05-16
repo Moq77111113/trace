@@ -1,10 +1,10 @@
 import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
-import { listFeaturesByGroup } from '$lib/server/features/queries';
 import { listGroups } from '$lib/server/groups/queries';
 import { createGroup, groupCreateInput } from '$lib/server/groups/create';
 import { deleteGroup, groupDeleteInput } from '$lib/server/groups/delete';
 import { renameGroup, groupRenameInput } from '$lib/server/groups/rename';
 import { reorderGroups, groupReorderInput } from '$lib/server/groups/reorder';
+import { getProjectDashboardStats } from '$lib/server/projects/queries';
 import { stringFields } from '$lib/server/forms';
 import { appendCrumb } from '$lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
@@ -13,13 +13,13 @@ import type { PageServerLoad } from './$types';
 type Params = { pid: string };
 
 export const load = (async ({ params, parent }) => {
-  const [byGroup, groups, parentData] = await Promise.all([
-    listFeaturesByGroup(params.pid),
+  const [stats, groups, parentData] = await Promise.all([
+    getProjectDashboardStats(params.pid),
     listGroups(params.pid),
     parent(),
   ]);
   return {
-    byGroup,
+    stats,
     groups,
     breadcrumbs: appendCrumb(parentData.breadcrumbs, { label: m.nav_overview() }),
   };

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
   import Pill            from '$lib/components/ui/Pill.svelte';
   import Button          from '$lib/components/ui/Button.svelte';
   import DropZone        from '$lib/components/ui/DropZone.svelte';
@@ -7,14 +8,16 @@
   import Modal           from '$lib/components/ui/Modal.svelte';
   import Status          from '$lib/components/ui/Status.svelte';
   import Icon            from '$lib/components/ui/Icon.svelte';
+  import Tag             from '$lib/components/ui/Tag.svelte';
   import ScenarioSteps   from '$lib/components/ScenarioSteps.svelte';
   import { toStatusKind } from '$lib/components/ui/Status.svelte';
-  import { LiveExecutionController } from '$lib/executions/live-execution.svelte';
-  import { extractScenarioSteps } from '$lib/gherkin/steps';
+  import { LiveExecutionController, type ScenarioFilter } from '$lib/executions/live-execution.svelte';
+  import { extractScenarioSteps, extractScenarioTags } from '$lib/gherkin/steps';
   import {
     formatScenarioDuration,
     isTypingTarget
   } from '$lib/executions/format';
+  import * as m from '$lib/paraglide/messages';
   import type { ExecutionPageData } from '$lib/server/executions/queries';
 
   type Props = { data: NonNullable<ExecutionPageData> };
@@ -35,6 +38,17 @@
     submitFinish();
   }
 
+  async function onConfirmAbort(): Promise<void> {
+    const result = await controller.abort();
+    if (result.ok) await invalidateAll();
+  }
+
+  function abortBody(count: number): string {
+    return count === 1
+      ? m.execution_abort_modal_body_one({ count })
+      : m.execution_abort_modal_body_other({ count });
+  }
+
   const progressPct = $derived(
     controller.counts.total === 0
       ? 0
@@ -46,6 +60,18 @@
       ? extractScenarioSteps(data.execution.featureContentAtStart, controller.selected.scenarioName)
       : []
   );
+
+  const selectedTags = $derived(
+    controller.selected
+      ? extractScenarioTags(data.execution.featureContentAtStart, controller.selected.scenarioName)
+      : []
+  );
+
+  const filterTabs: { value: ScenarioFilter; label: string }[] = [
+    { value: 'all',     label: 'All'     },
+    { value: 'failed',  label: 'Failed'  },
+    { value: 'pending', label: 'Pending' },
+  ];
 
   function formatStarted(d: Date | string): string {
     const date = typeof d === 'string' ? new Date(d) : d;
@@ -65,9 +91,10 @@
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       const key = event.key.toLowerCase();
-      if (key === 'p') { controller.markPassed();  return; }
-      if (key === 'f') { controller.markFailed();  return; }
-      if (key === 's') { controller.markSkipped(); return; }
+      if (key === 'p') { controller.markPassed();         return; }
+      if (key === 'f') { controller.markFailed();         return; }
+      if (key === 's') { controller.markSkipped();        return; }
+      if (key === 'j') { controller.jumpToNextPending();  return; }
       if (event.key === 'ArrowDown') { event.preventDefault(); controller.moveDown(); return; }
       if (event.key === 'ArrowUp')   { event.preventDefault(); controller.moveUp();   return; }
     }
@@ -102,10 +129,16 @@
       </div>
 
       <div class="ml-auto flex items-center gap-2">
+        <Button variant="danger" onclick={controller.requestAbort} disabled={controller.aborting}>
+          {controller.aborting ? m.execution_abort_aborting() : m.execution_abort_cta()}
+        </Button>
         <Button onclick={onFinishClick}>
           Finish run <Kbd>⌘↵</Kbd>
         </Button>
       </div>
+      {#if controller.abortError}
+        <span class="text-[12px] text-fail-ink" role="alert">{controller.abortError}</span>
+      {/if}
     </div>
 
     <div class="flex items-center gap-3.5">
@@ -142,8 +175,23 @@
         </span>
       </header>
 
+      <div class="px-3.5 py-2 border-b border-border flex items-center gap-1 text-[11.5px]">
+        {#each filterTabs as tab (tab.value)}
+          {@const active = controller.filter === tab.value}
+          {@const count = tab.value === 'failed' ? controller.failedCount : tab.value === 'pending' ? controller.pendingCount : controller.counts.total}
+          <button
+            type="button"
+            class="px-2 py-1 rounded-md bg-transparent border-0 cursor-pointer text-ink-3 hover:text-ink-2 hover:bg-surface-2 {active ? 'bg-surface text-ink font-medium' : ''}"
+            onclick={() => controller.setFilter(tab.value)}
+          >
+            {tab.label}
+            <span class="ml-1 text-ink-3 tabular-nums">{count}</span>
+          </button>
+        {/each}
+      </div>
+
       <ul class="flex-1 overflow-auto py-1 m-0 p-0 list-none">
-        {#each controller.scenarios as scenario (scenario.id)}
+        {#each controller.visibleScenarios as scenario (scenario.id)}
           {@const active = scenario.id === controller.selectedId}
           {@const kind = toStatusKind(scenario.status)}
           <li>
@@ -167,9 +215,11 @@
         {/each}
       </ul>
 
-      <footer class="px-3.5 py-2.5 text-[11px] text-ink-3 flex items-center gap-1.5 border-t border-border">
+      <footer class="px-3.5 py-2.5 text-[11px] text-ink-3 flex items-center gap-1.5 border-t border-border flex-wrap">
         <Kbd>↑</Kbd><Kbd>↓</Kbd>
         <span class="ml-1">navigate</span>
+        <span class="mx-1.5 text-ink-mute">·</span>
+        <Kbd>J</Kbd> <span>next pending</span>
         <span class="mx-1.5 text-ink-mute">·</span>
         <Kbd>P</Kbd> <span>pass</span>
         <span class="mx-1.5 text-ink-mute">·</span>
@@ -191,6 +241,13 @@
             </h2>
             <Pill kind={kind}>{controller.selected.status.toLowerCase()}</Pill>
           </div>
+          {#if selectedTags.length > 0}
+            <div class="flex items-center gap-1 flex-wrap">
+              {#each selectedTags as name (name)}
+                <Tag {name} />
+              {/each}
+            </div>
+          {/if}
           <div class="text-[11.5px] text-ink-3 flex items-center gap-2.5 tabular-nums">
             <span>Scenario</span>
             <span class="w-[3px] h-[3px] rounded-full bg-ink-mute"></span>
@@ -302,5 +359,22 @@
   {#snippet footer()}
     <Button variant="ghost" onclick={controller.cancelConfirmFinish}>Cancel</Button>
     <Button variant="primary" onclick={onConfirmFinish}>Confirm finish</Button>
+  {/snippet}
+</Modal>
+
+<Modal
+  open={controller.confirmingAbort}
+  onOpenChange={(v) => { if (!v) controller.cancelConfirmAbort(); }}
+  title={m.execution_abort_modal_title()}
+>
+  <p class="text-[13px]">{abortBody(controller.pendingCount)}</p>
+
+  {#snippet footer()}
+    <Button variant="ghost" onclick={controller.cancelConfirmAbort} disabled={controller.aborting}>
+      {m.execution_abort_modal_cancel()}
+    </Button>
+    <Button variant="danger" onclick={onConfirmAbort} disabled={controller.aborting}>
+      {controller.aborting ? m.execution_abort_aborting() : m.execution_abort_modal_confirm()}
+    </Button>
   {/snippet}
 </Modal>

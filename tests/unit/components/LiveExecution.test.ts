@@ -15,6 +15,7 @@ const fakeData = {
     source:              'MANUAL' as const,
     featureId:           'f1',
     featureContentAtStart: 'Feature: F\n',
+    ciMetadata:          null,
   },
   feature: {
     id:          'f1',

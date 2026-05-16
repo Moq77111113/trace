@@ -1,8 +1,10 @@
-import { and, asc, desc, eq, gte, inArray, isNull, lte, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, sql, type SQL } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { attachments, executions, features, projects, scenarioResults } from '$lib/server/db/schema';
+import type { CiMetadata } from '$lib/executions/ci-metadata';
+import { EXPORT_ROW_CAP } from '$lib/executions/csv';
 
-export type ExecutionStatusFilter = 'PASSED' | 'FAILED' | 'SKIPPED' | 'IN_PROGRESS';
+export type ExecutionStatusFilter = 'PASSED' | 'FAILED' | 'SKIPPED' | 'ABORTED' | 'IN_PROGRESS';
 export type ExecutionSourceFilter = 'MANUAL' | 'CI';
 export type GroupFilter     = string | 'ungrouped';
 
@@ -20,6 +22,8 @@ export type ExecutionFilters = {
 
 const MAX_PAGE_SIZE     = 100;
 const DEFAULT_PAGE_SIZE = 50;
+
+export const FLAKE_WINDOW = 10;
 
 function buildConditions(projectId: string, f: ExecutionFilters): SQL[] {
   const conds: SQL[] = [eq(features.projectId, projectId)];
@@ -52,12 +56,19 @@ export async function listExecutionsForProject(projectId: string, f: ExecutionFi
       environment: executions.environment,
       startedAt:   executions.startedAt,
       finishedAt:  executions.finishedAt,
+      ciMetadata:  executions.ciMetadata,
       featureId:   features.id,
       featureName: features.name,
+      passed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'PASSED'  THEN 1 ELSE 0 END), 0)::int`,
+      failed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'FAILED'  THEN 1 ELSE 0 END), 0)::int`,
+      skipped: sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'SKIPPED' THEN 1 ELSE 0 END), 0)::int`,
+      pending: sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'PENDING' THEN 1 ELSE 0 END), 0)::int`,
     })
     .from(executions)
     .innerJoin(features, eq(features.id, executions.featureId))
+    .leftJoin(scenarioResults, eq(scenarioResults.executionId, executions.id))
     .where(and(...conds))
+    .groupBy(executions.id, features.id, features.name)
     .orderBy(desc(executions.startedAt))
     .limit(pageSize)
     .offset(offset);
@@ -69,6 +80,54 @@ export async function listExecutionsForProject(projectId: string, f: ExecutionFi
     .where(and(...conds));
 
   return { rows, page, pageSize, total: totalRow?.count ?? 0 };
+}
+
+export type ExecutionExportRow = {
+  id:          string;
+  status:      string;
+  source:      string;
+  executedBy:  string;
+  environment: string | null;
+  startedAt:   Date;
+  finishedAt:  Date | null;
+  ciMetadata:  CiMetadata | null;
+  featureName: string;
+  passed:      number;
+  failed:      number;
+  skipped:     number;
+  pending:     number;
+};
+
+/**
+ * Flat (un-paged) export of executions matching `f`. Capped at EXPORT_ROW_CAP + 1
+ * rows so callers can detect overflow without a separate COUNT query.
+ */
+export async function listExecutionsForExport(projectId: string, f: ExecutionFilters = {}): Promise<ExecutionExportRow[]> {
+  const conds = buildConditions(projectId, f);
+
+  return db
+    .select({
+      id:          executions.id,
+      status:      executions.status,
+      source:      executions.source,
+      executedBy:  executions.executedBy,
+      environment: executions.environment,
+      startedAt:   executions.startedAt,
+      finishedAt:  executions.finishedAt,
+      ciMetadata:  executions.ciMetadata,
+      featureName: features.name,
+      passed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'PASSED'  THEN 1 ELSE 0 END), 0)::int`,
+      failed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'FAILED'  THEN 1 ELSE 0 END), 0)::int`,
+      skipped: sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'SKIPPED' THEN 1 ELSE 0 END), 0)::int`,
+      pending: sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'PENDING' THEN 1 ELSE 0 END), 0)::int`,
+    })
+    .from(executions)
+    .innerJoin(features, eq(features.id, executions.featureId))
+    .leftJoin(scenarioResults, eq(scenarioResults.executionId, executions.id))
+    .where(and(...conds))
+    .groupBy(executions.id, features.id, features.name)
+    .orderBy(desc(executions.startedAt))
+    .limit(EXPORT_ROW_CAP + 1);
 }
 
 export async function listRecentExecutionsForFeature(featureId: string, limit = 5) {
@@ -85,6 +144,44 @@ export async function listRecentExecutionsForFeature(featureId: string, limit = 
     .where(eq(executions.featureId, featureId))
     .orderBy(desc(executions.startedAt))
     .limit(limit);
+}
+
+/**
+ * Feature IDs that look flaky: among the last FLAKE_WINDOW finished executions
+ * (PASSED/FAILED/ABORTED — anything not IN_PROGRESS), at least one PASSED and at
+ * least one FAILED. SKIPPED alone never makes a feature flaky.
+ */
+export async function listFlakeFeatureIds(projectId: string): Promise<Set<string>> {
+  const ranked = db.$with('ranked_finished').as(
+    db
+      .select({
+        featureId:  executions.featureId,
+        status:     executions.status,
+        finishedAt: executions.finishedAt,
+        rn:         sql<number>`ROW_NUMBER() OVER (
+          PARTITION BY ${executions.featureId}
+          ORDER BY ${executions.finishedAt} DESC NULLS LAST
+        )`.as('rn'),
+      })
+      .from(executions)
+      .innerJoin(features, eq(features.id, executions.featureId))
+      .where(and(eq(features.projectId, projectId), ne(executions.status, 'IN_PROGRESS'))),
+  );
+
+  const rows = await db
+    .with(ranked)
+    .select({
+      featureId: ranked.featureId,
+      passes:    sql<number>`SUM(CASE WHEN ${ranked.status} = 'PASSED' THEN 1 ELSE 0 END)::int`,
+      fails:     sql<number>`SUM(CASE WHEN ${ranked.status} = 'FAILED' THEN 1 ELSE 0 END)::int`,
+    })
+    .from(ranked)
+    .where(lte(ranked.rn, FLAKE_WINDOW))
+    .groupBy(ranked.featureId)
+    .having(sql`SUM(CASE WHEN ${ranked.status} = 'PASSED' THEN 1 ELSE 0 END) > 0
+            AND SUM(CASE WHEN ${ranked.status} = 'FAILED' THEN 1 ELSE 0 END) > 0`);
+
+  return new Set(rows.map((r) => r.featureId));
 }
 
 /** Distinct non-null environments seen on any run in the project, alphabetical. */

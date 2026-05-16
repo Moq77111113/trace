@@ -1,6 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
-import { createApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
+import { createApiKey, listApiKeys, revokeApiKey, rotateApiKey } from '$lib/server/api-keys';
 import { appendCrumb } from '$lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { Actions, PageServerLoad } from './$types';
@@ -24,6 +24,10 @@ const CreateForm = z.object({
 });
 
 const RevokeForm = z.object({
+  id: z.uuid({ version: 'v7' }),
+});
+
+const RotateForm = z.object({
   id: z.uuid({ version: 'v7' }),
 });
 
@@ -64,5 +68,25 @@ export const actions = {
     }
 
     return { revoked: true };
+  },
+
+  rotate: async ({ request, params, locals }) => {
+    if (!locals.user) throw error(401, 'unauthorized');
+
+    const parsed = RotateForm.safeParse(Object.fromEntries(await request.formData()));
+    if (!parsed.success) {
+      return fail(400, { error: parsed.error.issues[0]?.message ?? m.error_invalid_input() });
+    }
+
+    try {
+      const created = await rotateApiKey({
+        id:        parsed.data.id,
+        projectId: params.pid,
+        userId:    locals.user.id,
+      });
+      return { createdKey: created };
+    } catch (e) {
+      return fail(400, { error: e instanceof Error ? e.message : m.error_revoke_failed() });
+    }
   },
 } satisfies Actions;

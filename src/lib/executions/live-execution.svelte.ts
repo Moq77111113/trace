@@ -5,6 +5,8 @@ type RunData    = NonNullable<ExecutionPageData>;
 type Scenario   = RunData['scenarios'][number];
 type Attachment = UploadedAttachment;
 
+export type ScenarioFilter = 'all' | 'failed' | 'pending';
+
 /**
  * Owns the live-run UI state and the side-effects that flow from user actions.
  * The component renders this controller's fields and dispatches verbs —
@@ -17,9 +19,13 @@ export class LiveExecutionController {
   saveError:         string | null                     = $state(null);
   notesError:        string | null                     = $state(null);
   uploadError:       string | null                     = $state(null);
+  abortError:        string | null                     = $state(null);
   uploadsByScenario: Record<string, Attachment[]>      = $state({});
   uploading:         boolean                           = $state(false);
   confirming:        boolean                           = $state(false);
+  confirmingAbort:   boolean                           = $state(false);
+  aborting:          boolean                           = $state(false);
+  filter:            ScenarioFilter                    = $state('all');
 
   readonly executionId:    string;
   readonly counts        = $derived({
@@ -27,8 +33,10 @@ export class LiveExecutionController {
     done:  this.scenarios.filter((s) => s.status !== 'PENDING').length,
   });
   readonly pendingCount  = $derived(this.scenarios.filter((s) => s.status === 'PENDING').length);
+  readonly failedCount   = $derived(this.scenarios.filter((s) => s.status === 'FAILED').length);
   readonly selected      = $derived<Scenario | undefined>(this.scenarios.find((s) => s.id === this.selectedId));
   readonly attachmentsOfSelected = $derived<Attachment[]>(this.selected ? this.uploadsByScenario[this.selected.id] ?? [] : []);
+  readonly visibleScenarios = $derived<Scenario[]>(this.scenarios.filter((s) => this.matchesFilter(s)));
 
   private readonly api: ExecutionApi;
 
@@ -51,6 +59,15 @@ export class LiveExecutionController {
   markFailed  = (): void => this.mark('FAILED');
   markSkipped = (): void => this.mark('SKIPPED');
 
+  jumpToNextPending = (): void => {
+    const next = this.pickNextPending(this.selectedId);
+    if (next) this.selectedId = next;
+  };
+
+  setFilter = (filter: ScenarioFilter): void => {
+    this.filter = filter;
+  };
+
   /** Returns `true` if the run can be finished right now; `false` if a confirm is required (and opens it). */
   requestFinish = (): boolean => {
     if (this.pendingCount === 0) return true;
@@ -60,6 +77,31 @@ export class LiveExecutionController {
 
   cancelConfirmFinish = (): void => {
     this.confirming = false;
+  };
+
+  requestAbort = (): void => {
+    this.abortError      = null;
+    this.confirmingAbort = true;
+  };
+
+  cancelConfirmAbort = (): void => {
+    this.confirmingAbort = false;
+  };
+
+  abort = async (): Promise<{ ok: boolean }> => {
+    this.aborting   = true;
+    this.abortError = null;
+    try {
+      await this.api.postAbort();
+      this.scenarios = this.scenarios.map((s) => (s.status === 'PENDING' ? { ...s, status: 'SKIPPED' } : s));
+      this.confirmingAbort = false;
+      return { ok: true };
+    } catch (e) {
+      this.abortError = e instanceof Error ? e.message : 'Abort failed';
+      return { ok: false };
+    } finally {
+      this.aborting = false;
+    }
   };
 
   flushNotes = async (): Promise<void> => {
@@ -117,16 +159,26 @@ export class LiveExecutionController {
   }
 
   private moveSelection(delta: -1 | 1): void {
-    const idx = this.scenarios.findIndex((s) => s.id === this.selectedId);
-    if (idx < 0) return;
-
-    const len = this.scenarios.length;
+    const list = this.visibleScenarios;
+    const len  = list.length;
     if (len === 0) return;
 
-    const next = this.scenarios[(idx + delta + len) % len];
+    const idx = list.findIndex((s) => s.id === this.selectedId);
+    if (idx < 0) {
+      this.selectedId = list[0]?.id ?? '';
+      return;
+    }
+
+    const next = list[(idx + delta + len) % len];
     if (!next) return;
 
     this.selectedId = next.id;
+  }
+
+  private matchesFilter(scenario: Scenario): boolean {
+    if (this.filter === 'failed')  return scenario.status === 'FAILED';
+    if (this.filter === 'pending') return scenario.status === 'PENDING';
+    return true;
   }
 
   private firstPendingId(): string {

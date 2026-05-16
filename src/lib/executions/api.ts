@@ -51,6 +51,11 @@ export function createExecutionApi(executionId: string) {
       if (!res.ok) throw new RunsApiError(await readErrorMessage(res, 'Notes not saved'), res.status);
     },
 
+    async postAbort(): Promise<void> {
+      const res = await fetch(`/api/executions/${executionId}/abort`, { method: 'POST' });
+      if (!res.ok) throw new RunsApiError(await readErrorMessage(res, 'Abort failed'), res.status);
+    },
+
     async uploadScenarioAttachment(scenarioId: string, file: File): Promise<UploadedAttachment> {
       const form = new FormData();
       form.set('file', file);

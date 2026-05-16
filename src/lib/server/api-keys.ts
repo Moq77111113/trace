@@ -106,3 +106,34 @@ export async function revokeApiKey(id: string, projectId: string): Promise<void>
 
 	await db.update(apikey).set({ enabled: false }).where(sql`${apikey.id} = ${id}`);
 }
+
+/**
+ * Creates a new key sharing the old one's name + expiry window, then revokes
+ * the old key. Returns the new raw secret in the same `{ id, key }` shape as
+ * `createApiKey` so the UI's "shown once" banner is reused verbatim.
+ */
+export async function rotateApiKey(args: {
+	id:        string;
+	projectId: string;
+	userId:    string;
+}): Promise<{ id: string; key: string }> {
+	const [row] = await db
+		.select({ name: apikey.name, expiresAt: apikey.expiresAt, metadata: apikey.metadata })
+		.from(apikey)
+		.where(sql`${apikey.id} = ${args.id}`);
+	if (!row) throw new Error('api key not found');
+	if (parseMetadata(row.metadata).projectId !== args.projectId) {
+		throw new Error('api key not scoped to this project');
+	}
+
+	const created = await createApiKey({
+		projectId: args.projectId,
+		name:      row.name ?? 'rotated',
+		userId:    args.userId,
+		expiresAt: row.expiresAt ?? null,
+	});
+
+	await db.update(apikey).set({ enabled: false }).where(sql`${apikey.id} = ${args.id}`);
+
+	return created;
+}

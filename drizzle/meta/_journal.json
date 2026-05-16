@@ -8,6 +8,20 @@
       "when": 1778919815306,
       "tag": "0000_aberrant_skullbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778935278125,
+      "tag": "0001_wet_shocker",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778937049175,
+      "tag": "0002_ci_metadata_on_executions",
+      "breakpoints": true
     }
   ]
 }

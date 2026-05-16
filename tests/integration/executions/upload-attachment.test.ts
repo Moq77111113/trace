@@ -52,7 +52,7 @@ describe('uploadAttachment', () => {
 
     expect(row.filename).toBe('logs.txt');
     expect(row.sizeBytes).toBe(11);
-    expect(row.storageKey).toMatch(new RegExp(`^runs/${run.id}/${scenario.id}/.+-logs\\.txt$`));
+    expect(row.storageKey).toMatch(new RegExp(`^executions/${run.id}/${scenario.id}/.+-logs\\.txt$`));
   });
 
   it('refuses files over the size limit', async () => {

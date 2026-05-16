@@ -6,6 +6,7 @@
     if (upper === 'PASSED')   return 'pass';
     if (upper === 'FAILED')   return 'fail';
     if (upper === 'SKIPPED')  return 'skip';
+    if (upper === 'ABORTED')  return 'skip';
     if (upper === 'IN_PROGRESS')  return 'running';
     if (upper === 'FLAKE' || upper === 'FLAKY') return 'flake';
     return 'pending';

@@ -1,23 +1,13 @@
 <script lang="ts">
-  import Button    from '$lib/components/ui/Button.svelte';
-  import Input     from '$lib/components/ui/Input.svelte';
-  import Pill      from '$lib/components/ui/Pill.svelte';
-  import Icon      from '$lib/components/ui/Icon.svelte';
-  import PageTitle from '$lib/components/PageTitle.svelte';
-  import * as m    from '$lib/paraglide/messages';
+  import Button             from '$lib/components/ui/Button.svelte';
+  import Input              from '$lib/components/ui/Input.svelte';
+  import Icon               from '$lib/components/ui/Icon.svelte';
+  import PageTitle          from '$lib/components/PageTitle.svelte';
+  import ApiKeyRow          from '$lib/features/api-keys/ui/ApiKeyRow.svelte';
+  import CreatedKeyBanner   from '$lib/features/api-keys/ui/CreatedKeyBanner.svelte';
+  import * as m             from '$lib/paraglide/messages';
 
   let { data, form } = $props();
-
-  let copied = $state(false);
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
-
-  async function copyKey() {
-    if (!form?.createdKey) return;
-    await navigator.clipboard.writeText(form.createdKey.key);
-    copied = true;
-    clearTimeout(copyTimer);
-    copyTimer = setTimeout(() => (copied = false), 1500);
-  }
 </script>
 
 <PageTitle title={m.page_title_api_keys()} />
@@ -42,16 +32,7 @@
       </p>
 
       {#if form?.createdKey}
-        <div class="bg-accent-soft border border-accent/25 rounded-lg px-3.5 py-3 mb-3.5 flex items-center gap-3 text-[12.5px] max-md:flex-wrap">
-          <Icon name="Key" size={14} class="text-accent-soft-ink shrink-0" />
-          <strong class="text-accent-soft-ink whitespace-nowrap">Copy now — shown once.</strong>
-          <code
-            class="flex-1 text-[12px] text-accent-soft-ink px-2.5 py-1.5 bg-accent/5 border border-accent/20 rounded-md font-mono select-all break-all max-md:order-3 max-md:w-full"
-          >{form.createdKey.key}</code>
-          <Button variant="secondary" size="sm" onclick={copyKey}>
-            <Icon name="Copy" size={12} /> {copied ? 'Copied' : 'Copy'}
-          </Button>
-        </div>
+        <CreatedKeyBanner rawKey={form.createdKey.key} />
       {/if}
 
       {#if form?.error}
@@ -79,43 +60,7 @@
       {:else}
         <div class="bg-surface border border-border rounded-xl overflow-hidden">
           {#each data.keys as k (k.id)}
-            {@const expired = k.enabled && k.expiresAt && k.expiresAt.getTime() < Date.now()}
-            <div class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 items-center px-4 py-3 border-t border-border first:border-t-0 max-lg:grid-cols-[1fr_auto_auto] max-md:grid-cols-[1fr_auto] max-md:gap-2">
-              <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="font-medium text-[13px] truncate">{k.name}</span>
-                  {#if !k.enabled}<Pill kind="fail">revoked</Pill>{/if}
-                  {#if expired}<Pill kind="fail">expired</Pill>{/if}
-                </div>
-                <div class="font-mono text-[12px] text-ink-3 mt-0.5">{k.start ?? '—'}</div>
-              </div>
-              <span class="text-[12px] text-ink-3 tabular-nums max-lg:hidden">
-                created {k.createdAt.toLocaleDateString()}
-              </span>
-              <span class="text-[12px] text-ink-3 tabular-nums max-lg:hidden max-md:hidden">
-                {#if k.lastRequest}
-                  used {k.lastRequest.toLocaleDateString()}
-                {:else}
-                  never used
-                {/if}
-              </span>
-              <span class="text-[12px] text-ink-3 tabular-nums max-md:hidden">
-                {#if k.expiresAt}
-                  expires {k.expiresAt.toLocaleDateString()}
-                {:else}
-                  no expiry
-                {/if}
-              </span>
-
-              {#if k.enabled}
-                <form method="POST" action="?/revoke">
-                  <input type="hidden" name="id" value={k.id} />
-                  <Button type="submit" variant="danger" size="sm">Revoke</Button>
-                </form>
-              {:else}
-                <span></span>
-              {/if}
-            </div>
+            <ApiKeyRow {k} />
           {/each}
         </div>
       {/if}

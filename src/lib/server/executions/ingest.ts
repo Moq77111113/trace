@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db/client';
 import { executions, features, scenarioResults } from '$lib/server/db/schema';
 import type { IngestedExecution } from './cucumber-json/types';
+import type { CiMetadata } from '$lib/executions/ci-metadata';
 import type { InferSelectModel } from 'drizzle-orm';
 import { and, eq, sql } from 'drizzle-orm';
 
@@ -8,6 +9,7 @@ export type IngestExecutionInput = {
   projectId:    string;
   executedBy:   string;
   environment?: string | null;
+  ciMetadata?:  CiMetadata | null;
   parsed:       IngestedExecution;
 };
 
@@ -57,6 +59,7 @@ export async function ingestExecution(input: IngestExecutionInput): Promise<Inge
         source:                'CI',
         executedBy:            input.executedBy,
         environment:           input.environment ?? null,
+        ciMetadata:            input.ciMetadata ?? null,
         featureContentAtStart: feature.content,
         status:                finalStatus,
         startedAt:             now,

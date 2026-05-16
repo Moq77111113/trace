@@ -53,10 +53,30 @@
 
 	"execution_rerun_failed": "Relancer les {count} échecs",
 
+	"execution_abort_cta": "Interrompre",
+	"execution_abort_aborting": "Interruption…",
+	"execution_abort_modal_title": "Interrompre cette exécution ?",
+	"execution_abort_modal_body_one": "{count} scénario est encore en attente. Il sera marqué SKIPPED et l'exécution clôturée en ABORTED.",
+	"execution_abort_modal_body_other": "{count} scénarios sont encore en attente. Ils seront marqués SKIPPED et l'exécution clôturée en ABORTED.",
+	"execution_abort_modal_cancel": "Annuler",
+	"execution_abort_modal_confirm": "Interrompre",
+	"execution_abort_error": "Impossible d'interrompre l'exécution.",
+
 	"feature_aside_open_live_execution": "Ouvrir l'exécution en cours",
 	"feature_aside_view_execution": "Voir l'exécution",
 	"feature_aside_no_executions_yet": "Aucune exécution",
 	"feature_aside_no_executions_hint": "Lancez-en une avec le bouton ci-dessus.",
+
+	"dash_stats_label": "Santé du projet",
+	"dash_tile_pass_rate": "Taux de réussite · 7j",
+	"dash_tile_pass_rate_hint": "Exécutions passées / terminées",
+	"dash_tile_runs_today": "Exécutions aujourd'hui",
+	"dash_tile_runs_today_hint": "Lancées depuis minuit",
+	"dash_tile_flaky": "Fonctionnalités instables",
+	"dash_tile_flaky_hint": "Réussite + échec sur 10 exécutions",
+	"dash_tile_median": "Durée médiane · 7j",
+	"dash_tile_median_hint": "Sur les exécutions terminées",
+	"dash_feature_flake": "instable",
 
 	"home_subtitle": "Tous les projets auxquels vous avez accès.",
 	"home_empty_title": "Aucun projet pour l'instant",

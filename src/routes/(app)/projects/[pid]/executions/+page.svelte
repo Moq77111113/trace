@@ -1,14 +1,14 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import EmptyState from '$lib/components/ui/EmptyState.svelte';
-  import Pill       from '$lib/components/ui/Pill.svelte';
-  import Table      from '$lib/components/ui/Table.svelte';
-  import Select     from '$lib/components/ui/Select.svelte';
-  import PageTitle  from '$lib/components/PageTitle.svelte';
-  import * as m     from '$lib/paraglide/messages';
-  import { formatExecutionDuration } from '$lib/executions/format';
-  import { toStatusKind } from '$lib/components/ui/Status.svelte';
+  import EmptyState               from '$lib/components/ui/EmptyState.svelte';
+  import PageTitle                from '$lib/components/PageTitle.svelte';
+  import ExecutionsFilters        from '$lib/entities/execution/ui/ExecutionsFilters.svelte';
+  import ExecutionsTable          from '$lib/entities/execution/ui/ExecutionsTable.svelte';
+  import ExecutionsPager          from '$lib/entities/execution/ui/ExecutionsPager.svelte';
+  import ExecutionsExportButton   from '$lib/features/csv-export/ui/ExecutionsExportButton.svelte';
+  import * as m                   from '$lib/paraglide/messages';
+  import { hasAnyExecutionFilter } from '$lib/executions/format';
   import { createExecutionsFilterNav } from '$lib/executions/filter-nav';
 
   let { data } = $props();
@@ -18,47 +18,17 @@
     (target) => goto(target, { keepFocus: true, noScroll: true }),
   );
 
-  const statusOptions = [
-    { value: '',         label: 'Any status' },
-    { value: 'PASSED',   label: 'Passed'     },
-    { value: 'FAILED',   label: 'Failed'     },
-    { value: 'SKIPPED',  label: 'Skipped'    },
-    { value: 'IN_PROGRESS',  label: 'Running'    },
-  ];
-
-  const sourceOptions = [
-    { value: '',        label: 'Any source' },
-    { value: 'MANUAL',  label: 'Manual'     },
-    { value: 'CI',      label: 'CI'         },
-  ];
-
-  const envOptions = $derived([
-    { value: '', label: 'Any env' },
-    ...data.environments.map((e) => ({ value: e, label: e })),
-  ]);
-
-  const featureOptions = $derived([
-    { value: '', label: 'Any feature' },
-    ...data.features.map((f) => ({ value: f.id, label: f.name })),
-  ]);
-
-  const groupOptions = $derived([
-    { value: '',           label: 'Any group' },
-    { value: 'ungrouped',  label: 'Ungrouped' },
-    ...data.groups.map((g) => ({ value: g.id, label: g.name })),
-  ]);
-
   const lastPage   = $derived(Math.max(1, Math.ceil(data.total / data.pageSize)));
   const rangeStart = $derived(data.total === 0 ? 0 : (data.page - 1) * data.pageSize + 1);
   const rangeEnd   = $derived(Math.min(data.page * data.pageSize, data.total));
+  const hasFilter  = $derived(hasAnyExecutionFilter(data.filters, data.dateRange));
 
-  const hasFilter = $derived(
-    Boolean(data.filters.status) ||
-    Boolean(data.filters.source) ||
-    Boolean(data.filters.environment) ||
-    Boolean(data.filters.featureId) ||
-    Boolean(data.filters.groupId),
-  );
+  const exportHref = $derived.by(() => {
+    const params = new URLSearchParams(page.url.searchParams);
+    params.delete('page');
+    const qs = params.toString();
+    return `/projects/${data.project.id}/executions/export.csv${qs ? `?${qs}` : ''}`;
+  });
 </script>
 
 <PageTitle title={m.page_title_executions()} />
@@ -76,88 +46,29 @@
       </p>
     </div>
     <div class="text-[12.5px]">
-      <a
-        href="/projects/{data.project.id}/executions/ci"
-        class="text-accent-soft-ink hover:underline"
-      >
+      <a href="/projects/{data.project.id}/executions/ci" class="text-accent-soft-ink hover:underline">
         CI ingest →
       </a>
     </div>
   </header>
 
-  <div class="flex flex-wrap items-center gap-2 mb-4">
-    <Select value={data.filters.status      ?? ''} options={statusOptions}  placeholder="Status"      onValueChange={(v) => nav.setFilter('status',      v)} />
-    <Select value={data.filters.source      ?? ''} options={sourceOptions}  placeholder="Source"      onValueChange={(v) => nav.setFilter('source',      v)} />
-    <Select value={data.filters.environment ?? ''} options={envOptions}     placeholder="Environment" onValueChange={(v) => nav.setFilter('environment', v)} />
-    <Select value={data.filters.featureId   ?? ''} options={featureOptions} placeholder="Feature"     onValueChange={(v) => nav.setFilter('feature',     v)} />
-    <Select value={data.filters.groupId     ?? ''} options={groupOptions}   placeholder="Group"       onValueChange={(v) => nav.setFilter('group',       v)} />
-    {#if hasFilter}
-      <button
-        type="button"
-        class="text-[12px] text-ink-3 hover:text-ink underline-offset-2 hover:underline bg-transparent border-0 cursor-pointer"
-        onclick={nav.clearAll}
-      >
-        Clear filters
-      </button>
-    {/if}
-  </div>
+  <ExecutionsFilters
+    filters={data.filters}
+    dateRange={data.dateRange}
+    environments={data.environments}
+    features={data.features}
+    groups={data.groups}
+    {nav}
+  />
 
   {#if data.rows.length === 0}
     <EmptyState title={hasFilter ? 'No executions match these filters' : 'No executions yet'} />
   {:else}
-    <Table>
-      <thead>
-        <tr>
-          <th>Feature</th>
-          <th>Status</th>
-          <th>Source</th>
-          <th>By</th>
-          <th>Env</th>
-          <th>Started</th>
-          <th>Duration</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each data.rows as r (r.id)}
-          <tr>
-            <td>
-              <a class="text-ink font-medium hover:text-accent-soft-ink" href="/projects/{data.project.id}/executions/{r.id}">
-                {r.featureName}
-              </a>
-            </td>
-            <td><Pill kind={toStatusKind(r.status)}>{r.status.toLowerCase()}</Pill></td>
-            <td class="font-mono text-[11.5px] text-ink-2">{r.source}</td>
-            <td class="text-[12px] text-ink-3">{r.executedBy}</td>
-            <td class="text-[12px] text-ink-3">{r.environment ?? '—'}</td>
-            <td class="text-[12px] text-ink-3">{new Date(r.startedAt).toLocaleString()}</td>
-            <td class="text-[12px] text-ink-3 tabular-nums">{formatExecutionDuration(r.startedAt, r.finishedAt)}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </Table>
+    <ExecutionsTable rows={data.rows} projectId={data.project.id} flakeFeatureIds={data.flakeFeatureIds} />
 
-    {#if lastPage > 1}
-      <footer class="mt-4 flex items-center justify-between text-[12px] text-ink-3">
-        <span class="tabular-nums">Page {data.page} of {lastPage}</span>
-        <span class="flex items-center gap-3">
-          <button
-            type="button"
-            class="text-ink-2 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed bg-transparent border-0 cursor-pointer"
-            disabled={data.page <= 1}
-            onclick={() => nav.goToPage(data.page - 1)}
-          >
-            ← Prev
-          </button>
-          <button
-            type="button"
-            class="text-ink-2 hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed bg-transparent border-0 cursor-pointer"
-            disabled={data.page >= lastPage}
-            onclick={() => nav.goToPage(data.page + 1)}
-          >
-            Next →
-          </button>
-        </span>
-      </footer>
-    {/if}
+    <footer class="mt-6 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-4 text-[12.5px]">
+      <ExecutionsExportButton href={exportHref} total={data.total} />
+      <ExecutionsPager page={data.page} {lastPage} onGoToPage={nav.goToPage} />
+    </footer>
   {/if}
 </div>

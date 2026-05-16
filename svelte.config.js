@@ -8,6 +8,9 @@ const config = {
 	},
 	kit: {
 		adapter: adapter(),
+		alias: {
+			'~': '.'
+		},
 
 		typescript: {
 			config: (config) => ({

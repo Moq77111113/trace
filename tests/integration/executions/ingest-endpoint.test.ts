@@ -75,6 +75,49 @@ describe('POST /api/executions/ingest', () => {
     });
   });
 
+  it('persists ci_metadata from X-CI-Branch and X-CI-Commit headers', async () => {
+    const { project, rawKey } = await seedProjectWithKey();
+    const body                = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
+
+    const res = await invoke(buildEvent(body, {
+      'x-project-id':  project.id,
+      'authorization': `Bearer ${rawKey}`,
+      'x-environment': 'staging',
+      'x-ci-branch':   'feat/A9',
+      'x-ci-commit':   'a3fa827abcdef',
+    }));
+
+    expect(res.status).toBe(201);
+
+    const runId = res.body.run_id as string;
+    const { db }             = await import('$lib/server/db/client');
+    const { executions }     = await import('$lib/server/db/schema');
+    const { eq }             = await import('drizzle-orm');
+
+    const [row] = await db.select().from(executions).where(eq(executions.id, runId));
+    expect(row?.ciMetadata).toEqual({ branch: 'feat/A9', commit: 'a3fa827abcdef' });
+  });
+
+  it('leaves ci_metadata null when no CI headers are sent', async () => {
+    const { project, rawKey } = await seedProjectWithKey();
+    const body                = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
+
+    const res = await invoke(buildEvent(body, {
+      'x-project-id':  project.id,
+      'authorization': `Bearer ${rawKey}`,
+    }));
+
+    expect(res.status).toBe(201);
+
+    const runId = res.body.run_id as string;
+    const { db }         = await import('$lib/server/db/client');
+    const { executions } = await import('$lib/server/db/schema');
+    const { eq }         = await import('drizzle-orm');
+
+    const [row] = await db.select().from(executions).where(eq(executions.id, runId));
+    expect(row?.ciMetadata).toBeNull();
+  });
+
   it('returns 400 for missing project header', async () => {
     const res = await invoke(buildEvent('[]'));
 

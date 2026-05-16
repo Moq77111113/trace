@@ -3,6 +3,7 @@
   import { SvelteMap } from 'svelte/reactivity';
   import BrandMark  from './BrandMark.svelte';
   import Icon       from './ui/Icon.svelte';
+  import Pill       from './ui/Pill.svelte';
   import Status     from './ui/Status.svelte';
   import { toStatusKind, type StatusKind } from './ui/Status.svelte';
   import { plural } from '$lib/i18n/plural';
@@ -30,6 +31,7 @@
 
   const project = $derived(page.data.project as Project | undefined);
   const tree    = $derived(page.data.tree as Tree | undefined);
+  const flakeFeatureIds = $derived(page.data.flakeFeatureIds as Set<string> | undefined);
 
   const expanded = new SvelteMap<string, boolean>();
 
@@ -184,6 +186,9 @@
             >
               <Status kind={featureStatus(f)} size={10} />
               <span class="flex-1 min-w-0 truncate">{f.name}</span>
+              {#if flakeFeatureIds?.has(f.id)}
+                <Pill kind="flake" glyph={false}>flake</Pill>
+              {/if}
             </a>
           {/each}
         {/if}
@@ -199,6 +204,9 @@
         >
           <Status kind={featureStatus(f)} size={10} />
           <span class="flex-1 min-w-0 truncate">{f.name}</span>
+          {#if flakeFeatureIds?.has(f.id)}
+            <Pill kind="flake" glyph={false}>flake</Pill>
+          {/if}
         </a>
       {/each}
     </div>
