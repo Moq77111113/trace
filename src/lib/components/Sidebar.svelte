@@ -49,7 +49,7 @@
     project
       ? ([
           { key: 'overview', label: m.nav_overview(), icon: 'Home',     href: `/projects/${project.id}` },
-          { key: 'runs',     label: m.nav_runs(),     icon: 'History',  href: `/projects/${project.id}/runs` },
+          { key: 'executions', label: m.nav_executions(), icon: 'History',  href: `/projects/${project.id}/executions` },
           { key: 'import',   label: m.nav_import(),   icon: 'Upload',   href: `/projects/${project.id}/import` },
           { key: 'export',   label: m.nav_export(),   icon: 'Download', href: `/projects/${project.id}/export` },
           { key: 'keys',     label: m.nav_api_keys(), icon: 'Key',      href: `/projects/${project.id}/settings/api-keys` }
@@ -61,7 +61,7 @@
     if (!project) return 'home';
     const base = `/projects/${project.id}`;
     if (pathname.startsWith(`${base}/settings`)) return 'keys';
-    if (pathname.startsWith(`${base}/runs`))     return 'runs';
+    if (pathname.startsWith(`${base}/executions`)) return 'executions';
     if (pathname.startsWith(`${base}/import`))   return 'import';
     if (pathname.startsWith(`${base}/export`))   return 'export';
     return 'overview';
@@ -243,10 +243,11 @@
         </div>
       </div>
       <a
-        href="/account"
-        aria-label={m.nav_account()}
-        title={m.nav_account()}
-        class="w-[26px] h-[26px] grid place-items-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink"
+        href="/settings/account"
+        aria-label={m.nav_settings()}
+        title={m.nav_settings()}
+        class="w-[26px] h-[26px] grid place-items-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink aria-[current=page]:bg-surface aria-[current=page]:text-ink"
+        aria-current={page.url.pathname.startsWith('/settings') ? 'page' : undefined}
       >
         <Icon name="Settings" size={14} />
       </a>

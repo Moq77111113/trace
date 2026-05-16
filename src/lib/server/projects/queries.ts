@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db/client';
-import { projects, features, runs } from '$lib/server/db/schema';
+import { projects, features, executions } from '$lib/server/db/schema';
 import { and, count, desc, eq, ne, sql } from 'drizzle-orm';
 
 export async function listProjectsWithStats() {
@@ -18,16 +18,16 @@ export async function listProjectsWithStats() {
     db
       .select({
         projectId:  features.projectId,
-        status:     runs.status,
-        finishedAt: runs.finishedAt,
+        status:     executions.status,
+        finishedAt: executions.finishedAt,
         rn:         sql<number>`ROW_NUMBER() OVER (
           PARTITION BY ${features.projectId}
-          ORDER BY ${runs.finishedAt} DESC NULLS LAST
+          ORDER BY ${executions.finishedAt} DESC NULLS LAST
         )`.as('rn'),
       })
-      .from(runs)
-      .innerJoin(features, eq(runs.featureId, features.id))
-      .where(ne(runs.status, 'RUNNING')),
+      .from(executions)
+      .innerJoin(features, eq(executions.featureId, features.id))
+      .where(ne(executions.status, 'IN_PROGRESS')),
   );
 
   return db
@@ -46,19 +46,19 @@ export async function listProjectsWithStats() {
     .orderBy(desc(projects.updatedAt));
 }
 
-export async function listRecentRuns(limit = 20) {
+export async function listRecentExecutions(limit = 20) {
   return db
     .select({
-      id:          runs.id,
-      status:      runs.status,
-      source:      runs.source,
-      executedBy:  runs.executedBy,
-      startedAt:   runs.startedAt,
+      id:          executions.id,
+      status:      executions.status,
+      source:      executions.source,
+      executedBy:  executions.executedBy,
+      startedAt:   executions.startedAt,
       featureName: features.name,
       projectId:   features.projectId,
     })
-    .from(runs)
-    .innerJoin(features, eq(runs.featureId, features.id))
-    .orderBy(desc(runs.startedAt))
+    .from(executions)
+    .innerJoin(features, eq(executions.featureId, features.id))
+    .orderBy(desc(executions.startedAt))
     .limit(limit);
 }

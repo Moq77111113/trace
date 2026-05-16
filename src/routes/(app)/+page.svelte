@@ -8,21 +8,10 @@
   import { invalidateAll } from '$app/navigation';
   import { toStatusKind } from '$lib/components/ui/Status.svelte';
   import { plural } from '$lib/i18n/plural';
+  import { relativeTime } from '$lib/i18n/relative-time';
   import * as m from '$lib/paraglide/messages';
 
   let { data } = $props();
-
-  function relative(d: Date | string): string {
-    const date = typeof d === 'string' ? new Date(d) : d;
-    const mins = Math.floor((Date.now() - date.getTime()) / 60_000);
-    if (mins < 1)   return m.time_just_now();
-    if (mins < 60)  return m.time_minutes_ago({ count: mins });
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return m.time_hours_ago({ count: hours });
-    const days  = Math.floor(hours / 24);
-    if (days < 30)  return m.time_days_ago({ count: days });
-    return date.toLocaleDateString();
-  }
 
   function initials(name: string): string {
     return name
@@ -81,7 +70,7 @@
           </div>
           {#if p.lastRunStatus}
             <div class="flex items-center justify-between text-[12px] text-ink-3">
-              <span>{m.home_last_run()}</span>
+              <span>{m.home_last_execution()}</span>
               <Pill kind={toStatusKind(p.lastRunStatus)}>{p.lastRunStatus.toLowerCase()}</Pill>
             </div>
           {/if}
@@ -91,11 +80,11 @@
   {/if}
 
   {#if data.recentRuns.length > 0}
-    <h2 class="text-[16px] font-semibold tracking-tight mt-7 mb-2.5">{m.home_recent_runs()}</h2>
+    <h2 class="text-[16px] font-semibold tracking-tight mt-7 mb-2.5">{m.home_recent_executions()}</h2>
     <div class="bg-surface border border-border rounded-xl overflow-hidden">
       {#each data.recentRuns as r (r.id)}
         <a
-          href="/projects/{r.projectId}/runs/{r.id}"
+          href="/projects/{r.projectId}/executions/{r.id}"
           class="flex items-start gap-2.5 px-3.5 py-2.5 border-t border-border first:border-t-0 hover:bg-surface-2 transition-colors"
         >
           <Pill kind={toStatusKind(r.status)}>{r.status.toLowerCase()}</Pill>
@@ -108,7 +97,7 @@
               <span class="text-ink-mute">•</span>
               <span>{r.executedBy}</span>
               <span class="text-ink-mute">•</span>
-              <span>{relative(r.startedAt)}</span>
+              <span>{relativeTime(r.startedAt)}</span>
             </div>
           </div>
         </a>

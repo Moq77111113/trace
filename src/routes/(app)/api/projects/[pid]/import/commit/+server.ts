@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { commitBatch } from '$lib/server/import/commit';
 import { DECISIONS } from '$lib/import/format';
 import { authedHandler } from '$lib/server/route';
-import { resolveLiveExecutor } from '$lib/server/runs/auth';
+import { resolveLiveExecutor } from '$lib/server/executions/auth';
 import type { RequestHandler } from './$types';
 
 const body = z.object({

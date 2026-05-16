@@ -26,7 +26,7 @@ rest of the team. See [`.env.example`](./.env.example) for the full list of vari
 ## CI ingest
 
 ```sh
-curl -X POST https://your.trace/api/runs/ingest \
+curl -X POST https://your.trace/api/executions/ingest \
   -H 'X-Project-Id: <pid>' \
   -H 'X-Environment: ci' \
   -H 'X-CI-Source: github-actions' \

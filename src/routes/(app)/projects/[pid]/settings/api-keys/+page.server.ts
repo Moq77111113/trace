@@ -1,13 +1,22 @@
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { createApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
+import { appendCrumb } from '$lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load = (async ({ params }) => ({
-  projectId: params.pid,
-  keys:      await listApiKeys(params.pid),
-})) satisfies PageServerLoad;
+export const load = (async ({ params, parent }) => {
+  const { breadcrumbs } = await parent();
+  return {
+    projectId:   params.pid,
+    keys:        await listApiKeys(params.pid),
+    breadcrumbs: appendCrumb(
+      breadcrumbs,
+      { label: m.nav_settings() },
+      { label: m.nav_api_keys() },
+    ),
+  };
+}) satisfies PageServerLoad;
 
 const CreateForm = z.object({
   name:      z.string().trim().min(1, 'Name required').max(60, 'Name too long'),

@@ -7,7 +7,7 @@ import {
 	projects,
 	featureGroups,
 	features,
-	runs,
+	executions,
 	scenarioResults,
 } from '$lib/server/db/schema';
 
@@ -72,14 +72,14 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 	const runFeatureContent = await readFile(join(DEMO_DIR, 'features', runFile.featureFile), 'utf8');
 
 	const [run] = await db
-		.insert(runs)
+		.insert(executions)
 		.values({
 			featureId:           runFeatureId,
 			source:              runFile.source,
 			executedBy:          runFile.executedBy,
 			environment:         runFile.environment,
-			featureContentAtRun: runFeatureContent,
-			status:              'RUNNING',
+			featureContentAtStart: runFeatureContent,
+			status:              'IN_PROGRESS',
 			notes:               null,
 		})
 		.returning();
@@ -88,7 +88,7 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 	let aggregate: 'PASSED' | 'FAILED' | 'SKIPPED' = 'PASSED';
 	for (const s of runFile.scenarios) {
 		await db.insert(scenarioResults).values({
-			runId:        run.id,
+			executionId:        run.id,
 			scenarioName: s.name,
 			status:       s.status === 'PENDING' ? 'SKIPPED' : s.status,
 			durationMs:   s.durationMs,
@@ -105,7 +105,7 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 		.join('\n');
 
 	await db
-		.update(runs)
+		.update(executions)
 		.set({ status: aggregate, finishedAt: new Date(), notes: noteLines || null })
-		.where(eq(runs.id, run.id));
+		.where(eq(executions.id, run.id));
 }

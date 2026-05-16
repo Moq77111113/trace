@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { parseCucumberJson } from '$lib/server/runs/cucumber-json/parse';
+import { parseCucumberJson } from '$lib/server/executions/cucumber-json/parse';
 
 function load(file: string) {
   return JSON.parse(readFileSync(resolve('tests/fixtures/cucumber-json', file), 'utf-8'));

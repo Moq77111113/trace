@@ -4,11 +4,11 @@
   import Icon            from './ui/Icon.svelte';
   import CommandPalette  from './CommandPalette.svelte';
   import { applyTheme }  from '$lib/theme.client';
-  import { isTypingTarget } from '$lib/runs/format';
+  import { isTypingTarget } from '$lib/executions/format';
+  import type { Crumb }  from '$lib/breadcrumbs';
   import type { Theme }  from '$lib/theme';
   import * as m          from '$lib/paraglide/messages';
 
-  type Crumb = { label: string; href?: string };
   type Props = {
     theme: Theme;
     onToggleSidebar?: () => void;
@@ -42,57 +42,7 @@
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const crumbs = $derived(buildCrumbs(page.url.pathname));
-
-  function buildCrumbs(pathname: string): Crumb[] {
-    const project = page.data.project as { id: string; name: string } | undefined;
-    const feature = page.data.feature as { id: string; name: string } | undefined;
-    const out: Crumb[] = [];
-
-    if (!project) {
-      if (pathname === '/') out.push({ label: m.nav_projects() });
-      else if (pathname.startsWith('/projects/new')) {
-        out.push({ label: m.nav_projects(), href: '/' });
-        out.push({ label: m.breadcrumb_new_project() });
-      } else if (pathname.startsWith('/account')) {
-        out.push({ label: m.nav_account() });
-      } else if (pathname.startsWith('/settings/instance')) {
-        out.push({ label: m.nav_settings(), href: '/' });
-        out.push({ label: m.nav_instance() });
-      } else {
-        out.push({ label: m.nav_home(), href: '/' });
-      }
-      return out;
-    }
-
-    const base = `/projects/${project.id}`;
-    out.push({ label: project.name, href: base });
-
-    if (pathname === base) {
-      out.push({ label: m.nav_overview() });
-    } else if (pathname.startsWith(`${base}/features/new`)) {
-      out.push({ label: m.nav_features(), href: base });
-      out.push({ label: m.breadcrumb_new_feature() });
-    } else if (pathname.startsWith(`${base}/features/`) && feature) {
-      out.push({ label: m.nav_features(), href: base });
-      out.push({ label: feature.name });
-    } else if (pathname.match(new RegExp(`^${base}/runs/[^/]+`))) {
-      const rid = pathname.split('/').pop() ?? '';
-      out.push({ label: m.nav_runs(), href: `${base}/runs` });
-      out.push({ label: rid.slice(0, 8) });
-    } else if (pathname.startsWith(`${base}/runs`)) {
-      out.push({ label: m.nav_runs() });
-    } else if (pathname.startsWith(`${base}/import`)) {
-      out.push({ label: m.nav_import() });
-    } else if (pathname.startsWith(`${base}/export`)) {
-      out.push({ label: m.nav_export() });
-    } else if (pathname.startsWith(`${base}/settings/api-keys`)) {
-      out.push({ label: m.nav_settings() });
-      out.push({ label: m.nav_api_keys() });
-    }
-
-    return out;
-  }
+  const crumbs = $derived<Crumb[]>((page.data.breadcrumbs as Crumb[] | undefined) ?? []);
 </script>
 
 <header
@@ -110,12 +60,12 @@
   {/if}
 
   <nav class="flex items-center gap-1.5 text-[13px] text-ink-2 min-w-0" aria-label="Breadcrumb">
-    {#each crumbs as c, i (i)}
+    {#each crumbs as crumb, i (i)}
       {#if i > 0}<span class="text-ink-mute">›</span>{/if}
-      {#if c.href && i < crumbs.length - 1}
-        <a class="hover:text-ink truncate" href={c.href}>{c.label}</a>
+      {#if crumb.href && i < crumbs.length - 1}
+        <a class="hover:text-ink truncate" href={crumb.href}>{crumb.label}</a>
       {:else}
-        <span class="text-ink font-medium truncate">{c.label}</span>
+        <span class="text-ink font-medium truncate">{crumb.label}</span>
       {/if}
     {/each}
   </nav>

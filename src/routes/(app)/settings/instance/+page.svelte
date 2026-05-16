@@ -3,7 +3,6 @@
 	import Button    from '$lib/components/ui/Button.svelte';
 	import Input     from '$lib/components/ui/Input.svelte';
 	import Pill      from '$lib/components/ui/Pill.svelte';
-	import Icon      from '$lib/components/ui/Icon.svelte';
 	import PageTitle from '$lib/components/PageTitle.svelte';
 	import { plural } from '$lib/i18n/plural';
 	import * as m    from '$lib/paraglide/messages';
@@ -28,86 +27,74 @@
 
 <PageTitle title={m.page_title_settings_instance()} />
 
-<div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
-	<div class="grid grid-cols-[220px_1fr] gap-7 max-w-[1100px] max-lg:grid-cols-[200px_1fr] max-lg:gap-6 max-md:grid-cols-[1fr] max-md:gap-4">
-		<nav class="flex flex-col gap-px max-md:flex-row max-md:overflow-x-auto max-md:-mx-4 max-md:px-4 max-md:pb-2">
-			<a
-				href="#signup"
-				class="flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-md bg-surface text-ink font-medium shadow-[var(--shadow-1)]"
-			>
-				<Icon name="Settings" size={13} /> {m.nav_instance()}
-			</a>
-		</nav>
+<div class="flex flex-col gap-8">
+	<section id="signup">
+		<h1 class="text-[20px] font-semibold tracking-tight">{m.page_title_settings_instance()}</h1>
+		<h2 class="text-[15px] font-semibold tracking-tight mt-5 mb-1">{m.instance_signup_title()}</h2>
+		<p class="text-[13px] text-ink-3 max-w-[64ch] mb-4">
+			{m.instance_signup_body()}
+		</p>
 
-		<div class="flex flex-col gap-8">
-			<section id="signup">
-				<h1 class="text-[16px] font-semibold tracking-tight mb-1">{m.instance_signup_title()}</h1>
-				<p class="text-[13px] text-ink-3 max-w-[64ch] mb-4">
-					{m.instance_signup_body()}
-				</p>
-
-				<div class="flex items-center gap-2 mb-5">
-					<Pill kind={state.kind}>{state.label}</Pill>
-				</div>
-
-				{#if error}
-					<p class="text-[12px] text-fail-ink mb-3">{error}</p>
-				{/if}
-
-				<form method="POST" action="?/open" use:enhance class="flex flex-wrap items-end gap-2 mb-3">
-					<label class="flex flex-col gap-1 text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium">
-						{m.instance_signup_seats_field()}
-						<Input name="budget" type="number" min="1" value="1" required class="w-24" />
-					</label>
-					<label class="flex flex-col gap-1 text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium">
-						{m.instance_signup_closes_field()}
-						<Input name="windowEndsAt" type="datetime-local" />
-					</label>
-					<Button type="submit" variant="primary">{m.instance_signup_open_cta()}</Button>
-				</form>
-
-				{#if data.settings.signupBudget > 0}
-					<form method="POST" action="?/close" use:enhance>
-						<Button type="submit" variant="secondary" size="sm">{m.instance_signup_close_cta()}</Button>
-					</form>
-				{/if}
-			</section>
-
-			<section id="demo">
-				<h2 class="text-[15px] font-semibold tracking-tight mb-1">{m.instance_demo_title()}</h2>
-				<p class="text-[13px] text-ink-3 max-w-[64ch] mb-4">
-					{m.instance_demo_body()}
-				</p>
-
-				{#if data.demoExists}
-					<Pill kind="brand">{m.instance_demo_present()}</Pill>
-				{:else}
-					<div class="flex items-center gap-3">
-						<Pill kind="neutral">{m.instance_demo_missing()}</Pill>
-						<form method="POST" action="?/reseed" use:enhance>
-							<Button type="submit" variant="secondary" size="sm">{m.instance_demo_reseed()}</Button>
-						</form>
-					</div>
-				{/if}
-			</section>
-
-			<section id="users">
-				<h2 class="text-[15px] font-semibold tracking-tight mb-1">{m.instance_users_title()}</h2>
-				<p class="text-[13px] text-ink-3 max-w-[64ch] mb-4">
-					{m.instance_users_body()}
-				</p>
-
-				<ul class="flex flex-col gap-1.5">
-					{#each data.users as u (u.id)}
-						<li class="flex items-center gap-3 px-3 py-2 rounded-md bg-surface text-[13px]">
-							<span class="font-medium text-ink truncate flex-1">{u.email}</span>
-							{#if u.name}<span class="text-ink-3 text-[12px] truncate">{u.name}</span>{/if}
-							<Pill kind={u.role === 'admin' ? 'brand' : 'neutral'}>{u.role}</Pill>
-							<span class="text-ink-3 text-[11px] whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString()}</span>
-						</li>
-					{/each}
-				</ul>
-			</section>
+		<div class="flex items-center gap-2 mb-5">
+			<Pill kind={state.kind}>{state.label}</Pill>
 		</div>
-	</div>
+
+		{#if error}
+			<p class="text-[12px] text-fail-ink mb-3">{error}</p>
+		{/if}
+
+		<form method="POST" action="?/open" use:enhance class="flex flex-wrap items-end gap-2 mb-3">
+			<label class="flex flex-col gap-1 text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium">
+				{m.instance_signup_seats_field()}
+				<Input name="budget" type="number" min="1" value="1" required class="w-24" />
+			</label>
+			<label class="flex flex-col gap-1 text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium">
+				{m.instance_signup_closes_field()}
+				<Input name="windowEndsAt" type="datetime-local" />
+			</label>
+			<Button type="submit" variant="primary">{m.instance_signup_open_cta()}</Button>
+		</form>
+
+		{#if data.settings.signupBudget > 0}
+			<form method="POST" action="?/close" use:enhance>
+				<Button type="submit" variant="secondary" size="sm">{m.instance_signup_close_cta()}</Button>
+			</form>
+		{/if}
+	</section>
+
+	<section id="demo">
+		<h2 class="text-[15px] font-semibold tracking-tight mb-1">{m.instance_demo_title()}</h2>
+		<p class="text-[13px] text-ink-3 max-w-[64ch] mb-4">
+			{m.instance_demo_body()}
+		</p>
+
+		{#if data.demoExists}
+			<Pill kind="brand">{m.instance_demo_present()}</Pill>
+		{:else}
+			<div class="flex items-center gap-3">
+				<Pill kind="neutral">{m.instance_demo_missing()}</Pill>
+				<form method="POST" action="?/reseed" use:enhance>
+					<Button type="submit" variant="secondary" size="sm">{m.instance_demo_reseed()}</Button>
+				</form>
+			</div>
+		{/if}
+	</section>
+
+	<section id="users">
+		<h2 class="text-[15px] font-semibold tracking-tight mb-1">{m.instance_users_title()}</h2>
+		<p class="text-[13px] text-ink-3 max-w-[64ch] mb-4">
+			{m.instance_users_body()}
+		</p>
+
+		<ul class="flex flex-col gap-1.5">
+			{#each data.users as u (u.id)}
+				<li class="flex items-center gap-3 px-3 py-2 rounded-md bg-surface text-[13px]">
+					<span class="font-medium text-ink truncate flex-1">{u.email}</span>
+					{#if u.name}<span class="text-ink-3 text-[12px] truncate">{u.name}</span>{/if}
+					<Pill kind={u.role === 'admin' ? 'brand' : 'neutral'}>{u.role}</Pill>
+					<span class="text-ink-3 text-[11px] whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString()}</span>
+				</li>
+			{/each}
+		</ul>
+	</section>
 </div>

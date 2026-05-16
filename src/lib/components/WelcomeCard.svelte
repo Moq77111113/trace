@@ -48,7 +48,7 @@
 				<span class="opacity-70">2.</span>
 				<a
 					class="font-medium underline-offset-2 hover:underline"
-					href={`/projects/${projectId}/runs`}
+					href={`/projects/${projectId}/executions`}
 				>
 					Open the sample test run
 				</a>

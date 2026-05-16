@@ -6,16 +6,23 @@ import { deleteGroup, groupDeleteInput } from '$lib/server/groups/delete';
 import { renameGroup, groupRenameInput } from '$lib/server/groups/rename';
 import { reorderGroups, groupReorderInput } from '$lib/server/groups/reorder';
 import { stringFields } from '$lib/server/forms';
+import { appendCrumb } from '$lib/breadcrumbs';
+import * as m from '$lib/paraglide/messages';
 import type { PageServerLoad } from './$types';
 
 type Params = { pid: string };
 
-export const load = (async ({ params }) => {
-  const [byGroup, groups] = await Promise.all([
+export const load = (async ({ params, parent }) => {
+  const [byGroup, groups, parentData] = await Promise.all([
     listFeaturesByGroup(params.pid),
     listGroups(params.pid),
+    parent(),
   ]);
-  return { byGroup, groups };
+  return {
+    byGroup,
+    groups,
+    breadcrumbs: appendCrumb(parentData.breadcrumbs, { label: m.nav_overview() }),
+  };
 }) satisfies PageServerLoad;
 
 export const actions = {

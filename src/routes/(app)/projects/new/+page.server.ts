@@ -1,7 +1,20 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { stringFields } from '$lib/server/forms';
 import { createProject, projectInput } from '$lib/server/projects/create';
-import type { Actions } from './$types';
+import { appendCrumb } from '$lib/breadcrumbs';
+import * as m from '$lib/paraglide/messages';
+import type { Actions, PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ parent }) => {
+  const { breadcrumbs } = await parent();
+  return {
+    breadcrumbs: appendCrumb(
+      breadcrumbs,
+      { label: m.nav_projects(), href: '/' },
+      { label: m.breadcrumb_new_project() },
+    ),
+  };
+};
 
 export const actions: Actions = {
   default: async ({ request }) => {

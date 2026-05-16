@@ -1,21 +1,21 @@
 import { and, asc, desc, eq, ne, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, featureGroups, runs } from '$lib/server/db/schema';
+import { features, featureGroups, executions } from '$lib/server/db/schema';
 
 export async function listFeatures(projectId: string) {
   const ranked = db.$with('ranked_runs').as(
     db
       .select({
-        featureId:  runs.featureId,
-        status:     runs.status,
-        finishedAt: runs.finishedAt,
+        featureId:  executions.featureId,
+        status:     executions.status,
+        finishedAt: executions.finishedAt,
         rn:         sql<number>`ROW_NUMBER() OVER (
-          PARTITION BY ${runs.featureId}
-          ORDER BY ${runs.finishedAt} DESC NULLS LAST
+          PARTITION BY ${executions.featureId}
+          ORDER BY ${executions.finishedAt} DESC NULLS LAST
         )`.as('rn'),
       })
-      .from(runs)
-      .where(ne(runs.status, 'RUNNING')),
+      .from(executions)
+      .where(ne(executions.status, 'IN_PROGRESS')),
   );
 
   return db
@@ -46,7 +46,7 @@ type FeatureRow = {
   parseErrors:          (typeof features.$inferSelect)['parseErrors'];
   version:              number;
   updatedAt:            Date;
-  latestFinishedStatus: (typeof runs.status.enumValues)[number] | null;
+  latestFinishedStatus: (typeof executions.status.enumValues)[number] | null;
 };
 
 type GroupRow = typeof featureGroups.$inferSelect;
@@ -62,16 +62,16 @@ export async function listFeaturesByGroup(projectId: string): Promise<FeaturesBy
   const ranked = db.$with('ranked_runs').as(
     db
       .select({
-        featureId:  runs.featureId,
-        status:     runs.status,
-        finishedAt: runs.finishedAt,
+        featureId:  executions.featureId,
+        status:     executions.status,
+        finishedAt: executions.finishedAt,
         rn:         sql<number>`ROW_NUMBER() OVER (
-          PARTITION BY ${runs.featureId}
-          ORDER BY ${runs.finishedAt} DESC NULLS LAST
+          PARTITION BY ${executions.featureId}
+          ORDER BY ${executions.finishedAt} DESC NULLS LAST
         )`.as('rn'),
       })
-      .from(runs)
-      .where(ne(runs.status, 'RUNNING')),
+      .from(executions)
+      .where(ne(executions.status, 'IN_PROGRESS')),
   );
 
   const rows = await db

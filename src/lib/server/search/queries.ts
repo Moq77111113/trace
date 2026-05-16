@@ -1,6 +1,6 @@
 import { and, asc, eq, ilike, ne, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { featureGroups, features, projects, runs } from '$lib/server/db/schema';
+import { featureGroups, features, projects, executions } from '$lib/server/db/schema';
 
 export type SearchResult = {
 	featureId:   string;
@@ -8,7 +8,7 @@ export type SearchResult = {
 	projectId:   string;
 	projectName: string;
 	groupName:   string | null;
-	status:      typeof runs.status.enumValues[number] | null;
+	status:      typeof executions.status.enumValues[number] | null;
 };
 
 const LIMIT = 20;
@@ -21,16 +21,16 @@ export async function searchFeatures(query: string): Promise<SearchResult[]> {
 	const ranked = db.$with('ranked_runs').as(
 		db
 			.select({
-				featureId:  runs.featureId,
-				status:     runs.status,
-				finishedAt: runs.finishedAt,
+				featureId:  executions.featureId,
+				status:     executions.status,
+				finishedAt: executions.finishedAt,
 				rn:         sql<number>`ROW_NUMBER() OVER (
-					PARTITION BY ${runs.featureId}
-					ORDER BY ${runs.finishedAt} DESC NULLS LAST
+					PARTITION BY ${executions.featureId}
+					ORDER BY ${executions.finishedAt} DESC NULLS LAST
 				)`.as('rn')
 			})
-			.from(runs)
-			.where(ne(runs.status, 'RUNNING'))
+			.from(executions)
+			.where(ne(executions.status, 'IN_PROGRESS'))
 	);
 
 	return db

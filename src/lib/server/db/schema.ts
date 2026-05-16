@@ -7,9 +7,9 @@ import { sql } from 'drizzle-orm';
 import { pk } from './columns';
 import { user } from './auth.schema';
 
-export const runSource      = pgEnum('run_source',      ['MANUAL', 'CI']);
-export const runStatus      = pgEnum('run_status',      ['RUNNING', 'PASSED', 'FAILED', 'SKIPPED']);
-export const scenarioStatus = pgEnum('scenario_status', ['PENDING', 'PASSED', 'FAILED', 'SKIPPED']);
+export const executionSource = pgEnum('execution_source', ['MANUAL', 'CI']);
+export const executionStatus = pgEnum('execution_status', ['IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED']);
+export const scenarioStatus  = pgEnum('scenario_status',  ['PENDING', 'PASSED', 'FAILED', 'SKIPPED']);
 
 export type ParseError = { line: number; column?: number; message: string };
 
@@ -87,28 +87,28 @@ export const featureTags = pgTable(
   ],
 );
 
-export const runs = pgTable(
-  'runs',
+export const executions = pgTable(
+  'executions',
   {
-    id:                  pk(),
-    featureId:           uuid('feature_id').notNull().references(() => features.id, { onDelete: 'restrict' }),
-    source:              runSource('source').notNull(),
-    executedBy:          text('executed_by').notNull(),
-    environment:         text('environment'),
-    notes:               text('notes'),
-    featureContentAtRun: text('feature_content_at_run').notNull(),
-    status:              runStatus('status').notNull().default('RUNNING'),
-    startedAt:           timestamp('started_at',  { withTimezone: true }).notNull().defaultNow(),
-    finishedAt:          timestamp('finished_at', { withTimezone: true }),
+    id:                    pk(),
+    featureId:             uuid('feature_id').notNull().references(() => features.id, { onDelete: 'restrict' }),
+    source:                executionSource('source').notNull(),
+    executedBy:            text('executed_by').notNull(),
+    environment:           text('environment'),
+    notes:                 text('notes'),
+    featureContentAtStart: text('feature_content_at_start').notNull(),
+    status:                executionStatus('status').notNull().default('IN_PROGRESS'),
+    startedAt:             timestamp('started_at',  { withTimezone: true }).notNull().defaultNow(),
+    finishedAt:            timestamp('finished_at', { withTimezone: true }),
   },
-  (t) => [index('runs_feature_started_idx').on(t.featureId, sql`${t.startedAt} DESC`)],
+  (t) => [index('executions_feature_started_idx').on(t.featureId, sql`${t.startedAt} DESC`)],
 );
 
 export const scenarioResults = pgTable(
   'scenario_results',
   {
     id:           pk(),
-    runId:        uuid('run_id').notNull().references(() => runs.id, { onDelete: 'cascade' }),
+    executionId:  uuid('execution_id').notNull().references(() => executions.id, { onDelete: 'cascade' }),
     scenarioName: text('scenario_name').notNull(),
     status:       scenarioStatus('status').notNull().default('PENDING'),
     durationMs:   integer('duration_ms'),
@@ -116,12 +116,12 @@ export const scenarioResults = pgTable(
     errorMessage: text('error_message'),
     updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex('scenario_results_run_name_unique').on(t.runId, t.scenarioName)],
+  (t) => [uniqueIndex('scenario_results_execution_name_unique').on(t.executionId, t.scenarioName)],
 );
 
 export const attachments = pgTable('attachments', {
   id:               pk(),
-  runId:            uuid('run_id').notNull().references(() => runs.id, { onDelete: 'cascade' }),
+  executionId:      uuid('execution_id').notNull().references(() => executions.id, { onDelete: 'cascade' }),
   scenarioResultId: uuid('scenario_result_id').references(() => scenarioResults.id, { onDelete: 'cascade' }),
   filename:         text('filename').notNull(),
   mimeType:         text('mime_type').notNull(),

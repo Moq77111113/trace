@@ -15,8 +15,8 @@
           "notNull": true,
           "default": "uuidv7()"
         },
-        "run_id": {
-          "name": "run_id",
+        "execution_id": {
+          "name": "execution_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -67,12 +67,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "attachments_run_id_runs_id_fk": {
-          "name": "attachments_run_id_runs_id_fk",
+        "attachments_execution_id_executions_id_fk": {
+          "name": "attachments_execution_id_executions_id_fk",
           "tableFrom": "attachments",
-          "tableTo": "runs",
+          "tableTo": "executions",
           "columnsFrom": [
-            "run_id"
+            "execution_id"
           ],
           "columnsTo": [
             "id"
@@ -531,8 +531,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.runs": {
-      "name": "runs",
+    "public.executions": {
+      "name": "executions",
       "schema": "",
       "columns": {
         "id": {
@@ -550,7 +550,7 @@
         },
         "source": {
           "name": "source",
-          "type": "run_source",
+          "type": "execution_source",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -573,19 +573,19 @@
           "primaryKey": false,
           "notNull": false
         },
-        "feature_content_at_run": {
-          "name": "feature_content_at_run",
+        "feature_content_at_start": {
+          "name": "feature_content_at_start",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "status": {
           "name": "status",
-          "type": "run_status",
+          "type": "execution_status",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'RUNNING'"
+          "default": "'IN_PROGRESS'"
         },
         "started_at": {
           "name": "started_at",
@@ -602,8 +602,8 @@
         }
       },
       "indexes": {
-        "runs_feature_started_idx": {
-          "name": "runs_feature_started_idx",
+        "executions_feature_started_idx": {
+          "name": "executions_feature_started_idx",
           "columns": [
             {
               "expression": "feature_id",
@@ -625,9 +625,9 @@
         }
       },
       "foreignKeys": {
-        "runs_feature_id_features_id_fk": {
-          "name": "runs_feature_id_features_id_fk",
-          "tableFrom": "runs",
+        "executions_feature_id_features_id_fk": {
+          "name": "executions_feature_id_features_id_fk",
+          "tableFrom": "executions",
           "tableTo": "features",
           "columnsFrom": [
             "feature_id"
@@ -656,8 +656,8 @@
           "notNull": true,
           "default": "uuidv7()"
         },
-        "run_id": {
-          "name": "run_id",
+        "execution_id": {
+          "name": "execution_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -703,11 +703,11 @@
         }
       },
       "indexes": {
-        "scenario_results_run_name_unique": {
-          "name": "scenario_results_run_name_unique",
+        "scenario_results_execution_name_unique": {
+          "name": "scenario_results_execution_name_unique",
           "columns": [
             {
-              "expression": "run_id",
+              "expression": "execution_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -726,12 +726,12 @@
         }
       },
       "foreignKeys": {
-        "scenario_results_run_id_runs_id_fk": {
-          "name": "scenario_results_run_id_runs_id_fk",
+        "scenario_results_execution_id_executions_id_fk": {
+          "name": "scenario_results_execution_id_executions_id_fk",
           "tableFrom": "scenario_results",
-          "tableTo": "runs",
+          "tableTo": "executions",
           "columnsFrom": [
-            "run_id"
+            "execution_id"
           ],
           "columnsTo": [
             "id"
@@ -1388,19 +1388,19 @@
     }
   },
   "enums": {
-    "public.run_source": {
-      "name": "run_source",
+    "public.execution_source": {
+      "name": "execution_source",
       "schema": "public",
       "values": [
         "MANUAL",
         "CI"
       ]
     },
-    "public.run_status": {
-      "name": "run_status",
+    "public.execution_status": {
+      "name": "execution_status",
       "schema": "public",
       "values": [
-        "RUNNING",
+        "IN_PROGRESS",
         "PASSED",
         "FAILED",
         "SKIPPED"

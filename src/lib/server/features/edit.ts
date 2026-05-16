@@ -4,7 +4,9 @@ import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { featureTags, tags } from '$lib/server/db/schema';
 import { stringFields } from '$lib/server/forms';
-import { resolveLiveExecutor } from '$lib/server/runs/auth';
+import { resolveLiveExecutor } from '$lib/server/executions/auth';
+import { listRecentExecutionsForFeature } from '$lib/server/executions/queries';
+import { appendCrumb, type Crumb } from '$lib/breadcrumbs';
 import { archiveFeature } from './archive';
 import { getFeature } from './queries';
 import { saveFeature } from './save';
@@ -18,7 +20,7 @@ const saveBody = z.object({
   groupId: z.string().uuid().nullable().optional(),
 });
 
-export const load = async ({ params }: { params: Params }) => {
+export const load = async ({ params, parent }: { params: Params; parent: () => Promise<{ breadcrumbs: Crumb[] }> }) => {
   const feature = await getFeature(params.fid);
   if (!feature) throw error(404, 'Feature not found');
 
@@ -40,7 +42,16 @@ export const load = async ({ params }: { params: Params }) => {
     .where(eq(tags.projectId, params.pid))
     .orderBy(desc(sql`COALESCE(${tagCounts.count}, 0)`), tags.name);
 
-  return { feature, projectTags, groups: await listGroups(params.pid) };
+  const recentRuns = await listRecentExecutionsForFeature(params.fid, 5);
+  const { breadcrumbs } = await parent();
+
+  return {
+    feature,
+    projectTags,
+    groups: await listGroups(params.pid),
+    recentRuns,
+    breadcrumbs: appendCrumb(breadcrumbs, { label: feature.name }),
+  };
 };
 
 export const actions = {

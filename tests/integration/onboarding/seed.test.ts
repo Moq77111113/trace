@@ -5,7 +5,7 @@ import {
 	projects,
 	features,
 	featureGroups,
-	runs,
+	executions,
 	scenarioResults,
 	user,
 } from '$lib/server/db/schema';
@@ -18,7 +18,7 @@ async function clearDemo() {
 	if (!demo) return;
 	const feats = await db.select({ id: features.id }).from(features).where(eq(features.projectId, demo.id));
 	if (feats.length > 0) {
-		await db.delete(runs).where(inArray(runs.featureId, feats.map((f) => f.id)));
+		await db.delete(executions).where(inArray(executions.featureId, feats.map((f) => f.id)));
 	}
 	await db.delete(projects).where(eq(projects.id, demo.id));
 }
@@ -64,12 +64,12 @@ describe('seedDemoProject', () => {
 		await seedDemoProject(admin.id);
 		const [p]    = await db.select().from(projects).where(eq(projects.name, DEMO_NAME));
 		const feats  = await db.select({ id: features.id }).from(features).where(eq(features.projectId, p!.id));
-		const allRuns = await db.select().from(runs).where(inArray(runs.featureId, feats.map((f) => f.id)));
+		const allRuns = await db.select().from(executions).where(inArray(executions.featureId, feats.map((f) => f.id)));
 		expect(allRuns).toHaveLength(1);
 		expect(allRuns[0]?.finishedAt).not.toBeNull();
 		expect(allRuns[0]?.notes).toMatch(/BUG-/);
 
-		const sr = await db.select().from(scenarioResults).where(eq(scenarioResults.runId, allRuns[0]!.id));
+		const sr = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, allRuns[0]!.id));
 		const statuses = new Set(sr.map((r) => r.status));
 		expect(statuses.has('PASSED')).toBe(true);
 		expect(statuses.has('FAILED')).toBe(true);

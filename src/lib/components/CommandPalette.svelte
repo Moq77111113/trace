@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { runs } from '$lib/server/db/schema';
+  import type { executions } from '$lib/server/db/schema';
 
   export type SearchResult = {
     featureId:   string;
@@ -7,7 +7,7 @@
     projectId:   string;
     projectName: string;
     groupName:   string | null;
-    status:      typeof runs.status.enumValues[number] | null;
+    status:      typeof executions.status.enumValues[number] | null;
   };
 </script>
 

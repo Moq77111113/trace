@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { db } from '$lib/server/db/client';
-import { attachments, features, projects, runs, scenarioResults } from '$lib/server/db/schema';
+import { attachments, executions, features, projects, scenarioResults } from '$lib/server/db/schema';
 import { putObject, deleteObject } from '$lib/server/storage/s3';
 import { GET } from '../../../src/routes/(public)/api/attachments/[aid]/+server';
 
@@ -36,17 +36,17 @@ async function seedRunWithScenario() {
   if (!f) throw new Error('seed: feature insert failed');
 
   const [r] = await db
-    .insert(runs)
+    .insert(executions)
     .values({
       featureId:           f.id,
       source:              'MANUAL',
       executedBy:          'Alice',
-      featureContentAtRun: f.content,
+      featureContentAtStart: f.content,
     })
     .returning();
   if (!r) throw new Error('seed: run insert failed');
 
-  const [s] = await db.insert(scenarioResults).values({ runId: r.id, scenarioName: 'A' }).returning();
+  const [s] = await db.insert(scenarioResults).values({ executionId: r.id, scenarioName: 'A' }).returning();
   if (!s) throw new Error('seed: scenario insert failed');
 
   return { run: r, scenario: s };
@@ -63,7 +63,7 @@ describe('GET /api/attachments/[aid]', () => {
     const [att] = await db
       .insert(attachments)
       .values({
-        runId:            run.id,
+        executionId:            run.id,
         scenarioResultId: scenario.id,
         filename:         'note.txt',
         mimeType:         'text/plain',
@@ -102,7 +102,7 @@ describe('GET /api/attachments/[aid]', () => {
     const [att] = await db
       .insert(attachments)
       .values({
-        runId:            run.id,
+        executionId:            run.id,
         scenarioResultId: scenario.id,
         filename:         'evil"name.txt',
         mimeType:         'text/plain',

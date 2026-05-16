@@ -6,11 +6,12 @@ import { user, projects } from '$lib/server/db/schema';
 import { requireAdmin } from '$lib/server/instance/require-admin';
 import { getInstanceSettings, openSignup, closeSignup } from '$lib/server/instance/settings';
 import { seedDemoProject } from '$lib/server/onboarding/seed';
+import { appendCrumb } from '$lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 
 const DEMO_NAME = 'Trace Demo';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, parent }) => {
 	const admin    = requireAdmin(locals.user);
 	const settings = await getInstanceSettings();
 	const users    = await db
@@ -28,11 +29,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.from(projects)
 		.where(eq(projects.name, DEMO_NAME));
 
+	const { breadcrumbs } = await parent();
 	return {
 		settings,
 		users,
 		demoExists:  Boolean(demo),
 		adminUserId: admin.id,
+		breadcrumbs: appendCrumb(breadcrumbs, { label: m.nav_instance() }),
 	};
 };
 

@@ -1,7 +1,9 @@
 import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features, projects } from '$lib/server/db/schema';
-import { listProjectsWithStats, listRecentRuns } from '$lib/server/projects/queries';
+import { listProjectsWithStats, listRecentExecutions } from '$lib/server/projects/queries';
+import { appendCrumb } from '$lib/breadcrumbs';
+import * as m from '$lib/paraglide/messages';
 import type { PageServerLoad } from './$types';
 
 const DEMO_NAME = 'Trace Demo';
@@ -26,8 +28,12 @@ async function loadWelcome(locals: App.Locals) {
 	};
 }
 
-export const load = (async ({ locals }) => ({
-	projects:   await listProjectsWithStats(),
-	recentRuns: await listRecentRuns(20),
-	welcome:    await loadWelcome(locals),
-})) satisfies PageServerLoad;
+export const load = (async ({ locals, parent }) => {
+	const { breadcrumbs } = await parent();
+	return {
+		projects:    await listProjectsWithStats(),
+		recentRuns:  await listRecentExecutions(20),
+		welcome:     await loadWelcome(locals),
+		breadcrumbs: appendCrumb(breadcrumbs, { label: m.nav_projects() }),
+	};
+}) satisfies PageServerLoad;
