@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres   from 'postgres';
 import { sql as rawSql } from 'drizzle-orm';
+import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import * as schema from './schema';
 
@@ -39,4 +40,4 @@ async function ensureMigrations(): Promise<void> {
 	else console.log(`[db] migrations applied (${applied})`);
 }
 
-await ensureMigrations();
+if (!building) await ensureMigrations();

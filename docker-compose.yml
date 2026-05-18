@@ -44,6 +44,33 @@ services:
       echo 'bucket trace-attachments ready'
       "
 
+  app:
+    profiles: ['app']
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trace-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV:                    production
+      PORT:                        '3000'
+      ORIGIN:                      ${ORIGIN:-http://localhost:7777}
+      DATABASE_URL:                postgres://trace:trace@postgres:5432/trace
+      TRACE_AUTH_SECRET:           ${TRACE_AUTH_SECRET:?TRACE_AUTH_SECRET is required (openssl rand -hex 32)}
+      BETTER_AUTH_SECRET:          ${TRACE_AUTH_SECRET}
+      TRACE_BOOTSTRAP_ADMIN_EMAIL: ${TRACE_BOOTSTRAP_ADMIN_EMAIL:-}
+      S3_ENDPOINT:                 http://minio:9000
+      S3_REGION:                   us-east-1
+      S3_BUCKET:                   trace-attachments
+      S3_ACCESS_KEY:               trace
+      S3_SECRET_KEY:               tracetrace
+    ports: ['${TRACE_PORT:-7777}:3000']
+
 volumes:
   pgdata:
   miniodata:

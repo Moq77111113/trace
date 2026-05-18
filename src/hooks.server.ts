@@ -1,5 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
+import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
@@ -13,9 +14,11 @@ import {
 	parseTheme
 } from '$lib/shared/lib/theme';
 
-void bootstrapAdminFromEnv(env.TRACE_BOOTSTRAP_ADMIN_EMAIL).catch((err) => {
-	console.error('bootstrap admin failed:', err);
-});
+if (!building) {
+	void bootstrapAdminFromEnv(env.TRACE_BOOTSTRAP_ADMIN_EMAIL).catch((err) => {
+		console.error('bootstrap admin failed:', err);
+	});
+}
 
 const authHandle: Handle = async ({ event, resolve }) => {
 	const session = await auth.api.getSession({ headers: event.request.headers });
