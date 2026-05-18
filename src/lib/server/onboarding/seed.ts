@@ -42,8 +42,8 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 	const runFile     = JSON.parse(await readFile(join(DEMO_DIR, 'run.json'),     'utf8')) as RunFile;
 
 	const projectResult = await createProject({ name: projectFile.name, description: projectFile.description });
-	if ('error' in projectResult) throw new Error(`demo seed: createProject failed: ${projectResult.error}`);
-	const project = projectResult;
+	if (!projectResult.ok) throw new Error(`demo seed: createProject failed: ${projectResult.error}`);
+	const project = projectResult.value;
 
 	const featureIdByFilename = new Map<string, string>();
 	for (const g of groupsFile) {

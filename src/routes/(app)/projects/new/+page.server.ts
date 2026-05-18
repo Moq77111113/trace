@@ -25,10 +25,10 @@ export const actions: Actions = {
     }
 
     const result = await createProject(parsed.data);
-    if ('error' in result) {
+    if (!result.ok) {
       return fail(409, { error: m.new_project_error_slug_taken(), values: data, field: 'slug' as const });
     }
 
-    throw redirect(303, `/p/${result.slug}`);
+    throw redirect(303, `/p/${result.value.slug}`);
   },
 };

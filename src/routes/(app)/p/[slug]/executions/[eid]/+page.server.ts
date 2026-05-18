@@ -34,7 +34,7 @@ export const actions = {
   rerunFailed: async (event) => {
     const executedBy = resolveLiveExecutor(event);
     const result     = await rerunFailed({ parentExecutionId: event.params.eid, executedBy });
-    if (!result.ok) return fail(409, { error: result.reason });
-    throw redirect(303, `/p/${event.params.slug}/executions/${result.execution.id}`);
+    if (!result.ok) return fail(409, { error: result.error });
+    throw redirect(303, `/p/${event.params.slug}/executions/${result.value.id}`);
   },
 } satisfies Actions;

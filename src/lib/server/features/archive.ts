@@ -1,8 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
+import { ok, err, type Result } from '$lib/shared/lib/result';
 
-export type ArchiveResult = { ok: true } | { ok: false; reason: 'not-found' };
+export type ArchiveError  = 'not-found';
+export type ArchiveResult = Result<null, ArchiveError>;
 
 /**
  * Soft-deletes a feature by setting `archived = true`. Run history (which references
@@ -14,6 +16,6 @@ export async function archiveFeature(featureId: string): Promise<ArchiveResult> 
     .where(eq(features.id, featureId))
     .returning({ id: features.id });
 
-  if (rows.length === 0) return { ok: false, reason: 'not-found' };
-  return { ok: true };
+  if (rows.length === 0) return err('not-found');
+  return ok(null);
 }

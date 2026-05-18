@@ -57,15 +57,15 @@ describe('rerunFailed', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.execution.featureId).toBe(run.featureId);
-    expect(result.execution.status).toBe('IN_PROGRESS');
-    expect(result.execution.environment).toBe('staging');
-    expect(result.execution.featureContentAtStart).toBe(run.featureContentAtStart);
+    expect(result.value.featureId).toBe(run.featureId);
+    expect(result.value.status).toBe('IN_PROGRESS');
+    expect(result.value.environment).toBe('staging');
+    expect(result.value.featureContentAtStart).toBe(run.featureContentAtStart);
 
     const newScenarios = await db
       .select({ name: scenarioResults.scenarioName, status: scenarioResults.status })
       .from(scenarioResults)
-      .where(eq(scenarioResults.executionId, result.execution.id))
+      .where(eq(scenarioResults.executionId, result.value.id))
       .orderBy(asc(scenarioResults.scenarioName));
 
     expect(newScenarios.map((s) => s.name)).toEqual([second.scenarioName, third.scenarioName].sort());
@@ -78,7 +78,7 @@ describe('rerunFailed', () => {
     const result = await rerunFailed({ parentExecutionId: run.id, executedBy: 'Alice' });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe('parent-in-progress');
+    if (!result.ok) expect(result.error).toBe('parent-in-progress');
   });
 
   it('refuses when the parent has no failed scenarios', async () => {
@@ -91,7 +91,7 @@ describe('rerunFailed', () => {
     const result = await rerunFailed({ parentExecutionId: run.id, executedBy: 'Alice' });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe('no-failed-scenarios');
+    if (!result.ok) expect(result.error).toBe('no-failed-scenarios');
   });
 
   it('refuses when the parent run does not exist', async () => {
@@ -101,6 +101,6 @@ describe('rerunFailed', () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe('parent-not-found');
+    if (!result.ok) expect(result.error).toBe('parent-not-found');
   });
 });

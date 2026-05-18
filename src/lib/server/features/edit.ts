@@ -104,8 +104,8 @@ export const actions = {
     const featureId = await resolveFeatureId(params.slug, params.code);
     if (!featureId) throw error(404, 'Feature not found');
 
-    const result = await archiveFeature(featureId);
-    if (!result.ok) throw error(404, 'Feature not found');
+    const archived = await archiveFeature(featureId);
+    if (!archived.ok) throw error(404, 'Feature not found');
 
     throw redirect(303, `/p/${params.slug}`);
   },

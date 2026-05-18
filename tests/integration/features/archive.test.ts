@@ -24,7 +24,7 @@ describe('archiveFeature', () => {
 
   it('returns not-found for missing features', async () => {
     const result = await archiveFeature('00000000-0000-7000-8000-000000000000');
-    expect(result).toEqual({ ok: false, reason: 'not-found' });
+    expect(result).toEqual({ ok: false, error: 'not-found' });
   });
 
   it('keeps the row in the DB so run history references stay intact', async () => {

@@ -1,15 +1,15 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { executions, scenarioResults } from '$lib/server/db/schema';
+import { ok, err, type Result } from '$lib/shared/lib/result';
 
 export type RerunFailedInput = {
   parentExecutionId: string;
   executedBy:  string;
 };
 
-export type RerunFailedResult =
-  | { ok: true;  execution: typeof executions.$inferSelect }
-  | { ok: false; reason: 'parent-not-found' | 'parent-in-progress' | 'no-failed-scenarios' };
+export type RerunFailedError  = 'parent-not-found' | 'parent-in-progress' | 'no-failed-scenarios';
+export type RerunFailedResult = Result<typeof executions.$inferSelect, RerunFailedError>;
 
 /**
  * Starts a new run that re-executes only the FAILED scenarios from a finished
@@ -22,15 +22,15 @@ export type RerunFailedResult =
  */
 export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedResult> {
   const [parent] = await db.select().from(executions).where(eq(executions.id, input.parentExecutionId));
-  if (!parent) return { ok: false, reason: 'parent-not-found' };
-  if (parent.status === 'IN_PROGRESS') return { ok: false, reason: 'parent-in-progress' };
+  if (!parent) return err('parent-not-found');
+  if (parent.status === 'IN_PROGRESS') return err('parent-in-progress');
 
   const failed = await db
     .select({ scenarioName: scenarioResults.scenarioName })
     .from(scenarioResults)
     .where(and(eq(scenarioResults.executionId, parent.id), eq(scenarioResults.status, 'FAILED')));
 
-  if (failed.length === 0) return { ok: false, reason: 'no-failed-scenarios' };
+  if (failed.length === 0) return err('no-failed-scenarios');
 
   const created = await db.transaction(async (tx) => {
     const [execution] = await tx
@@ -55,5 +55,5 @@ export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedR
     return execution;
   });
 
-  return { ok: true, execution: created };
+  return ok(created);
 }

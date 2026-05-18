@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { projects } from '$lib/server/db/schema';
 import { inferCodePrefix, isValidCodePrefix, isValidSlug, kebab } from '$lib/shared/lib/slug';
+import { ok, err, type Result } from '$lib/shared/lib/result';
 import { nextAvailableSlug } from './slug';
 
 const slugField   = z.string().trim().refine(isValidSlug,        { error: 'invalid-slug' });
@@ -17,13 +18,14 @@ export const projectInput = z.object({
 export type ProjectInput = z.infer<typeof projectInput>;
 
 export type Project = typeof projects.$inferSelect;
-export type CreateProjectResult = Project | { error: 'slug-taken' };
+export type CreateProjectError  = 'slug-taken';
+export type CreateProjectResult = Result<Project, CreateProjectError>;
 
 export async function createProject(input: ProjectInput): Promise<CreateProjectResult> {
   let slug: string;
   if (input.slug) {
     const taken = await db.query.projects.findFirst({ where: eq(projects.slug, input.slug) });
-    if (taken) return { error: 'slug-taken' };
+    if (taken) return err('slug-taken');
     slug = input.slug;
   } else {
     slug = await nextAvailableSlug(kebab(input.name));
@@ -35,5 +37,5 @@ export async function createProject(input: ProjectInput): Promise<CreateProjectR
     .values({ name: input.name, description: input.description, slug, codePrefix })
     .returning();
   if (!row) throw new Error('createProject: insert returned no row');
-  return row;
+  return ok(row);
 }
