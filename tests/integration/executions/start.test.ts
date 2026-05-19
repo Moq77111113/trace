@@ -1,24 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, projects, scenarioResults } from '$lib/server/db/schema';
+import { features, scenarioResults } from '$lib/server/db/schema';
 import type { ParseError } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/start';
+import { mkFeature, mkProject } from '../../fixtures';
 
 async function freshFeatureBase(content: string) {
-  const [p] = await db
-    .insert(projects)
-    .values({ name: `Run ${Date.now()}-${Math.random()}` })
-    .returning();
-  if (!p) throw new Error('seed: project insert failed');
-
-  const [f] = await db
-    .insert(features)
-    .values({ projectId: p.id, name: 'Login', content })
-    .returning();
-  if (!f) throw new Error('seed: feature insert failed');
-
-  return { project: p, feature: f };
+  const project = await mkProject({ name: `Run ${Date.now()}-${Math.random()}` });
+  const feature = await mkFeature(project.id, { name: 'Login', content });
+  return { project, feature };
 }
 
 async function setParseErrors(featureId: string, errors: ParseError[]) {

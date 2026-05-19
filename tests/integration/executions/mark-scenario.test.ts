@@ -1,20 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, projects, executions, scenarioResults } from '$lib/server/db/schema';
+import { executions, scenarioResults } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/start';
 import { markScenario } from '$lib/server/executions/mark-scenario';
+import { mkFeature, mkProject } from '../../fixtures';
 
 async function seedRun() {
-  const [p] = await db.insert(projects).values({ name: `Mark ${Date.now()}-${Math.random()}` }).returning();
-  if (!p) throw new Error('seed: project insert failed');
-
-  const [f] = await db.insert(features).values({
-    projectId: p.id,
-    name:      'F',
-    content:   'Feature: F\n\n  Scenario: S\n    Given x\n',
-  }).returning();
-  if (!f) throw new Error('seed: feature insert failed');
+  const p = await mkProject({ name: `Mark ${Date.now()}-${Math.random()}` });
+  const f = await mkFeature(p.id, {
+    name:    'F',
+    content: 'Feature: F\n\n  Scenario: S\n    Given x\n',
+  });
 
   const run = await startExecution({ featureId: f.id, executedBy: 'Alice' });
   const [scenario] = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, run.id));

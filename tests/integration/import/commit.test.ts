@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { featureGroups, features, tags, featureTags } from '$lib/server/db/schema';
-import { createProject } from '$lib/server/projects/create';
+import { mkProject } from '../../fixtures';
 import { createFeature } from '$lib/server/features/create';
 import { archiveFeature } from '$lib/server/features/archive';
 import { createGroup } from '$lib/server/groups/create';
@@ -20,7 +20,7 @@ function decisionsFor(rows: { rowId: string }[], action: Decision): Record<strin
 
 describe('commitBatch', () => {
   it('imports new rows, persists parsed tags, skips DB collisions by default', async () => {
-    const p = await createProject({ name: `Imp ${Date.now()}` });
+    const p = await mkProject({ name: `Imp ${Date.now()}` });
     await createFeature({ projectId: p.id, name: 'Login' });
 
     const preview = await parseBatch(p.id, [
@@ -50,7 +50,7 @@ describe('commitBatch', () => {
   });
 
   it('overwrites colliding features via saveFeature codepath and bumps version', async () => {
-    const p   = await createProject({ name: `Ovw ${Date.now()}` });
+    const p   = await mkProject({ name: `Ovw ${Date.now()}` });
     const old = await createFeature({ projectId: p.id, name: 'Tgt' });
 
     const updated = await saveFeature({
@@ -79,7 +79,7 @@ describe('commitBatch', () => {
   });
 
   it('rename strategy inserts under a unique " (n)" suffix without touching the original', async () => {
-    const p   = await createProject({ name: `Rnm ${Date.now()}` });
+    const p   = await mkProject({ name: `Rnm ${Date.now()}` });
     await createFeature({ projectId: p.id, name: 'Same' });
 
     const preview = await parseBatch(p.id, [
@@ -101,7 +101,7 @@ describe('commitBatch', () => {
   });
 
   it('isolates per-row failures so siblings still commit', async () => {
-    const p = await createProject({ name: `Iso ${Date.now()}` });
+    const p = await mkProject({ name: `Iso ${Date.now()}` });
 
     const preview = await parseBatch(p.id, [
       file('ok.feature',   'Feature: Ok\n  Scenario: A\n    Given x\n'),
@@ -124,7 +124,7 @@ describe('commitBatch', () => {
   });
 
   it('imports a feature whose name matches an archived one as a fresh row', async () => {
-    const p = await createProject({ name: `ArcImp ${Date.now()}` });
+    const p = await mkProject({ name: `ArcImp ${Date.now()}` });
     const old = await createFeature({ projectId: p.id, name: 'Reborn' });
     await archiveFeature(old.id);
 
@@ -146,7 +146,7 @@ describe('commitBatch', () => {
   });
 
   it('rename strategy skips archived names when finding a free slot', async () => {
-    const p = await createProject({ name: `ArcRnm ${Date.now()}` });
+    const p = await mkProject({ name: `ArcRnm ${Date.now()}` });
     await createFeature({ projectId: p.id, name: 'Pick' });
     const archived = await createFeature({ projectId: p.id, name: 'Pick (2)' });
     await archiveFeature(archived.id);
@@ -167,7 +167,7 @@ describe('commitBatch', () => {
   });
 
   it('creates the group on import when meta references a missing one', async () => {
-    const p = await createProject({ name: `GmNew ${Date.now()}` });
+    const p = await mkProject({ name: `GmNew ${Date.now()}` });
 
     const preview = await parseBatch(p.id, [
       file('a.feature', '# trace-group: Onboarding\nFeature: Sign Up\n  Scenario: A\n    Given x\n'),
@@ -190,7 +190,7 @@ describe('commitBatch', () => {
   });
 
   it('reuses an existing group case-insensitively without duplicating', async () => {
-    const p = await createProject({ name: `GmExist ${Date.now()}` });
+    const p = await mkProject({ name: `GmExist ${Date.now()}` });
     const g = await createGroup({ projectId: p.id, name: 'Auth' });
     if ('error' in g) throw new Error('seed group failed');
 
@@ -213,7 +213,7 @@ describe('commitBatch', () => {
   });
 
   it('overwrite path moves the feature to the group referenced in the imported meta', async () => {
-    const p   = await createProject({ name: `GmOvw ${Date.now()}` });
+    const p   = await mkProject({ name: `GmOvw ${Date.now()}` });
     const old = await createFeature({ projectId: p.id, name: 'Profile' });
 
     const preview = await parseBatch(p.id, [
@@ -234,7 +234,7 @@ describe('commitBatch', () => {
   });
 
   it('drops the preview buffer once committed', async () => {
-    const p = await createProject({ name: `Drp ${Date.now()}` });
+    const p = await mkProject({ name: `Drp ${Date.now()}` });
 
     const preview = await parseBatch(p.id, [
       file('a.feature', 'Feature: Once\n  Scenario: A\n    Given x\n'),

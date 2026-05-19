@@ -10,6 +10,8 @@ import {
 	executions,
 	scenarioResults,
 } from '$lib/server/db/schema';
+import { createProject } from '$lib/server/projects/create';
+import { allocateCodeSeq } from '$lib/server/features/code-seq';
 
 const DEMO_NAME = 'Trace Demo';
 const DEMO_DIR  = join(dirname(fileURLToPath(import.meta.url)), 'demo');
@@ -39,11 +41,9 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 	const groupsFile  = JSON.parse(await readFile(join(DEMO_DIR, 'groups.json'),  'utf8')) as GroupsFile;
 	const runFile     = JSON.parse(await readFile(join(DEMO_DIR, 'run.json'),     'utf8')) as RunFile;
 
-	const [project] = await db
-		.insert(projects)
-		.values({ name: projectFile.name, description: projectFile.description })
-		.returning();
-	if (!project) throw new Error('demo seed: project insert failed');
+	const projectResult = await createProject({ name: projectFile.name, description: projectFile.description });
+	if ('error' in projectResult) throw new Error(`demo seed: createProject failed: ${projectResult.error}`);
+	const project = projectResult;
 
 	const featureIdByFilename = new Map<string, string>();
 	for (const g of groupsFile) {
@@ -56,11 +56,15 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 		for (const filename of g.features) {
 			const content = await readFile(join(DEMO_DIR, 'features', filename), 'utf8');
 			const featName = filename.replace(/^\d+-/, '').replace(/\.feature$/, '').replace(/-/g, ' ');
-			const [feat] = await db
-				.insert(features)
-				.values({ projectId: project.id, groupId: group.id, name: featName, content })
-				.returning();
-			if (!feat) throw new Error('demo seed: feature insert failed');
+			const feat = await db.transaction(async (tx) => {
+				const codeSeq = await allocateCodeSeq(tx, project.id);
+				const [row] = await tx
+					.insert(features)
+					.values({ projectId: project.id, groupId: group.id, name: featName, content, codeSeq })
+					.returning();
+				if (!row) throw new Error('demo seed: feature insert failed');
+				return row;
+			});
 			featureIdByFilename.set(filename, feat.id);
 		}
 	}

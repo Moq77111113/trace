@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
-import { createProject } from '$lib/server/projects/create';
+import { mkProject } from '../../fixtures';
 import { createFeature } from '$lib/server/features/create';
 import { archiveFeature } from '$lib/server/features/archive';
 import { listFeatures } from '$lib/server/features/queries';
 
 describe('archiveFeature', () => {
   it('sets archived=true and hides the row from listFeatures', async () => {
-    const p = await createProject({ name: `Arc ${Date.now()}` });
+    const p = await mkProject({ name: `Arc ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'Doomed' });
 
     expect((await listFeatures(p.id)).length).toBe(1);
@@ -28,7 +28,7 @@ describe('archiveFeature', () => {
   });
 
   it('keeps the row in the DB so run history references stay intact', async () => {
-    const p = await createProject({ name: `Keep ${Date.now()}` });
+    const p = await mkProject({ name: `Keep ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'Survivor' });
 
     await archiveFeature(f.id);

@@ -1,5 +1,7 @@
 import { db } from '$lib/server/db/client';
 import { executions, features, scenarioResults } from '$lib/server/db/schema';
+import { getFeatureByCode } from '$lib/server/features/queries';
+import { parseFeatureCode } from '$lib/shared/lib/slug';
 import type { IngestedExecution } from './cucumber-json/types';
 import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 import type { InferSelectModel } from 'drizzle-orm';
@@ -10,6 +12,8 @@ export type IngestExecutionInput = {
   executedBy:   string;
   environment?: string | null;
   ciMetadata?:  CiMetadata | null;
+  /** Optional feature code (`prefix-seq`). Takes precedence over `parsed.featureName` for matching. */
+  featureCode?: string | null;
   parsed:       IngestedExecution;
 };
 
@@ -30,22 +34,36 @@ function deriveFinalStatus(statuses: ScenarioStatus[]): ScenarioStatus {
 }
 
 /**
- * CI counterpart to `startExecution`. Matches a feature within the project by
- * case-insensitive name, snapshots `features.content` at request time, and
- * writes one finished `runs` row plus N `scenario_results` in a single
- * transaction. The final status is derived the same way as `finishExecution`.
+ * Resolve the target feature from explicit `featureCode` (preferred) or fall back to
+ * case-insensitive name matching. Returns null if nothing matches.
  */
-export async function ingestExecution(input: IngestExecutionInput): Promise<IngestExecutionResult> {
-  const [feature] = await db
+async function resolveFeature(input: IngestExecutionInput) {
+  if (input.featureCode) {
+    const parsed = parseFeatureCode(input.featureCode);
+    if (!parsed) return null;
+    return getFeatureByCode(input.projectId, parsed.seq);
+  }
+  const [row] = await db
     .select()
     .from(features)
     .where(and(
       eq(features.projectId, input.projectId),
       sql`LOWER(${features.name}) = LOWER(${input.parsed.featureName})`,
     ));
+  return row ?? null;
+}
 
+/**
+ * CI counterpart to `startExecution`. Matches a feature within the project by
+ * case-insensitive name, snapshots `features.content` at request time, and
+ * writes one finished `runs` row plus N `scenario_results` in a single
+ * transaction. The final status is derived the same way as `finishExecution`.
+ */
+export async function ingestExecution(input: IngestExecutionInput): Promise<IngestExecutionResult> {
+  const feature = await resolveFeature(input);
   if (!feature) {
-    throw new Error(`ingest: no feature matching "${input.parsed.featureName}" in project ${input.projectId}`);
+    const tried = input.featureCode ?? input.parsed.featureName;
+    throw new Error(`ingest: no feature matching "${tried}" in project ${input.projectId}`);
   }
 
   const finalStatus = deriveFinalStatus(input.parsed.scenarios.map((s) => s.status));

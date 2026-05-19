@@ -2,6 +2,15 @@ import { db } from '$lib/server/db/client';
 import { projects, features, executions } from '$lib/server/db/schema';
 import { and, count, desc, eq, ne, sql } from 'drizzle-orm';
 
+export async function getProjectBySlug(slug: string) {
+  return db.query.projects.findFirst({ where: eq(projects.slug, slug) });
+}
+
+export async function getProjectIdBySlug(slug: string): Promise<string | null> {
+  const [row] = await db.select({ id: projects.id }).from(projects).where(eq(projects.slug, slug));
+  return row?.id ?? null;
+}
+
 export async function listProjectsWithStats() {
   const featureAgg = db.$with('feature_agg').as(
     db
@@ -34,6 +43,7 @@ export async function listProjectsWithStats() {
     .with(featureAgg, ranked)
     .select({
       id:            projects.id,
+      slug:          projects.slug,
       name:          projects.name,
       description:   projects.description,
       featureCount:  sql<number>`COALESCE(${featureAgg.cnt}, 0)`,
@@ -98,10 +108,13 @@ export async function listRecentExecutions(limit = 20) {
       executedBy:  executions.executedBy,
       startedAt:   executions.startedAt,
       featureName: features.name,
+      featureCode: sql<string>`${projects.codePrefix} || '-' || ${features.codeSeq}`,
       projectId:   features.projectId,
+      projectSlug: projects.slug,
     })
     .from(executions)
     .innerJoin(features, eq(executions.featureId, features.id))
+    .innerJoin(projects, eq(projects.id, features.projectId))
     .orderBy(desc(executions.startedAt))
     .limit(limit);
 }

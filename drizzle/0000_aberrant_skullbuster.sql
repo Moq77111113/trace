@@ -33,13 +33,15 @@ CREATE TABLE "features" (
 	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"project_id" uuid NOT NULL,
 	"group_id" uuid,
+	"code_seq" integer NOT NULL,
 	"name" text NOT NULL,
 	"content" text NOT NULL,
 	"parse_errors" jsonb,
 	"version" integer DEFAULT 1 NOT NULL,
 	"archived" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "features_code_seq_positive" CHECK ("features"."code_seq" >= 1)
 );
 --> statement-breakpoint
 CREATE TABLE "instance_settings" (
@@ -55,10 +57,20 @@ CREATE TABLE "instance_settings" (
 CREATE TABLE "projects" (
 	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"name" text NOT NULL,
+	"slug" text NOT NULL,
+	"code_prefix" text NOT NULL,
 	"description" text,
 	"archived" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "projects_slug_kebab" CHECK (
+		"projects"."slug" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$'
+		AND char_length("projects"."slug") BETWEEN 2 AND 40
+	),
+	CONSTRAINT "projects_code_prefix_kebab" CHECK (
+		"projects"."code_prefix" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$'
+		AND char_length("projects"."code_prefix") BETWEEN 2 AND 15
+	)
 );
 --> statement-breakpoint
 CREATE TABLE "executions" (
@@ -184,6 +196,8 @@ CREATE UNIQUE INDEX "feature_groups_project_name_idx" ON "feature_groups" USING 
 CREATE INDEX "feature_tags_tag_idx" ON "feature_tags" USING btree ("tag_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "features_project_name_unique" ON "features" USING btree ("project_id",LOWER("name")) WHERE "features"."archived" = FALSE;--> statement-breakpoint
 CREATE UNIQUE INDEX "projects_name_unique" ON "projects" USING btree (LOWER("name")) WHERE "projects"."archived" = FALSE;--> statement-breakpoint
+CREATE UNIQUE INDEX "projects_slug_unique" ON "projects" USING btree ("slug");--> statement-breakpoint
+CREATE UNIQUE INDEX "features_project_code_seq_unique" ON "features" USING btree ("project_id","code_seq");--> statement-breakpoint
 CREATE INDEX "executions_feature_started_idx" ON "executions" USING btree ("feature_id","started_at" DESC);--> statement-breakpoint
 CREATE UNIQUE INDEX "scenario_results_execution_name_unique" ON "scenario_results" USING btree ("execution_id","scenario_name");--> statement-breakpoint
 CREATE UNIQUE INDEX "tags_project_name_unique" ON "tags" USING btree ("project_id",LOWER("name"));--> statement-breakpoint

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createProject } from '$lib/server/projects/create';
+import { mkProject } from '../../fixtures';
 import { createFeature } from '$lib/server/features/create';
 import { archiveFeature } from '$lib/server/features/archive';
 import { parseBatch } from '$lib/server/import/parse-batch';
@@ -11,7 +11,7 @@ function file(filename: string, content: string) {
 
 describe('parseBatch', () => {
   it('classifies new, collision (DB), and parse-error rows', async () => {
-    const p = await createProject({ name: `Pb ${Date.now()}` });
+    const p = await mkProject({ name: `Pb ${Date.now()}` });
     await createFeature({ projectId: p.id, name: 'Login' });
 
     const preview = await parseBatch(p.id, [
@@ -28,7 +28,7 @@ describe('parseBatch', () => {
   });
 
   it('flags in-batch duplicate Feature: names as collision (spec §11.4)', async () => {
-    const p = await createProject({ name: `Inb ${Date.now()}` });
+    const p = await mkProject({ name: `Inb ${Date.now()}` });
 
     const preview = await parseBatch(p.id, [
       file('a.feature', 'Feature: Twin\n  Scenario: A\n    Given x\n'),
@@ -41,7 +41,7 @@ describe('parseBatch', () => {
   });
 
   it('ignores archived features when checking for DB collisions', async () => {
-    const p = await createProject({ name: `Arc ${Date.now()}` });
+    const p = await mkProject({ name: `Arc ${Date.now()}` });
     const old = await createFeature({ projectId: p.id, name: 'Recycled' });
     await archiveFeature(old.id);
 
@@ -54,7 +54,7 @@ describe('parseBatch', () => {
   });
 
   it('captures the trace-group meta on each row', async () => {
-    const p = await createProject({ name: `Gm ${Date.now()}` });
+    const p = await mkProject({ name: `Gm ${Date.now()}` });
 
     const preview = await parseBatch(p.id, [
       file('a.feature', '# trace-group: Auth\nFeature: Login\n  Scenario: A\n    Given x\n'),
@@ -66,7 +66,7 @@ describe('parseBatch', () => {
   });
 
   it('stores raw buffers in the preview buffer for later commit', async () => {
-    const p = await createProject({ name: `Buf ${Date.now()}` });
+    const p = await mkProject({ name: `Buf ${Date.now()}` });
 
     const preview = await parseBatch(p.id, [
       file('a.feature', 'Feature: Stored\n  Scenario: A\n    Given x\n'),

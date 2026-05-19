@@ -17,6 +17,7 @@
     ciMetadata:  CiMetadata | null;
     featureId:   string;
     featureName: string;
+    featureCode: string;
     passed:      number;
     failed:      number;
     skipped:     number;
@@ -25,11 +26,11 @@
 
   type Props = {
     rows:            ReadonlyArray<Row>;
-    projectId:       string;
+    projectSlug:     string;
     flakeFeatureIds: Set<string>;
   };
 
-  let { rows, projectId, flakeFeatureIds }: Props = $props();
+  let { rows, projectSlug, flakeFeatureIds }: Props = $props();
 </script>
 
 <Table>
@@ -51,7 +52,8 @@
       <tr>
         <td>
           <span class="inline-flex items-center gap-2">
-            <a class="text-ink font-medium hover:text-accent-soft-ink" href="/projects/{projectId}/executions/{r.id}">
+            <span class="font-mono text-[11px] text-ink-3 tabular-nums">{r.featureCode}</span>
+            <a class="text-ink font-medium hover:text-accent-soft-ink" href="/p/{projectSlug}/executions/{r.id}">
               {r.featureName}
             </a>
             {#if flakeFeatureIds.has(r.featureId)}

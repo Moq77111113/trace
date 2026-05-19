@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createProject } from '$lib/server/projects/create';
+import { mkProject } from '../../fixtures';
 import { createFeature } from '$lib/server/features/create';
 import { streamProjectZip } from '$lib/server/projects/export-zip';
 
@@ -11,7 +11,7 @@ async function drain(stream: NodeJS.ReadableStream): Promise<Buffer> {
 
 describe('streamProjectZip', () => {
   it('streams a zip with one entry per non-archived feature', async () => {
-    const p = await createProject({ name: `Zip ${Date.now()}` });
+    const p = await mkProject({ name: `Zip ${Date.now()}` });
     await createFeature({ projectId: p.id, name: 'Alpha' });
     await createFeature({ projectId: p.id, name: 'Beta One' });
 
@@ -25,7 +25,7 @@ describe('streamProjectZip', () => {
   });
 
   it('suffixes duplicate slugs with a short id', async () => {
-    const p = await createProject({ name: `Dup ${Date.now()}` });
+    const p = await mkProject({ name: `Dup ${Date.now()}` });
     await createFeature({ projectId: p.id, name: 'Same' });
     const second = await createFeature({ projectId: p.id, name: 'Same!' });
 
@@ -37,7 +37,7 @@ describe('streamProjectZip', () => {
   });
 
   it('returns null for empty projects', async () => {
-    const p = await createProject({ name: `Empty ${Date.now()}` });
+    const p = await mkProject({ name: `Empty ${Date.now()}` });
     expect(await streamProjectZip(p.id)).toBeNull();
   });
 

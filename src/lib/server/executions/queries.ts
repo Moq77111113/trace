@@ -40,6 +40,8 @@ function buildConditions(projectId: string, f: ExecutionFilters): SQL[] {
   return conds;
 }
 
+const featureCodeSql = sql<string>`${projects.codePrefix} || '-' || ${features.codeSeq}`;
+
 export async function listExecutionsForProject(projectId: string, f: ExecutionFilters = {}) {
   const page     = Math.max(1, f.page ?? 1);
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, f.pageSize ?? DEFAULT_PAGE_SIZE));
@@ -59,6 +61,7 @@ export async function listExecutionsForProject(projectId: string, f: ExecutionFi
       ciMetadata:  executions.ciMetadata,
       featureId:   features.id,
       featureName: features.name,
+      featureCode: featureCodeSql,
       passed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'PASSED'  THEN 1 ELSE 0 END), 0)::int`,
       failed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'FAILED'  THEN 1 ELSE 0 END), 0)::int`,
       skipped: sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'SKIPPED' THEN 1 ELSE 0 END), 0)::int`,
@@ -66,9 +69,10 @@ export async function listExecutionsForProject(projectId: string, f: ExecutionFi
     })
     .from(executions)
     .innerJoin(features, eq(features.id, executions.featureId))
+    .innerJoin(projects, eq(projects.id, features.projectId))
     .leftJoin(scenarioResults, eq(scenarioResults.executionId, executions.id))
     .where(and(...conds))
-    .groupBy(executions.id, features.id, features.name)
+    .groupBy(executions.id, features.id, features.name, projects.codePrefix, features.codeSeq)
     .orderBy(desc(executions.startedAt))
     .limit(pageSize)
     .offset(offset);
@@ -92,6 +96,7 @@ export type ExecutionExportRow = {
   finishedAt:  Date | null;
   ciMetadata:  CiMetadata | null;
   featureName: string;
+  featureCode: string;
   passed:      number;
   failed:      number;
   skipped:     number;
@@ -116,6 +121,7 @@ export async function listExecutionsForExport(projectId: string, f: ExecutionFil
       finishedAt:  executions.finishedAt,
       ciMetadata:  executions.ciMetadata,
       featureName: features.name,
+      featureCode: featureCodeSql,
       passed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'PASSED'  THEN 1 ELSE 0 END), 0)::int`,
       failed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'FAILED'  THEN 1 ELSE 0 END), 0)::int`,
       skipped: sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'SKIPPED' THEN 1 ELSE 0 END), 0)::int`,
@@ -123,9 +129,10 @@ export async function listExecutionsForExport(projectId: string, f: ExecutionFil
     })
     .from(executions)
     .innerJoin(features, eq(features.id, executions.featureId))
+    .innerJoin(projects, eq(projects.id, features.projectId))
     .leftJoin(scenarioResults, eq(scenarioResults.executionId, executions.id))
     .where(and(...conds))
-    .groupBy(executions.id, features.id, features.name)
+    .groupBy(executions.id, features.id, features.name, projects.codePrefix, features.codeSeq)
     .orderBy(desc(executions.startedAt))
     .limit(EXPORT_ROW_CAP + 1);
 }

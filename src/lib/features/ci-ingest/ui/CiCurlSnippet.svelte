@@ -4,11 +4,12 @@
   import Icon   from '$lib/shared/ui/Icon.svelte';
 
   type Props = {
-    projectId: string;
-    baseUrl:   string;
+    projectId:   string;
+    projectSlug: string;
+    baseUrl:     string;
   };
 
-  let { projectId, baseUrl }: Props = $props();
+  let { projectId, projectSlug, baseUrl }: Props = $props();
 
   let env = $state('staging');
 
@@ -17,6 +18,7 @@
   -H 'Content-Type: application/json' \\
   -H 'X-Project-Id: ${projectId}' \\
   -H 'X-Environment: ${env}' \\
+  -H 'X-CI-Feature-Code: <feature-code>' \\
   -H 'X-CI-Branch: <branch>' \\
   -H 'X-CI-Commit: <commit>' \\
   -H 'X-CI-Source: github-actions' \\
@@ -50,7 +52,7 @@
   </Button>
   <span class="text-[12px] text-pass-ink tabular-nums" aria-live="polite">{copied ? 'Copied' : ''}</span>
   <a
-    href="/projects/{projectId}/settings/api-keys"
+    href="/p/{projectSlug}/settings/api-keys"
     class="ml-auto text-[12px] text-accent-soft-ink hover:underline"
   >
     Manage API keys →

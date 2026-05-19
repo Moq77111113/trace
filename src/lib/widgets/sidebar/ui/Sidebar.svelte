@@ -8,8 +8,8 @@
   import SidebarFooter from './SidebarFooter.svelte';
   import * as m from '$lib/paraglide/messages';
 
-  type Project = { id: string; name: string };
-  type FeatureRow = { id: string; name: string; latestFinishedStatus?: string | null };
+  type Project = { id: string; slug: string; name: string };
+  type FeatureRow = { id: string; name: string; code: string; latestFinishedStatus?: string | null };
   type GroupRow   = { id: string; name: string };
   type Tree       = { groups: { group: GroupRow; features: FeatureRow[] }[]; ungrouped: FeatureRow[] };
   type User       = { id: string; email: string; name: string | null };
@@ -28,18 +28,18 @@
   const sections = $derived(
     project
       ? ([
-          { key: 'overview',   label: m.nav_overview(),   icon: 'Home',     href: `/projects/${project.id}` },
-          { key: 'executions', label: m.nav_executions(), icon: 'History',  href: `/projects/${project.id}/executions` },
-          { key: 'import',     label: m.nav_import(),     icon: 'Upload',   href: `/projects/${project.id}/import` },
-          { key: 'export',     label: m.nav_export(),     icon: 'Download', href: `/projects/${project.id}/export` },
-          { key: 'keys',       label: m.nav_api_keys(),   icon: 'Key',      href: `/projects/${project.id}/settings/api-keys` },
+          { key: 'overview',   label: m.nav_overview(),   icon: 'Home',     href: `/p/${project.slug}` },
+          { key: 'executions', label: m.nav_executions(), icon: 'History',  href: `/p/${project.slug}/executions` },
+          { key: 'import',     label: m.nav_import(),     icon: 'Upload',   href: `/p/${project.slug}/import` },
+          { key: 'export',     label: m.nav_export(),     icon: 'Download', href: `/p/${project.slug}/export` },
+          { key: 'keys',       label: m.nav_api_keys(),   icon: 'Key',      href: `/p/${project.slug}/settings/api-keys` },
         ] as const)
       : ([{ key: 'home', label: m.nav_projects(), icon: 'Home', href: '/' }] as const)
   );
 
   function activeSection(pathname: string): string {
     if (!project) return 'home';
-    const base = `/projects/${project.id}`;
+    const base = `/p/${project.slug}`;
     if (pathname.startsWith(`${base}/settings`))   return 'keys';
     if (pathname.startsWith(`${base}/executions`)) return 'executions';
     if (pathname.startsWith(`${base}/import`))     return 'import';
@@ -47,9 +47,9 @@
     return 'overview';
   }
 
-  const activeKey       = $derived(activeSection(page.url.pathname));
-  const activeFeatureId = $derived(page.url.pathname.match(/\/features\/([^/]+)/)?.[1] ?? null);
-  const showTree        = $derived(!!project && !!tree && (tree.groups.length > 0 || tree.ungrouped.length > 0));
+  const activeKey         = $derived(activeSection(page.url.pathname));
+  const activeFeatureCode = $derived(page.url.pathname.match(/\/p\/[^/]+\/([a-z][a-z0-9-]*-\d+)/)?.[1] ?? null);
+  const showTree          = $derived(!!project && !!tree && (tree.groups.length > 0 || tree.ungrouped.length > 0));
 </script>
 
 <aside
@@ -72,7 +72,7 @@
   {/if}
 
   {#if showTree && project && tree}
-    <FeatureTree projectId={project.id} {tree} {activeFeatureId} {flakeFeatureIds} />
+    <FeatureTree projectSlug={project.slug} {tree} {activeFeatureCode} {flakeFeatureIds} />
   {/if}
 
   <SidebarFooter {user} />

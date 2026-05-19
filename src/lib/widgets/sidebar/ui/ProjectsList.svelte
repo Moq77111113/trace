@@ -3,7 +3,7 @@
   import { initials } from '../lib/initials';
   import * as m from '$lib/paraglide/messages';
 
-  type Project = { id: string; name: string };
+  type Project = { id: string; slug: string; name: string };
 
   type Props = { projects: Project[] };
   let { projects }: Props = $props();
@@ -23,7 +23,7 @@
 <div class="px-2 flex flex-col gap-px overflow-y-auto">
   {#each projects as p (p.id)}
     <a
-      href="/projects/{p.id}"
+      href="/p/{p.slug}"
       class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12.5px] text-ink-2 hover:bg-surface-2 hover:text-ink"
     >
       <span class="w-[18px] h-[18px] rounded-sm bg-surface-2 border border-border text-ink-2 text-[9.5px] font-semibold grid place-items-center shrink-0">

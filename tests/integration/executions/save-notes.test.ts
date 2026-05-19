@@ -1,21 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { db } from '$lib/server/db/client';
-import { features, projects } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/start';
 import { finishExecution } from '$lib/server/executions/finish';
 import { saveNotes } from '$lib/server/executions/save-notes';
+import { mkFeature, mkProject } from '../../fixtures';
 
 async function seedRun() {
-  const [p] = await db.insert(projects).values({ name: `Notes ${Date.now()}-${Math.random()}` }).returning();
-  if (!p) throw new Error('seed: project insert failed');
-
-  const [f] = await db.insert(features).values({
-    projectId: p.id,
-    name:      'F',
-    content:   'Feature: F\n\n  Scenario: S\n    Given x\n',
-  }).returning();
-  if (!f) throw new Error('seed: feature insert failed');
-
+  const p = await mkProject({ name: `Notes ${Date.now()}-${Math.random()}` });
+  const f = await mkFeature(p.id, {
+    name:    'F',
+    content: 'Feature: F\n\n  Scenario: S\n    Given x\n',
+  });
   return startExecution({ featureId: f.id, executedBy: 'Alice' });
 }
 

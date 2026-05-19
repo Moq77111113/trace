@@ -95,8 +95,13 @@
 
 	"new_project_subtitle": "Set up a workspace for a set of feature files.",
 	"new_project_name": "Name",
+	"new_project_slug": "Short name (used in links)",
+	"new_project_code_prefix": "Feature code",
+	"new_project_code_prefix_hint": "Features are numbered under this code, like code-1, code-2. Can't be changed later.",
 	"new_project_description": "Description",
 	"new_project_submit": "Create project",
+	"new_project_error_slug_taken": "That short name is already taken. Try another.",
+	"new_project_error_invalid": "Some fields look off — check the highlighted ones.",
 
 	"account_subtitle": "Personal settings — applies to you across all projects.",
 	"account_profile": "Profile",

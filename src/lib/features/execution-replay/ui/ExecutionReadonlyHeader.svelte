@@ -10,7 +10,8 @@
 
   type Props = {
     featureName: string;
-    projectId:   string;
+    featureCode: string;
+    projectSlug: string;
     featureId:   string;
     status:      string;
     executionId: string;
@@ -25,7 +26,7 @@
   };
 
   let {
-    featureName, projectId, featureId, status, executionId, source, environment,
+    featureName, featureCode, projectSlug, featureId, status, executionId, source, environment,
     startedAt, finishedAt, executedBy, notes, failedCount, onSnapshot,
   }: Props = $props();
 
@@ -36,6 +37,7 @@
   <div class="flex items-center gap-3.5 flex-wrap">
     <div class="flex items-center gap-2.5">
       <Status kind={runKind} size={16} />
+      <span class="font-mono text-[12px] text-ink-3 tabular-nums">{featureCode}</span>
       <h1 class="text-[16px] font-semibold tracking-tight m-0">{featureName}</h1>
       <Pill kind={runKind}>{status.toLowerCase()}</Pill>
     </div>
@@ -63,7 +65,7 @@
       {#if failedCount > 0}
         <RerunFailedForm {failedCount} />
       {/if}
-      <ExecutionLauncher {projectId} {featureId} />
+      <ExecutionLauncher {projectSlug} {featureId} />
     </div>
   </div>
 

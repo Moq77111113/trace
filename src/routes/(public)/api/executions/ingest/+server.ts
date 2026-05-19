@@ -18,6 +18,7 @@ export const POST = (async (event) => {
   if (!projectId) throw error(400, 'X-Project-Id header (or ?project=) required');
 
   const environment = event.request.headers.get('x-environment');
+  const featureCode = event.request.headers.get('x-ci-feature-code');
   const ciMetadata  = readCiMetadata((name) => event.request.headers.get(name));
   const executedBy  = await resolveCiExecutor(event);
 
@@ -32,7 +33,7 @@ export const POST = (async (event) => {
   }
 
   try {
-    const result = await ingestExecution({ projectId, executedBy, environment, ciMetadata, parsed });
+    const result = await ingestExecution({ projectId, executedBy, environment, featureCode, ciMetadata, parsed });
     return json({
       run_id:            result.execution.id,
       status:            result.execution.status,

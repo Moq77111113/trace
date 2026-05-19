@@ -20,7 +20,8 @@
 <section class="grid grid-rows-[auto_1fr] min-h-0 flex-1">
   <ExecutionReadonlyHeader
     featureName={data.feature.name}
-    projectId={data.project.id}
+    featureCode={`${data.project.codePrefix}-${data.feature.codeSeq}`}
+    projectSlug={data.project.slug}
     featureId={data.feature.id}
     status={data.execution.status}
     executionId={data.execution.id}

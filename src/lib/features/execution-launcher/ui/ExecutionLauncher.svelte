@@ -5,12 +5,12 @@
   import Icon   from '$lib/shared/ui/Icon.svelte';
 
   type Props = {
-    projectId: string;
-    featureId: string;
-    disabled?: boolean;
+    projectSlug: string;
+    featureId:   string;
+    disabled?:   boolean;
   };
 
-  let { projectId, featureId, disabled = false }: Props = $props();
+  let { projectSlug, featureId, disabled = false }: Props = $props();
 
   type StartFailure = { error?: string };
 
@@ -43,7 +43,7 @@
 
 <form
   method="POST"
-  action="/projects/{projectId}/executions/new"
+  action="/p/{projectSlug}/executions/new"
   use:enhance={onSubmit}
   class="inline-flex items-center gap-3"
 >

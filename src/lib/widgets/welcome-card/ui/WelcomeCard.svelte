@@ -3,13 +3,13 @@
 	import Icon   from '$lib/shared/ui/Icon.svelte';
 
 	type Props = {
-		projectId:   string;
+		projectSlug: string;
 		projectName: string;
-		featureId:   string | null;
+		featureCode: string | null;
 		ondismiss?:  () => void;
 	};
 
-	let { projectId, projectName, featureId, ondismiss }: Props = $props();
+	let { projectSlug, projectName, featureCode, ondismiss }: Props = $props();
 
 	let dismissing = $state(false);
 
@@ -39,7 +39,7 @@
 		<ol class="text-[12.5px] flex flex-col gap-1.5 mb-3">
 			<li>
 				<span class="opacity-70">1.</span>
-				<a class="font-medium underline-offset-2 hover:underline" href={`/projects/${projectId}`}>
+				<a class="font-medium underline-offset-2 hover:underline" href={`/p/${projectSlug}`}>
 					Browse the demo features
 				</a>
 				<span class="opacity-75">— see how Gherkin scenarios are organised.</span>
@@ -48,7 +48,7 @@
 				<span class="opacity-70">2.</span>
 				<a
 					class="font-medium underline-offset-2 hover:underline"
-					href={`/projects/${projectId}/executions`}
+					href={`/p/${projectSlug}/executions`}
 				>
 					Open the sample test run
 				</a>
@@ -56,17 +56,17 @@
 			</li>
 			<li>
 				<span class="opacity-70">3.</span>
-				{#if featureId}
+				{#if featureCode}
 					<a
 						class="font-medium underline-offset-2 hover:underline"
-						href={`/projects/${projectId}/features/${featureId}`}
+						href={`/p/${projectSlug}/${featureCode}`}
 					>
 						Edit a feature in Gherkin
 					</a>
 				{:else}
 					<a
 						class="font-medium underline-offset-2 hover:underline"
-						href={`/projects/${projectId}`}
+						href={`/p/${projectSlug}`}
 					>
 						Edit a feature in Gherkin
 					</a>

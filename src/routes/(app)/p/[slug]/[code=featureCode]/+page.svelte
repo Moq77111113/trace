@@ -11,7 +11,7 @@
   let parseErrors = $state(untrack(() => data.feature.parseErrors));
 
   const featureHasErrors = $derived((parseErrors?.length ?? 0) > 0);
-  const projectId        = $derived(page.params.pid ?? '');
+  const projectSlug      = $derived(page.params.slug ?? '');
 </script>
 
 <PageTitle title={data.feature.name} />
@@ -20,7 +20,7 @@
   <div class="flex flex-col min-h-0 min-w-0">
     <div class="flex items-center justify-end px-4 py-2 border-b border-border bg-bg">
       <ExecutionLauncher
-        {projectId}
+        {projectSlug}
         featureId={data.feature.id}
         disabled={featureHasErrors}
       />
@@ -30,6 +30,6 @@
   </div>
 
   <div class="max-lg:hidden">
-    <FeatureExecutionsAside {projectId} recentRuns={data.recentRuns} />
+    <FeatureExecutionsAside {projectSlug} recentRuns={data.recentRuns} />
   </div>
 </div>

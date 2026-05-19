@@ -9,6 +9,7 @@
   type FeatureRow = {
     id:                    string;
     name:                  string;
+    code:                  string;
     latestFinishedStatus?: string | null;
   };
   type GroupRow = { id: string; name: string };
@@ -18,13 +19,13 @@
   };
 
   type Props = {
-    projectId:       string;
-    tree:            Tree;
-    activeFeatureId: string | null;
-    flakeFeatureIds: Set<string> | undefined;
+    projectSlug:       string;
+    tree:              Tree;
+    activeFeatureCode: string | null;
+    flakeFeatureIds:   Set<string> | undefined;
   };
 
-  let { projectId, tree, activeFeatureId, flakeFeatureIds }: Props = $props();
+  let { projectSlug, tree, activeFeatureCode, flakeFeatureIds }: Props = $props();
 
   const expanded = new SvelteMap<string, boolean>();
   const isExpanded = (id: string): boolean => expanded.get(id) ?? true;
@@ -37,7 +38,7 @@
 <div class="px-2.5 pt-3.5 pb-1.5 text-[10.5px] font-medium uppercase tracking-[0.07em] text-ink-3 flex items-center justify-between">
   <span>{m.nav_features()}</span>
   <a
-    href="/projects/{projectId}/features/new"
+    href="/p/{projectSlug}/new"
     aria-label={m.nav_new_feature()}
     class="w-4 h-4 grid place-items-center rounded-sm text-ink-3 hover:bg-surface-2 hover:text-ink"
   >
@@ -64,14 +65,15 @@
 
     {#if open}
       {#each g.features as f (f.id)}
-        {@const active = activeFeatureId === f.id}
+        {@const active = activeFeatureCode === f.code}
         <a
-          href="/projects/{projectId}/features/{f.id}"
+          href="/p/{projectSlug}/{f.code}"
           class="flex items-center gap-2 pl-6 pr-2 py-1 rounded-md text-[12.5px] text-ink-2 leading-snug hover:bg-surface-2 hover:text-ink
                  aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:shadow-[var(--shadow-1)]"
           aria-current={active ? 'page' : undefined}
         >
           <Status kind={status(f)} size={10} />
+          <span class="font-mono text-[10.5px] text-ink-3 shrink-0 tabular-nums">{f.code}</span>
           <span class="flex-1 min-w-0 truncate">{f.name}</span>
           {#if flakeFeatureIds?.has(f.id)}
             <Pill kind="flake" glyph={false}>flake</Pill>
@@ -82,9 +84,9 @@
   {/each}
 
   {#each tree.ungrouped as f (f.id)}
-    {@const active = activeFeatureId === f.id}
+    {@const active = activeFeatureCode === f.code}
     <a
-      href="/projects/{projectId}/features/{f.id}"
+      href="/p/{projectSlug}/{f.code}"
       class="flex items-center gap-2 pl-3.5 pr-2 py-1 rounded-md text-[12.5px] text-ink-2 leading-snug hover:bg-surface-2 hover:text-ink
              aria-[current=page]:bg-surface aria-[current=page]:text-ink aria-[current=page]:shadow-[var(--shadow-1)]"
       aria-current={active ? 'page' : undefined}

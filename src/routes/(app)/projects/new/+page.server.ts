@@ -20,9 +20,15 @@ export const actions: Actions = {
   default: async ({ request }) => {
     const data   = stringFields(await request.formData());
     const parsed = projectInput.safeParse(data);
-    if (!parsed.success) return fail(400, { error: parsed.error.message, values: data });
+    if (!parsed.success) {
+      return fail(400, { error: m.new_project_error_invalid(), values: data, field: null });
+    }
 
-    const project = await createProject(parsed.data);
-    throw redirect(303, `/projects/${project.id}`);
+    const result = await createProject(parsed.data);
+    if ('error' in result) {
+      return fail(409, { error: m.new_project_error_slug_taken(), values: data, field: 'slug' as const });
+    }
+
+    throw redirect(303, `/p/${result.slug}`);
   },
 };

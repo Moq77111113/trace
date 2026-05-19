@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createProject } from '$lib/server/projects/create';
+import { mkProject } from '../fixtures';
 import { createFeature } from '$lib/server/features/create';
 import { saveFeature } from '$lib/server/features/save';
 
@@ -9,7 +9,7 @@ const badGherkin = 'Feature Login\n  Scenrio: A\n';
 
 describe('saveFeature', () => {
   it('saves valid content, bumps version, populates name + tags', async () => {
-    const p = await createProject({ name: `S ${Date.now()}` });
+    const p = await mkProject({ name: `S ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'X' });
 
     const r = await saveFeature({ featureId: f.id, content: goodGherkin('X'), expectedVersion: f.version, editor: 'alice' });
@@ -21,7 +21,7 @@ describe('saveFeature', () => {
   });
 
   it('rejects with conflict when expectedVersion is stale', async () => {
-    const p = await createProject({ name: `S2 ${Date.now()}` });
+    const p = await mkProject({ name: `S2 ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'X' });
 
     await saveFeature({ featureId: f.id, content: goodGherkin('X'), expectedVersion: f.version, editor: 'alice' });
@@ -33,7 +33,7 @@ describe('saveFeature', () => {
   });
 
   it('saves invalid content permissively with parseErrors set', async () => {
-    const p = await createProject({ name: `S3 ${Date.now()}` });
+    const p = await mkProject({ name: `S3 ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'X' });
 
     const r = await saveFeature({ featureId: f.id, content: badGherkin, expectedVersion: f.version, editor: 'alice' });

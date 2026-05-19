@@ -42,6 +42,7 @@ function row(overrides: Partial<ExecutionExportRow> = {}): ExecutionExportRow {
     finishedAt:  new Date('2026-01-15T10:00:30.000Z'),
     ciMetadata:  null,
     featureName: 'Sign in',
+    featureCode: 'auth-1',
     passed:  3,
     failed:  0,
     skipped: 0,
@@ -54,7 +55,7 @@ describe('toExecutionsCsv', () => {
   it('emits header row only when no data', () => {
     const out = toExecutionsCsv([]);
     expect(out).toBe(
-      'execution_id,feature,status,source,executed_by,environment,ci_branch,ci_commit,started_at,finished_at,duration_seconds,passed,failed,skipped,pending\r\n',
+      'execution_id,feature_code,feature,status,source,executed_by,environment,ci_branch,ci_commit,started_at,finished_at,duration_seconds,passed,failed,skipped,pending\r\n',
     );
   });
 
@@ -62,28 +63,28 @@ describe('toExecutionsCsv', () => {
     const out = toExecutionsCsv([row()]);
     const lines = out.split('\r\n');
     expect(lines[1]).toBe(
-      'exec-1,Sign in,PASSED,CI,ci@example.com,prod,,,2026-01-15T10:00:00.000Z,2026-01-15T10:00:30.000Z,30,3,0,0,0',
+      'exec-1,auth-1,Sign in,PASSED,CI,ci@example.com,prod,,,2026-01-15T10:00:00.000Z,2026-01-15T10:00:30.000Z,30,3,0,0,0',
     );
   });
 
   it('flattens ci_branch and ci_commit from ciMetadata', () => {
     const out = toExecutionsCsv([row({ ciMetadata: { branch: 'main', commit: 'a3fa827abc' } })]);
     const cells = out.split('\r\n')[1]?.split(',') ?? [];
-    expect(cells[6]).toBe('main');
-    expect(cells[7]).toBe('a3fa827abc');
+    expect(cells[7]).toBe('main');
+    expect(cells[8]).toBe('a3fa827abc');
   });
 
   it('leaves finished_at and duration_seconds blank for unfinished runs', () => {
     const out = toExecutionsCsv([row({ status: 'IN_PROGRESS', finishedAt: null })]);
     const cells = out.split('\r\n')[1]?.split(',') ?? [];
-    expect(cells[9]).toBe('');
     expect(cells[10]).toBe('');
+    expect(cells[11]).toBe('');
   });
 
   it('leaves environment blank when null', () => {
     const out = toExecutionsCsv([row({ environment: null })]);
     const cells = out.split('\r\n')[1]?.split(',') ?? [];
-    expect(cells[5]).toBe('');
+    expect(cells[6]).toBe('');
   });
 
   it('quotes feature names containing commas', () => {
@@ -97,9 +98,9 @@ describe('toExecutionsCsv', () => {
       row({ startedAt: '2026-01-15T10:00:00.000Z', finishedAt: '2026-01-15T10:00:45.000Z' }),
     ]);
     const cells = out.split('\r\n')[1]?.split(',') ?? [];
-    expect(cells[8]).toBe('2026-01-15T10:00:00.000Z');
-    expect(cells[9]).toBe('2026-01-15T10:00:45.000Z');
-    expect(cells[10]).toBe('45');
+    expect(cells[9]).toBe('2026-01-15T10:00:00.000Z');
+    expect(cells[10]).toBe('2026-01-15T10:00:45.000Z');
+    expect(cells[11]).toBe('45');
   });
 });
 

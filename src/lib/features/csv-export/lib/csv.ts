@@ -21,6 +21,7 @@ function durationSeconds(startedAt: Date, finishedAt: Date | null): string {
 
 const HEADERS = [
   'execution_id',
+  'feature_code',
   'feature',
   'status',
   'source',
@@ -46,6 +47,7 @@ export function toExecutionsCsv(rows: ExecutionExportRow[]): string {
 
     lines.push([
       csvField(r.id),
+      csvField(r.featureCode),
       csvField(r.featureName),
       csvField(r.status),
       csvField(r.source),

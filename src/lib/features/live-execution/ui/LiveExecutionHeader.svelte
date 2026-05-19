@@ -11,6 +11,7 @@
     selection:   ScenarioSelection;
     terminal:    TerminalFlow;
     featureName: string;
+    featureCode: string;
     executionId: string;
     source:      string;
     environment: string | null;
@@ -19,7 +20,7 @@
     onFinish:    () => void;
   };
 
-  let { selection, terminal, featureName, executionId, source, environment, startedAt, executedBy, onFinish }: Props = $props();
+  let { selection, terminal, featureName, featureCode, executionId, source, environment, startedAt, executedBy, onFinish }: Props = $props();
 
   const progressPct = $derived(
     selection.counts.total === 0
@@ -41,6 +42,7 @@
   <div class="flex items-center gap-3.5 flex-wrap">
     <div class="flex items-center gap-2.5">
       <Status kind="running" size={16} />
+      <span class="font-mono text-[12px] text-ink-3 tabular-nums">{featureCode}</span>
       <h1 class="text-[16px] font-semibold tracking-tight m-0 max-md:text-[14px]">{featureName}</h1>
       <Pill kind="running">running</Pill>
     </div>

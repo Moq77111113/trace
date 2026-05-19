@@ -24,7 +24,7 @@
     </div>
     <div class="flex items-center gap-2 max-md:flex-wrap">
       <NewGroupButton />
-      <Button variant="primary" href="/projects/{data.project.id}/features/new">
+      <Button variant="primary" href="/p/{data.project.slug}/new">
         <Icon name="Plus" size={13} /> New feature
       </Button>
     </div>
