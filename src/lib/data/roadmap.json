@@ -1,0 +1,320 @@
+{
+  "version": 1,
+  "stamp": "2026-05-19",
+  "items": [
+    {
+      "id": "gherkin-editor",
+      "title": "Easy editor to write your tests",
+      "status": "shipped",
+      "public": true,
+      "summary": "An editor right inside trace. Colours and instant feedback while you type, so you spot mistakes early.",
+      "notes": "Monaco-based, custom Gherkin grammar. Parse errors via @cucumber/gherkin in src/lib/editor."
+    },
+    {
+      "id": "feature-codes",
+      "title": "Short codes for each test",
+      "status": "shipped",
+      "public": true,
+      "summary": "Every test gets a short code like AUTH-42. Quick to mention in chat or in a meeting. The link keeps working even if you rename the test later.",
+      "notes": "A17. projects.slug (URL, unique global), projects.code_prefix (display, unique per project), features.code_seq (int sequence per project). Both slug + code_prefix locked after creation. See drizzle/0002 and tmp/todo.md A17."
+    },
+    {
+      "id": "feature-groups",
+      "title": "Sort your tests into folders",
+      "status": "shipped",
+      "public": true,
+      "summary": "Put related tests in named folders. Drag them around to reorder. Everyone on the team sees the same order.",
+      "notes": "feature_groups + position column. Drag via svelte-dnd-action."
+    },
+    {
+      "id": "live-cockpit",
+      "title": "Walk through a test live",
+      "status": "shipped",
+      "public": true,
+      "summary": "Click through a test step by step as you run it. Mark each step pass, fail, or skip. Drop in screenshots or short notes when something looks off.",
+      "notes": "Verdict shortcuts, S3-backed attachments, per-scenario notes. See src/lib/widgets/cockpit and tmp/todo.md A3."
+    },
+    {
+      "id": "abort-run",
+      "title": "Stop a run in the middle",
+      "status": "shipped",
+      "public": true,
+      "summary": "Need to cancel a run halfway? One click and the rest of the steps are marked skipped, so the run closes cleanly.",
+      "notes": "A3. Abort flow shipped without Pause (PAUSED deferred). Marks pending scenarios SKIPPED, execution ABORTED."
+    },
+    {
+      "id": "rerun-failed",
+      "title": "Re-run only the failed steps",
+      "status": "shipped",
+      "public": true,
+      "summary": "When part of a run fails, re-run just those steps without redoing the ones that already passed.",
+      "notes": "Restart a new execution scoped to scenarios with verdict=fail from the source execution."
+    },
+    {
+      "id": "dashboard",
+      "title": "Project dashboard at a glance",
+      "status": "shipped",
+      "public": true,
+      "summary": "See your project health in one screen: pass rate over the last week, runs today, and where the action's been.",
+      "notes": "src/routes/(app)/p/[slug]/+page. Tiles: pass rate 7d, runs today, etc. dash_* i18n keys."
+    },
+    {
+      "id": "command-palette",
+      "title": "Quick search with one keystroke",
+      "status": "shipped",
+      "public": true,
+      "summary": "Press Cmd+K (or Ctrl+K) to jump to any test from anywhere in trace. Type a name, a code, hit enter.",
+      "notes": "Topbar CommandPalette widget. Indexes features, project search. Also opens with '/'."
+    },
+    {
+      "id": "themes",
+      "title": "Light, dark, and accent colours",
+      "status": "shipped",
+      "public": true,
+      "summary": "Switch between light and dark mode any time. Pick the accent colour that feels right (pink, amber, cyan, lime).",
+      "notes": "Cookie-backed theme + accent. Tokens in src/app.css. Account settings page exposes the picker."
+    },
+    {
+      "id": "demo-onboarding",
+      "title": "Ready-to-explore demo project on day one",
+      "status": "shipped",
+      "public": true,
+      "summary": "When you first sign up, you get a sample project with real-looking tests and a past run so you can poke around right away.",
+      "notes": "src/lib/server/onboarding. seedDemoProject on first admin signup. WelcomeCard widget guides the 3-step tour."
+    },
+    {
+      "id": "ci-ingest",
+      "title": "Collect results from automated tests",
+      "status": "shipped",
+      "public": true,
+      "summary": "If your team runs tests automatically (after a deploy, every night, on every change), trace picks up the results and shows them here.",
+      "notes": "POST /api/executions/ingest, project API key auth. Headers: X-Project-Id, X-Environment, X-CI-Source/Branch/Commit."
+    },
+    {
+      "id": "ci-metadata",
+      "title": "Know where each result came from",
+      "status": "shipped",
+      "public": true,
+      "summary": "Every run remembers which version of the app was tested. Search old runs by version, branch, or where they ran.",
+      "notes": "A9. execution.environment / ci_branch / ci_commit / ci_source columns. drizzle/0002. Surfaces in history filters."
+    },
+    {
+      "id": "history-filters",
+      "title": "Find old runs, spot tests that flip-flop",
+      "status": "shipped",
+      "public": true,
+      "summary": "Look back through past runs and narrow the list down. Tests that pass one day and fail the next get flagged for you. Save the list as a spreadsheet anytime.",
+      "notes": "Filters chained via URL params. Flake detection on scenario verdict alternation. CSV export endpoint."
+    },
+    {
+      "id": "import-export",
+      "title": "Move your tests in and out",
+      "status": "shipped",
+      "public": true,
+      "summary": "Drag in a folder of test files to add them all at once. Or download a whole project as one file you can send to someone or keep as a backup.",
+      "notes": ".feature zip round-trip via archiver. Group meta preserved. src/lib/server/import + features/export."
+    },
+    {
+      "id": "oidc-sso",
+      "title": "Sign in with your work account",
+      "status": "shipped",
+      "public": true,
+      "summary": "Use the same login as your other work tools. Email and password still works too. (Some specific providers still need real-world testing.)",
+      "notes": "better-auth genericOAuth plugin. OIDC_DISCOVERY_URL + CLIENT_ID + CLIENT_SECRET. Keycloak not yet tested end-to-end; verify before promising it publicly."
+    },
+    {
+      "id": "api-keys",
+      "title": "Private keys for your automated tools",
+      "status": "shipped",
+      "public": true,
+      "summary": "Each project has its own private keys that automated tools use to send results in. Change them whenever you like from the project settings.",
+      "notes": "better-auth apiKey plugin. Rotate UI in Project Settings · API keys. Last-used + scope still on the A11 list."
+    },
+    {
+      "id": "i18n",
+      "title": "Available in English and French",
+      "status": "shipped",
+      "public": true,
+      "summary": "The interface follows your browser language. Switch any time from your account.",
+      "notes": "Paraglide. messages/en.json + fr.json. Inlang project config in project.inlang."
+    },
+    {
+      "id": "self-host-one-liner",
+      "title": "Install on your own server in one command",
+      "status": "shipped",
+      "public": true,
+      "summary": "Run a single command and trace is up. No subscription, no account, your data stays on your machine.",
+      "notes": "curl | docker compose -f - up -d. Default TRACE_AUTH_SECRET=change-the-secret-for-prod. Compose lives in trace.io repo at public/compose.yml. GHCR image ghcr.io/moq77111113/trace:main (latest pending v* tag)."
+    },
+    {
+      "id": "manual-features",
+      "title": "Write tests you run by hand too",
+      "status": "in-progress",
+      "public": true,
+      "summary": "Some tests are not automated, you run them by hand. Soon you can write those tests in trace too, in the same place as the rest.",
+      "notes": "A12. features.kind ('gherkin' | 'manual'). Editor swaps Monaco grammar for markdown when manual. Scenarios = '## Scenario name' sections."
+    },
+    {
+      "id": "tags-v2",
+      "title": "Use tags to organise tests",
+      "status": "next",
+      "public": true,
+      "summary": "Add labels like \"smoke\" or \"login\" to your tests. Then filter, group, or rename them from one place across the whole tool.",
+      "notes": "A20. Surface @tags from featureContentAtStart on execution finish, persist to scenario_results.tags. Add tag filter to history + feature list. Per-project Tags management page (rename, merge, delete-with-reassignment). Command palette: '#smoke' search."
+    },
+    {
+      "id": "html-reports",
+      "title": "Reports you can print or share",
+      "status": "next",
+      "public": true,
+      "summary": "A clean summary of a run that you can hand to a client or a manager. Print it, or save it as a PDF.",
+      "notes": "A19. Self-contained HTML per execution + filtered set. Header (project, feature code, env, branch@commit, durations), summary tile, per-scenario blocks with inline attachments, footer (version + stamp + signature line). Print stylesheet, no headless-Chrome."
+    },
+    {
+      "id": "pbac",
+      "title": "Decide who can do what",
+      "status": "next",
+      "public": true,
+      "summary": "Choose, project by project, who can read, run, or change tests. Lets you safely show your work to a client without giving them edit rights.",
+      "notes": "A16. policies table: subject × action × resource × optional condition × effect. Closed action enum (feature.read, execution.start, etc.). Single can(user, action, resource) evaluator. Project creator gets allow *; instance admin keeps built-in *."
+    },
+    {
+      "id": "campaigns",
+      "title": "Group all tests for a release",
+      "status": "later",
+      "public": true,
+      "summary": "Bundle every test that needs to pass for a release in one place. Track progress as the team works through it. Lock the result once it's signed off.",
+      "notes": "A21. campaigns (planned | running | closed) + campaign_features (id, feature_id, position, required) + executions.campaign_id nullable. Absorbs A14's app_version column. CI ingest accepts X-CI-Campaign-Id."
+    },
+    {
+      "id": "run-diff",
+      "title": "Compare two runs side by side",
+      "status": "later",
+      "public": true,
+      "summary": "Pick any two past runs of the same test. See at a glance which steps changed verdict between them.",
+      "notes": "A10. Picker + table of scenarios that flipped pass<->fail between the two."
+    },
+    {
+      "id": "webhooks",
+      "title": "Get a Slack message when a run ends",
+      "status": "later",
+      "public": true,
+      "summary": "When a run finishes (or fails), trace can drop a message into Slack, Teams, or anywhere else your team hangs out.",
+      "notes": "A13. webhooks (project_id, url, secret, events[], active) + webhook_deliveries. HMAC-signed payload. Retry with backoff, give up after N attempts. Delivery log in project settings."
+    },
+    {
+      "id": "source-traceability",
+      "title": "Jump from a failing test to its code",
+      "status": "later",
+      "public": true,
+      "summary": "Click straight from a step that failed to the part of the project where that step lives. Faster bug hunting.",
+      "notes": "A15. Three sub-shapes: (1) X-CI-Repo-Url/Commit/Feature-Path headers + 'View on GitHub' links (cheap), (2) stepDefinitions.json glue-file index uploaded alongside cucumber.json (medium), (3) source-of-truth toggle showing drift between repo .feature and snapshot."
+    },
+
+    {
+      "id": "demo-instance",
+      "title": "Public demo instance",
+      "status": "later",
+      "public": false,
+      "summary": "Reachable on the open internet, real instance for prospects to play with.",
+      "notes": "B1. One Node + one Postgres on Fly.io / Render / Hetzner. Reuse TRACE_BOOTSTRAP_ADMIN_EMAIL. Seed demo project on install."
+    },
+    {
+      "id": "demo-self-test",
+      "title": "Trace tests itself for the demo",
+      "status": "later",
+      "public": false,
+      "summary": "Demo data comes from a real cucumber suite testing trace itself, not fabricated content.",
+      "notes": "B2. e2e/self-demo/ folder. cucumber-js + Playwright (UI) + fetch (API). Feature set: auth/signin, projects/create, features/edit, runs/live-cockpit, runs/ci-ingest, import-export/roundtrip. cucumber.json artifact pushed to demo instance."
+    },
+    {
+      "id": "demo-runs-workflow",
+      "title": "GitHub Actions push to demo on every commit",
+      "status": "later",
+      "public": false,
+      "summary": "Every merge to main produces a live run on the demo instance.",
+      "notes": "B3. .github/workflows/demo-runs.yml. Triggers: push main, PR (env=pr-<n>), workflow_dispatch, schedule. One curl per feature so history shows multiple rows per commit. secrets.TRACE_DEMO_API_KEY."
+    },
+    {
+      "id": "landing-port",
+      "title": "Port the landing site",
+      "status": "later",
+      "public": false,
+      "summary": "Move from prototype to Astro on GH Pages.",
+      "notes": "B4. trace.io repo, src/ is Astro. Designer's site/ was the prototype. Already Astro now — verify what 'port' still means or close."
+    },
+    {
+      "id": "landing-wire-demo",
+      "title": "Wire landing CTAs to live demo",
+      "status": "later",
+      "public": false,
+      "summary": "Replace APP_URL placeholder with the real demo URL on the landing.",
+      "notes": "B5. 'Try the live cockpit' button in hero. Depends on demo-instance."
+    },
+    {
+      "id": "cockpit-recording",
+      "title": "Record cockpit walkthrough for landing",
+      "status": "later",
+      "public": false,
+      "summary": "Replace the skeleton placeholder in the landing's Live Demo section with a real recording.",
+      "notes": "B6. ~15-25s loop, webm or gif. Capture path: open cockpit, walk scenarios pass/fail/skip, attach evidence, finish. Output to trace.io public/cockpit-walkthrough.webm + poster. Possibly via chrome-devtools MCP."
+    },
+    {
+      "id": "ghcr-release-tag",
+      "title": "Cut v0.1.0-mvp release tag",
+      "status": "later",
+      "public": false,
+      "summary": "Push a versioned tag to publish :latest on GHCR.",
+      "notes": "C4. Workflow already publishes :main on push and :latest on v*.*.* tag. Just need the tag + release notes. Unlocks landing eyebrow 'v0.1.0-mvp' chip and image pinning."
+    },
+    {
+      "id": "trace-readme-quickstart",
+      "title": "Switch trace README to one-compose path",
+      "status": "later",
+      "public": false,
+      "summary": "Once GHCR :latest exists, replace the dev-loop quickstart with the one-compose path.",
+      "notes": "C5. Dev-loop moves to CONTRIBUTING.md."
+    },
+
+    {
+      "id": "pause-running-run",
+      "title": "Pause an in-flight run",
+      "status": "deferred",
+      "public": false,
+      "summary": "PAUSED status alongside RUNNING. Deferred when A3 shipped Abort only.",
+      "notes": "Deferred per the roadmap. Revisit after manual-features ships."
+    },
+    {
+      "id": "step-bindings",
+      "title": "Surface step-definition bindings",
+      "status": "deferred",
+      "public": false,
+      "summary": "Out of scope: that is a Cucumber-runtime concern, not trace's mandate.",
+      "notes": "Partially overlaps with source-traceability (A15)'s stepDefinitions.json sub-shape."
+    },
+    {
+      "id": "dashboard-activity-rail",
+      "title": "Activity rail on the dashboard",
+      "status": "deferred",
+      "public": false,
+      "summary": "Live activity feed on the dashboard. Past MVP.",
+      "notes": "Deferred per the roadmap."
+    },
+    {
+      "id": "project-settings-subnav",
+      "title": "Multi-section project settings",
+      "status": "deferred",
+      "public": false,
+      "summary": "Environments / Members / Notifications / Integrations subnav. Past MVP.",
+      "notes": "Deferred per the roadmap; revisit alongside PBAC + webhooks."
+    },
+    {
+      "id": "trace-cli",
+      "title": "Trace CLI",
+      "status": "deferred",
+      "public": false,
+      "summary": "trace init / push / export. Out of scope for MVP.",
+      "notes": "CI integration is curl + cucumber.json, already shipped. Designer's CLI snippets dropped in favour of curl on the landing."
+    }
+  ]
+}

@@ -21,6 +21,7 @@
   import Home          from 'lucide-svelte/icons/home';
   import Inbox         from 'lucide-svelte/icons/inbox';
   import Key           from 'lucide-svelte/icons/key';
+  import Map           from 'lucide-svelte/icons/map';
   import Menu          from 'lucide-svelte/icons/menu';
   import MoreHorizontal from 'lucide-svelte/icons/more-horizontal';
   import Moon          from 'lucide-svelte/icons/moon';
@@ -38,6 +39,7 @@
   import Tag           from 'lucide-svelte/icons/tag';
   import Trash         from 'lucide-svelte/icons/trash';
   import Upload        from 'lucide-svelte/icons/upload';
+  import X             from 'lucide-svelte/icons/x';
   import Zap           from 'lucide-svelte/icons/zap';
 
   const registry = {
@@ -63,6 +65,7 @@
     Home,
     Inbox,
     Key,
+    Map,
     Menu,
     MoreHorizontal,
     Moon,
@@ -80,6 +83,7 @@
     Tag,
     Trash,
     Upload,
+    X,
     Zap
   };
 
