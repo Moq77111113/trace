@@ -17,7 +17,12 @@ let cached: Drizzle | null = null;
 function init(): Drizzle {
 	const url = process.env.DATABASE_URL ?? env.DATABASE_URL;
 	if (!url) throw new Error('DATABASE_URL is not set');
-	const sql = postgres(url, { max: 10 });
+	const sql = postgres(url, {
+		max: 10,
+		onnotice: (notice) => {
+			if (notice.severity !== 'NOTICE') console.warn(notice);
+		}
+	});
 	return drizzle(sql, { schema });
 }
 
