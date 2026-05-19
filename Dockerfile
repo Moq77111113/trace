@@ -18,13 +18,6 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Placeholders so SvelteKit's analyse step can import server modules that
-# still read env at module-load time. See trace/tmp/todo.md C7 (lazy env reads):
-# s3 is already lazy; db client and auth still need refactoring.
-ENV DATABASE_URL=postgres://build:build@127.0.0.1:5432/build \
-    ORIGIN=http://localhost:3000 \
-    BETTER_AUTH_SECRET=build-placeholder-not-a-real-secret \
-    TRACE_AUTH_SECRET=build-placeholder-not-a-real-secret
 RUN pnpm build
 
 FROM base AS prod-deps
