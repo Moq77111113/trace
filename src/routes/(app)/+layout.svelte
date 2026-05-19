@@ -1,7 +1,8 @@
 <script lang="ts">
-  import Sidebar from '$lib/widgets/sidebar/ui/Sidebar.svelte';
-  import Topbar  from '$lib/widgets/topbar/ui/Topbar.svelte';
-  import * as m  from '$lib/paraglide/messages';
+  import PreviewBanner from '$lib/widgets/preview-banner/ui/PreviewBanner.svelte';
+  import Sidebar       from '$lib/widgets/sidebar/ui/Sidebar.svelte';
+  import Topbar        from '$lib/widgets/topbar/ui/Topbar.svelte';
+  import * as m        from '$lib/paraglide/messages';
 
   let { data, children } = $props();
 
@@ -16,23 +17,27 @@
   }
 </script>
 
-<div
-  class="app grid h-screen text-ink bg-canvas grid-cols-[244px_1fr] max-lg:grid-cols-[220px_1fr] max-md:grid-cols-[1fr]"
-  data-sidebar={sidebarOpen ? 'open' : 'closed'}
->
-  <Sidebar projects={data.projects} user={data.user} />
+<div class="h-screen flex flex-col text-ink bg-canvas">
+  <PreviewBanner />
 
-  <div class="flex flex-col min-w-0 min-h-0 bg-bg">
-    <Topbar theme={data.theme} onToggleSidebar={toggleSidebar} />
-    {@render children()}
+  <div
+    class="app grid flex-1 min-h-0 grid-cols-[244px_1fr] max-lg:grid-cols-[220px_1fr] max-md:grid-cols-[1fr]"
+    data-sidebar={sidebarOpen ? 'open' : 'closed'}
+  >
+    <Sidebar projects={data.projects} user={data.user} />
+
+    <div class="flex flex-col min-w-0 min-h-0 bg-bg">
+      <Topbar theme={data.theme} onToggleSidebar={toggleSidebar} />
+      {@render children()}
+    </div>
+
+    {#if sidebarOpen}
+      <button
+        type="button"
+        aria-label={m.nav_toggle_sidebar()}
+        class="hidden max-md:block fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] cursor-pointer"
+        onclick={closeSidebar}
+      ></button>
+    {/if}
   </div>
-
-  {#if sidebarOpen}
-    <button
-      type="button"
-      aria-label={m.nav_toggle_sidebar()}
-      class="hidden max-md:block fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] cursor-pointer"
-      onclick={closeSidebar}
-    ></button>
-  {/if}
 </div>
