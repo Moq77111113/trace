@@ -2,13 +2,15 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { featureGroups, features } from '$lib/server/db/schema';
+import { ok, err, type Result } from '$lib/shared/lib/result';
 
 export const groupDeleteInput = z.object({
   groupId: z.uuid({ version: 'v7' }),
 });
 export type GroupDeleteInput = z.infer<typeof groupDeleteInput>;
 
-export type DeleteGroupResult = { affectedFeatureCount: number } | { error: 'not-found' };
+export type DeleteGroupError  = 'not-found';
+export type DeleteGroupResult = Result<{ affectedFeatureCount: number }, DeleteGroupError>;
 
 /**
  * The DB enforces ON DELETE SET NULL on features.group_id, so the row count
@@ -27,7 +29,7 @@ export async function deleteGroup(input: GroupDeleteInput): Promise<DeleteGroupR
       .where(eq(featureGroups.id, input.groupId))
       .returning({ id: featureGroups.id });
 
-    if (deleted.length === 0) return { error: 'not-found' };
-    return { affectedFeatureCount: affected.length };
+    if (deleted.length === 0) return err('not-found');
+    return ok({ affectedFeatureCount: affected.length });
   });
 }

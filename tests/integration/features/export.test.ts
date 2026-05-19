@@ -44,8 +44,8 @@ describe('exportFeature', () => {
   it('prepends a # trace-group meta line when the feature is in a group', async () => {
     const p = await mkProject({ name: `Grp ${Date.now()}` });
     const g = await createGroup({ projectId: p.id, name: 'Auth' });
-    if ('error' in g) throw new Error('createGroup failed');
-    const f = await createFeature({ projectId: p.id, name: 'Login', groupId: g.id });
+    if (!g.ok) throw new Error('createGroup failed');
+    const f = await createFeature({ projectId: p.id, name: 'Login', groupId: g.value.id });
 
     const out = await exportFeature(f.id);
 

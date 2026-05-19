@@ -192,7 +192,7 @@ describe('commitBatch', () => {
   it('reuses an existing group case-insensitively without duplicating', async () => {
     const p = await mkProject({ name: `GmExist ${Date.now()}` });
     const g = await createGroup({ projectId: p.id, name: 'Auth' });
-    if ('error' in g) throw new Error('seed group failed');
+    if (!g.ok) throw new Error('seed group failed');
 
     const preview = await parseBatch(p.id, [
       file('a.feature', '# trace-group: auth\nFeature: Login\n  Scenario: A\n    Given x\n'),
@@ -209,7 +209,7 @@ describe('commitBatch', () => {
     const feature = await db.query.features.findFirst({
       where: and(eq(features.projectId, p.id), eq(features.name, 'Login')),
     });
-    expect(feature?.groupId).toBe(g.id);
+    expect(feature?.groupId).toBe(g.value.id);
   });
 
   it('overwrite path moves the feature to the group referenced in the imported meta', async () => {

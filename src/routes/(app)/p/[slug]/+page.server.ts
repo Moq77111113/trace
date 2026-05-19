@@ -39,7 +39,7 @@ export const actions = {
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'createGroup' });
 
     const result = await createGroup(parsed.data);
-    if ('error' in result) return fail(400, { error: result.error, action: 'createGroup' });
+    if (!result.ok) return fail(400, { error: result.error, action: 'createGroup' });
 
     throw redirect(303, `/p/${params.slug}`);
   },
@@ -50,7 +50,7 @@ export const actions = {
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'renameGroup' });
 
     const result = await renameGroup(parsed.data);
-    if ('error' in result) return fail(result.error === 'not-found' ? 404 : 400, { error: result.error, action: 'renameGroup' });
+    if (!result.ok) return fail(result.error === 'not-found' ? 404 : 400, { error: result.error, action: 'renameGroup' });
 
     throw redirect(303, `/p/${params.slug}`);
   },
@@ -61,7 +61,7 @@ export const actions = {
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'deleteGroup' });
 
     const result = await deleteGroup(parsed.data);
-    if ('error' in result) return fail(404, { error: result.error, action: 'deleteGroup' });
+    if (!result.ok) return fail(404, { error: result.error, action: 'deleteGroup' });
 
     throw redirect(303, `/p/${params.slug}`);
   },
@@ -79,7 +79,7 @@ export const actions = {
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'reorderGroups' });
 
     const result = await reorderGroups(parsed.data);
-    if ('error' in result) return fail(400, { error: result.error, action: 'reorderGroups' });
+    if (!result.ok) return fail(400, { error: result.error, action: 'reorderGroups' });
 
     throw redirect(303, `/p/${params.slug}`);
   },
