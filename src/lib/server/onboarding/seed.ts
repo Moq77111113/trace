@@ -1,6 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import {
@@ -12,9 +9,11 @@ import {
 } from '$lib/server/db/schema';
 import { createProject } from '$lib/server/projects/create';
 import { allocateCodeSeq } from '$lib/server/features/code-seq';
+import projectFileJson from './demo/project.json';
+import groupsFileJson from './demo/groups.json';
+import runFileJson from './demo/run.json';
 
 const DEMO_NAME = 'Trace Demo';
-const DEMO_DIR  = join(dirname(fileURLToPath(import.meta.url)), 'demo');
 
 type ProjectFile = { name: string; description: string };
 type GroupsFile  = Array<{ name: string; position: number; features: string[] }>;
@@ -33,13 +32,25 @@ type RunFile     = {
 	}>;
 };
 
+const featureFiles = import.meta.glob('./demo/features/*.feature', {
+	query: '?raw',
+	import: 'default',
+	eager: true,
+}) as Record<string, string>;
+
+function readFeature(filename: string): string {
+	const content = featureFiles[`./demo/features/${filename}`];
+	if (content === undefined) throw new Error(`demo seed: missing feature file ${filename}`);
+	return content;
+}
+
 export async function seedDemoProject(_adminUserId: string): Promise<void> {
 	const [existing] = await db.select({ id: projects.id }).from(projects).where(eq(projects.name, DEMO_NAME));
 	if (existing) return;
 
-	const projectFile = JSON.parse(await readFile(join(DEMO_DIR, 'project.json'), 'utf8')) as ProjectFile;
-	const groupsFile  = JSON.parse(await readFile(join(DEMO_DIR, 'groups.json'),  'utf8')) as GroupsFile;
-	const runFile     = JSON.parse(await readFile(join(DEMO_DIR, 'run.json'),     'utf8')) as RunFile;
+	const projectFile = projectFileJson as ProjectFile;
+	const groupsFile  = groupsFileJson  as GroupsFile;
+	const runFile     = runFileJson     as RunFile;
 
 	const projectResult = await createProject({ name: projectFile.name, description: projectFile.description });
 	if (!projectResult.ok) throw new Error(`demo seed: createProject failed: ${projectResult.error}`);
@@ -54,7 +65,7 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 		if (!group) throw new Error('demo seed: group insert failed');
 
 		for (const filename of g.features) {
-			const content = await readFile(join(DEMO_DIR, 'features', filename), 'utf8');
+			const content = readFeature(filename);
 			const featName = filename.replace(/^\d+-/, '').replace(/\.feature$/, '').replace(/-/g, ' ');
 			const feat = await db.transaction(async (tx) => {
 				const codeSeq = await allocateCodeSeq(tx, project.id);
@@ -73,7 +84,7 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 	if (!runFeatureId) {
 		throw new Error(`demo seed: run targets missing feature ${runFile.featureFile}`);
 	}
-	const runFeatureContent = await readFile(join(DEMO_DIR, 'features', runFile.featureFile), 'utf8');
+	const runFeatureContent = readFeature(runFile.featureFile);
 
 	const [run] = await db
 		.insert(executions)
