@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:18-alpine
     container_name: trace-pg
+    restart: unless-stopped
     environment:
       POSTGRES_USER: trace
       POSTGRES_PASSWORD: trace
@@ -18,10 +19,11 @@ services:
   minio:
     image: minio/minio:latest
     container_name: trace-minio
+    restart: unless-stopped
     command: server /data --console-address ':9001'
     environment:
-      MINIO_ROOT_USER:     trace
-      MINIO_ROOT_PASSWORD: tracetrace
+      MINIO_ROOT_USER:     ${S3_ACCESS_KEY:-trace}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-tracetrace}
     ports: ['9000:9000', '9001:9001']
     healthcheck:
       test:     ['CMD', 'mc', 'ready', 'local']
@@ -39,9 +41,9 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 trace tracetrace &&
-      mc mb --ignore-existing local/trace-attachments &&
-      echo 'bucket trace-attachments ready'
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY:-trace} ${S3_SECRET_KEY:-tracetrace} &&
+      mc mb --ignore-existing local/${S3_BUCKET:-trace-attachments} &&
+      echo 'bucket ${S3_BUCKET:-trace-attachments} ready'
       "
 
   app:
@@ -65,9 +67,9 @@ services:
       TRACE_BOOTSTRAP_ADMIN_EMAIL: ${TRACE_BOOTSTRAP_ADMIN_EMAIL:-}
       S3_ENDPOINT:                 http://minio:9000
       S3_REGION:                   us-east-1
-      S3_BUCKET:                   trace-attachments
-      S3_ACCESS_KEY:               trace
-      S3_SECRET_KEY:               tracetrace
+      S3_BUCKET:                   ${S3_BUCKET:-trace-attachments}
+      S3_ACCESS_KEY:               ${S3_ACCESS_KEY:-trace}
+      S3_SECRET_KEY:               ${S3_SECRET_KEY:-tracetrace}
     ports: ['${TRACE_PORT:-7777}:3000']
 
 volumes:
