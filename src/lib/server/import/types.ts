@@ -29,4 +29,4 @@ export type BatchPreview = {
   createdAt: Date;
 };
 
-export type ImportBuffer = { filename: string; bytes: Buffer };
+export type ImportBuffer = { filename: string; bytes: Buffer; presetGroup: string | null };

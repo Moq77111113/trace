@@ -8,7 +8,13 @@ import type { RequestHandler } from './$types';
 
 const body = z.object({
   previewId: z.string().min(1),
-  decisions: z.record(z.string(), z.enum(DECISIONS)),
+  rows: z.record(
+    z.string(),
+    z.object({
+      decision:  z.enum(DECISIONS),
+      groupName: z.string().min(1).nullable(),
+    }),
+  ),
 });
 
 export const POST: RequestHandler = authedHandler(async (event) => {
@@ -20,7 +26,7 @@ export const POST: RequestHandler = authedHandler(async (event) => {
   try {
     const outcome = await commitBatch({
       previewId: parsed.data.previewId,
-      decisions: parsed.data.decisions,
+      rows:      parsed.data.rows,
       editor,
     });
     return json(outcome);

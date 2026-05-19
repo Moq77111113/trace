@@ -5,8 +5,8 @@ import { archiveFeature } from '$lib/server/features/archive';
 import { parseBatch } from '$lib/server/import/parse-batch';
 import { getPreview } from '$lib/server/import/buffer';
 
-function file(filename: string, content: string) {
-  return { filename, bytes: Buffer.from(content) };
+function file(filename: string, content: string, presetGroup: string | null = null) {
+  return { filename, bytes: Buffer.from(content), presetGroup };
 }
 
 describe('parseBatch', () => {
@@ -63,6 +63,30 @@ describe('parseBatch', () => {
 
     expect(preview.rows[0]?.groupName).toBe('Auth');
     expect(preview.rows[1]?.groupName).toBeNull();
+  });
+
+  it('uses presetGroup when no trace-group meta is present', async () => {
+    const p = await mkProject({ name: `Pg ${Date.now()}` });
+
+    const preview = await parseBatch(p.id, [
+      file('a.feature', 'Feature: Bare\n  Scenario: A\n    Given x\n', 'Payments'),
+    ]);
+
+    expect(preview.rows[0]?.groupName).toBe('Payments');
+  });
+
+  it('trace-group meta wins over presetGroup', async () => {
+    const p = await mkProject({ name: `Prec ${Date.now()}` });
+
+    const preview = await parseBatch(p.id, [
+      file(
+        'a.feature',
+        '# trace-group: Auth\nFeature: Login\n  Scenario: A\n    Given x\n',
+        'Payments',
+      ),
+    ]);
+
+    expect(preview.rows[0]?.groupName).toBe('Auth');
   });
 
   it('stores raw buffers in the preview buffer for later commit', async () => {

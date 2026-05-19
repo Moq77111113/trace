@@ -8,7 +8,6 @@ import { createGroup } from '$lib/server/groups/create';
 import { listGroups } from '$lib/server/groups/queries';
 import { renameGroup } from '$lib/server/groups/rename';
 import { deleteGroup } from '$lib/server/groups/delete';
-import { reorderGroups } from '$lib/server/groups/reorder';
 import { listFeaturesByGroup } from '$lib/server/features/queries';
 import { saveFeature } from '$lib/server/features/save';
 import { unwrap } from '$lib/shared/lib/result';
@@ -120,38 +119,6 @@ describe('deleteGroup', () => {
   it('returns not-found for missing group', async () => {
     const result = await deleteGroup({ groupId: '00000000-0000-7000-8000-000000000000' });
     expect(result).toEqual({ ok: false, error: 'not-found' });
-  });
-});
-
-describe('reorderGroups', () => {
-  it('rewrites positions according to provided order', async () => {
-    const p = await mkProject({ name: `Reo ${Date.now()}` });
-    const a = unwrap(await createGroup({ projectId: p.id, name: 'A' }));
-    const b = unwrap(await createGroup({ projectId: p.id, name: 'B' }));
-    const c = unwrap(await createGroup({ projectId: p.id, name: 'C' }));
-
-    const result = await reorderGroups({
-      projectId:  p.id,
-      orderedIds: [c.id, a.id, b.id],
-    });
-    expect(result).toEqual({ ok: true, value: null });
-
-    const list = await listGroups(p.id);
-    expect(list.map((g) => g.name)).toEqual(['C', 'A', 'B']);
-  });
-
-  it('rejects when ids do not match project groups exactly', async () => {
-    const p = await mkProject({ name: `ReoBad ${Date.now()}` });
-    const a = unwrap(await createGroup({ projectId: p.id, name: 'A' }));
-
-    const missing = await reorderGroups({ projectId: p.id, orderedIds: [] });
-    expect(missing).toEqual({ ok: false, error: 'invalid-order' });
-
-    const foreign = await reorderGroups({
-      projectId:  p.id,
-      orderedIds: [a.id, '00000000-0000-7000-8000-000000000000'],
-    });
-    expect(foreign).toEqual({ ok: false, error: 'invalid-order' });
   });
 });
 

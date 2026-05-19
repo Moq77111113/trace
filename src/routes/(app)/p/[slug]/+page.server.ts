@@ -3,7 +3,7 @@ import { listGroups } from '$lib/server/groups/queries';
 import { createGroup, groupCreateInput } from '$lib/server/groups/create';
 import { deleteGroup, groupDeleteInput } from '$lib/server/groups/delete';
 import { renameGroup, groupRenameInput } from '$lib/server/groups/rename';
-import { reorderGroups, groupReorderInput } from '$lib/server/groups/reorder';
+import { moveFeature, featureMoveInput } from '$lib/server/features/move';
 import { getProjectDashboardStats, getProjectIdBySlug } from '$lib/server/projects/queries';
 import { stringFields } from '$lib/server/forms';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
@@ -66,20 +66,16 @@ export const actions = {
     throw redirect(303, `/p/${params.slug}`);
   },
 
-  reorderGroups: async ({ request, params }: RequestEvent<Params>) => {
-    const projectId = await requireProjectId(params.slug);
-    const raw       = await request.formData();
-    const ordered   = raw.get('orderedIds');
-    if (typeof ordered !== 'string') return fail(400, { error: 'invalid-input', action: 'reorderGroups' });
+  moveFeature: async ({ request, params }: RequestEvent<Params>) => {
+    const data    = stringFields(await request.formData());
+    const groupId = data.groupId === '' || data.groupId === undefined ? null : data.groupId;
+    const parsed  = featureMoveInput.safeParse({ featureId: data.featureId, groupId });
+    if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'moveFeature' });
 
-    let orderedIds: unknown;
-    try { orderedIds = JSON.parse(ordered); } catch { return fail(400, { error: 'invalid-input', action: 'reorderGroups' }); }
-
-    const parsed = groupReorderInput.safeParse({ projectId, orderedIds });
-    if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'reorderGroups' });
-
-    const result = await reorderGroups(parsed.data);
-    if (!result.ok) return fail(400, { error: result.error, action: 'reorderGroups' });
+    const result = await moveFeature(parsed.data);
+    if (!result.ok) {
+      return fail(result.error === 'feature-not-found' ? 404 : 400, { error: result.error, action: 'moveFeature' });
+    }
 
     throw redirect(303, `/p/${params.slug}`);
   },

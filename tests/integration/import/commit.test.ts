@@ -8,14 +8,19 @@ import { archiveFeature } from '$lib/server/features/archive';
 import { createGroup } from '$lib/server/groups/create';
 import { saveFeature } from '$lib/server/features/save';
 import { parseBatch } from '$lib/server/import/parse-batch';
-import { commitBatch, type Decision } from '$lib/server/import/commit';
+import { commitBatch, type Decision, type CommitRowInput } from '$lib/server/import/commit';
 
-function file(filename: string, content: string) {
-  return { filename, bytes: Buffer.from(content) };
+function file(filename: string, content: string, presetGroup: string | null = null) {
+  return { filename, bytes: Buffer.from(content), presetGroup };
 }
 
-function decisionsFor(rows: { rowId: string }[], action: Decision): Record<string, Decision> {
-  return Object.fromEntries(rows.map((r) => [r.rowId, action]));
+function rowsFor(
+  rows: { rowId: string; groupName: string | null }[],
+  action: Decision,
+): Record<string, CommitRowInput> {
+  return Object.fromEntries(
+    rows.map((r) => [r.rowId, { decision: action, groupName: r.groupName }]),
+  );
 }
 
 describe('commitBatch', () => {
@@ -28,11 +33,14 @@ describe('commitBatch', () => {
       file('b.feature', 'Feature: Login\n  Scenario: A\n    Given x\n'),
     ]);
 
-    const decisions = Object.fromEntries(
-      preview.rows.map((r) => [r.rowId, r.status === 'new' ? 'import' : 'skip']),
-    ) as Record<string, Decision>;
+    const payload: Record<string, CommitRowInput> = Object.fromEntries(
+      preview.rows.map((r) => [
+        r.rowId,
+        { decision: (r.status === 'new' ? 'import' : 'skip') as Decision, groupName: r.groupName },
+      ]),
+    );
 
-    const out = await commitBatch({ previewId: preview.previewId, decisions });
+    const out = await commitBatch({ previewId: preview.previewId, rows: payload });
 
     expect(out.imported).toBe(1);
     expect(out.skipped).toBe(1);
@@ -68,7 +76,7 @@ describe('commitBatch', () => {
 
     const out = await commitBatch({
       previewId: preview.previewId,
-      decisions: decisionsFor(preview.rows, 'overwrite'),
+      rows: rowsFor(preview.rows, 'overwrite'),
     });
 
     expect(out.imported).toBe(1);
@@ -88,7 +96,7 @@ describe('commitBatch', () => {
 
     const out = await commitBatch({
       previewId: preview.previewId,
-      decisions: decisionsFor(preview.rows, 'rename'),
+      rows: rowsFor(preview.rows, 'rename'),
     });
 
     expect(out.imported).toBe(1);
@@ -108,12 +116,15 @@ describe('commitBatch', () => {
       file('bad.feature',  'Feature: Bad\n  Scenario: B\n    Given x\n'),
     ]);
 
-    const decisions: Record<string, Decision> = {};
+    const payload: Record<string, CommitRowInput> = {};
     for (const r of preview.rows) {
-      decisions[r.rowId] = r.filename === 'bad.feature' ? 'overwrite' : 'import';
+      payload[r.rowId] = {
+        decision:  r.filename === 'bad.feature' ? 'overwrite' : 'import',
+        groupName: r.groupName,
+      };
     }
 
-    const out = await commitBatch({ previewId: preview.previewId, decisions });
+    const out = await commitBatch({ previewId: preview.previewId, rows: payload });
 
     expect(out.imported).toBe(1);
     expect(out.failed).toHaveLength(1);
@@ -134,7 +145,7 @@ describe('commitBatch', () => {
 
     const out = await commitBatch({
       previewId: preview.previewId,
-      decisions: decisionsFor(preview.rows, 'import'),
+      rows: rowsFor(preview.rows, 'import'),
     });
 
     expect(out.imported).toBe(1);
@@ -157,7 +168,7 @@ describe('commitBatch', () => {
 
     const out = await commitBatch({
       previewId: preview.previewId,
-      decisions: decisionsFor(preview.rows, 'rename'),
+      rows: rowsFor(preview.rows, 'rename'),
     });
 
     expect(out.imported).toBe(1);
@@ -175,7 +186,7 @@ describe('commitBatch', () => {
 
     await commitBatch({
       previewId: preview.previewId,
-      decisions: decisionsFor(preview.rows, 'import'),
+      rows: rowsFor(preview.rows, 'import'),
     });
 
     const created = await db.query.featureGroups.findFirst({
@@ -200,7 +211,7 @@ describe('commitBatch', () => {
 
     await commitBatch({
       previewId: preview.previewId,
-      decisions: decisionsFor(preview.rows, 'import'),
+      rows: rowsFor(preview.rows, 'import'),
     });
 
     const groups = await db.select().from(featureGroups).where(eq(featureGroups.projectId, p.id));
@@ -222,7 +233,7 @@ describe('commitBatch', () => {
 
     await commitBatch({
       previewId: preview.previewId,
-      decisions: decisionsFor(preview.rows, 'overwrite'),
+      rows: rowsFor(preview.rows, 'overwrite'),
     });
 
     const updated  = await db.query.features.findFirst({ where: eq(features.id, old.id) });
@@ -242,11 +253,11 @@ describe('commitBatch', () => {
 
     await commitBatch({
       previewId: preview.previewId,
-      decisions: decisionsFor(preview.rows, 'import'),
+      rows: rowsFor(preview.rows, 'import'),
     });
 
     await expect(
-      commitBatch({ previewId: preview.previewId, decisions: {} }),
+      commitBatch({ previewId: preview.previewId, rows: {} }),
     ).rejects.toThrow(/preview expired|not found/);
   });
 });

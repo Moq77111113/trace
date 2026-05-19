@@ -104,7 +104,7 @@
           </ul>
         {/if}
 
-        <DropZone onDrop={attachments.upload}>
+        <DropZone onDrop={(items) => attachments.upload(items.map((i) => i.file))}>
           <Icon name="Upload" size={14} />
           <span class="ml-1.5">Drop screenshots, logs, or files — or click to browse</span>
           {#if attachments.uploading}<span class="block mt-1 text-[11px]">Uploading…</span>{/if}
