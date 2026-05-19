@@ -22,7 +22,7 @@ export const load = (async ({ locals, url }) => {
 		signupWindowEndsAt: settings.signupWindowEndsAt,
 	});
 
-	return { oidcEnabled: isOidcEnabled, adminExists, signupOpen };
+	return { oidcEnabled: isOidcEnabled(), adminExists, signupOpen };
 }) satisfies PageServerLoad;
 
 type FormState = { error: string; mode: 'signin' | 'signup'; email?: string; name?: string };
@@ -76,7 +76,7 @@ export const actions = {
 	},
 
 	oidc: async ({ url }) => {
-		if (!isOidcEnabled) {
+		if (!isOidcEnabled()) {
 			return failForm(400, { error: m.error_oidc_not_configured(), mode: 'signin' });
 		}
 

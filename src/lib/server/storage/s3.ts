@@ -5,12 +5,7 @@ import {
 	DeleteObjectCommand
 } from '@aws-sdk/client-s3';
 import { Readable } from 'node:stream';
-
-function requireEnv(key: string): string {
-	const value = process.env[key];
-	if (!value) throw new Error(`s3 adapter: ${key} is not set`);
-	return value;
-}
+import { requireEnv } from '$lib/server/config/env';
 
 let cachedClient: S3Client | null = null;
 let cachedBucket: string   | null = null;
