@@ -10,7 +10,10 @@ const startBody = z.object({
   environment: z.string().trim().max(100).optional(),
 });
 
-export const load = (async ({ params }) => ({ projectId: params.pid })) satisfies PageServerLoad;
+export const load = (async ({ parent }) => {
+  const { project } = await parent();
+  return { projectId: project.id };
+}) satisfies PageServerLoad;
 
 export const actions = {
   default: async (event) => {
@@ -34,6 +37,6 @@ export const actions = {
       return fail(409, { error: e instanceof Error ? e.message : 'startExecution failed' });
     }
 
-    throw redirect(303, `/projects/${event.params.pid}/executions/${executionId}`);
+    throw redirect(303, `/p/${event.params.slug}/executions/${executionId}`);
   },
 } satisfies Actions;

@@ -1,24 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
-import { executions, features, featureGroups, projects } from '$lib/server/db/schema';
+import { executions, featureGroups } from '$lib/server/db/schema';
 import { listExecutionEnvironments, listExecutionsForProject } from '$lib/server/executions/queries';
+import { mkFeature, mkProject } from '../../fixtures';
 
 async function seedProject() {
-  const [p] = await db
-    .insert(projects)
-    .values({ name: `Hist ${Date.now()}-${Math.random()}` })
-    .returning();
-  if (!p) throw new Error('seed: project insert failed');
-  return p;
+  return mkProject({ name: `Hist ${Date.now()}-${Math.random()}` });
 }
 
 async function seedFeature(projectId: string, name: string, groupId: string | null = null) {
-  const [f] = await db
-    .insert(features)
-    .values({ projectId, groupId, name, content: `Feature: ${name}\n\n  Scenario: A\n    Given x\n` })
-    .returning();
-  if (!f) throw new Error('seed: feature insert failed');
-  return f;
+  return mkFeature(projectId, { groupId, name, content: `Feature: ${name}\n\n  Scenario: A\n    Given x\n` });
 }
 
 async function seedGroup(projectId: string, name: string) {

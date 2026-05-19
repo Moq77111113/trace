@@ -95,8 +95,13 @@
 
 	"new_project_subtitle": "Créez un espace de travail pour un ensemble de fichiers de fonctionnalités.",
 	"new_project_name": "Nom",
+	"new_project_slug": "Nom court (utilisé dans les liens)",
+	"new_project_code_prefix": "Code de feature",
+	"new_project_code_prefix_hint": "Les features sont numérotées sous ce code, ex. code-1, code-2. Pas modifiable après.",
 	"new_project_description": "Description",
 	"new_project_submit": "Créer le projet",
+	"new_project_error_slug_taken": "Ce nom court est déjà pris. Essayez-en un autre.",
+	"new_project_error_invalid": "Certains champs ne vont pas — vérifiez ceux mis en évidence.",
 
 	"account_subtitle": "Préférences personnelles — appliquées à tous vos projets.",
 	"account_profile": "Profil",

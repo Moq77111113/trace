@@ -27,7 +27,7 @@
     const params = new URLSearchParams(page.url.searchParams);
     params.delete('page');
     const qs = params.toString();
-    return `/projects/${data.project.id}/executions/export.csv${qs ? `?${qs}` : ''}`;
+    return `/p/${data.project.slug}/executions/export.csv${qs ? `?${qs}` : ''}`;
   });
 </script>
 
@@ -46,7 +46,7 @@
       </p>
     </div>
     <div class="text-[12.5px]">
-      <a href="/projects/{data.project.id}/executions/ci" class="text-accent-soft-ink hover:underline">
+      <a href="/p/{data.project.slug}/executions/ci" class="text-accent-soft-ink hover:underline">
         CI ingest →
       </a>
     </div>
@@ -64,7 +64,7 @@
   {#if data.rows.length === 0}
     <EmptyState title={hasFilter ? 'No executions match these filters' : 'No executions yet'} />
   {:else}
-    <ExecutionsTable rows={data.rows} projectId={data.project.id} flakeFeatureIds={data.flakeFeatureIds} />
+    <ExecutionsTable rows={data.rows} projectSlug={data.project.slug} flakeFeatureIds={data.flakeFeatureIds} />
 
     <footer class="mt-6 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-4 text-[12.5px]">
       <ExecutionsExportButton href={exportHref} total={data.total} />

@@ -2,6 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { featureGroups, features } from '$lib/server/db/schema';
 import type { DbTx } from '$lib/server/db/client';
 import { parse } from '$lib/shared/gherkin/parse';
+import { allocateCodeSeq } from './code-seq';
 import { syncFeatureTags } from './tags-sync';
 
 type Input = {
@@ -28,8 +29,10 @@ export async function importFeatureFromContent(tx: DbTx, input: Input): Promise<
     ? await findOrCreateGroup(tx, input.projectId, input.groupName)
     : null;
 
+  const codeSeq = await allocateCodeSeq(tx, input.projectId);
+
   const [row] = await tx.insert(features)
-    .values({ projectId: input.projectId, name, content, parseErrors: errors, groupId })
+    .values({ projectId: input.projectId, name, content, parseErrors: errors, groupId, codeSeq })
     .returning({ id: features.id, name: features.name, groupId: features.groupId });
 
   if (!row) throw new Error('importFeatureFromContent: insert returned no row');

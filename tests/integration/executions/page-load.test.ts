@@ -1,26 +1,23 @@
 import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
-import { executions, features, featureGroups, projects } from '$lib/server/db/schema';
-import { load } from '../../../src/routes/(app)/projects/[pid]/executions/+page.server';
+import { executions, featureGroups } from '$lib/server/db/schema';
+import { load } from '../../../src/routes/(app)/p/[slug]/executions/+page.server';
+import { mkFeature, mkProject } from '../../fixtures';
 
 type LoadEvent = Parameters<typeof load>[0];
 
-function buildEvent(pid: string, search: Record<string, string> = {}): LoadEvent {
-  const url = new URL(`http://localhost/projects/${pid}/runs`);
+function buildEvent(project: { id: string; slug: string }, search: Record<string, string> = {}): LoadEvent {
+  const url = new URL(`http://localhost/p/${project.slug}/executions`);
   for (const [k, v] of Object.entries(search)) url.searchParams.set(k, v);
   return {
-    params: { pid },
+    params: { slug: project.slug },
     url,
-    parent: async () => ({ breadcrumbs: [] }),
+    parent: async () => ({ breadcrumbs: [], project }),
   } as unknown as LoadEvent;
 }
 
 async function seedFixture() {
-  const [p] = await db
-    .insert(projects)
-    .values({ name: `RunsLoad ${Date.now()}-${Math.random()}` })
-    .returning();
-  if (!p) throw new Error('seed: project insert failed');
+  const p = await mkProject({ name: `RunsLoad ${Date.now()}-${Math.random()}` });
 
   const [g] = await db
     .insert(featureGroups)
@@ -28,17 +25,8 @@ async function seedFixture() {
     .returning();
   if (!g) throw new Error('seed: group insert failed');
 
-  const [fApi] = await db
-    .insert(features)
-    .values({ projectId: p.id, groupId: g.id, name: 'Login API', content: 'Feature: x\n\n  Scenario: A\n    Given x\n' })
-    .returning();
-  if (!fApi) throw new Error('seed: feature insert failed');
-
-  const [fUi] = await db
-    .insert(features)
-    .values({ projectId: p.id, groupId: null, name: 'Login UI', content: 'Feature: x\n\n  Scenario: A\n    Given x\n' })
-    .returning();
-  if (!fUi) throw new Error('seed: feature insert failed');
+  const fApi = await mkFeature(p.id, { groupId: g.id, name: 'Login API', content: 'Feature: x\n\n  Scenario: A\n    Given x\n' });
+  const fUi  = await mkFeature(p.id, { groupId: null,  name: 'Login UI',  content: 'Feature: x\n\n  Scenario: A\n    Given x\n' });
 
   await db.insert(executions).values({
     featureId:           fApi.id,
@@ -76,7 +64,7 @@ async function callLoad(event: LoadEvent) {
 describe('runs page server load — URL query params drive filters', () => {
   it('reads no filters when URL has no params', async () => {
     const { project } = await seedFixture();
-    const data = await callLoad(buildEvent(project.id));
+    const data = await callLoad(buildEvent(project));
 
     expect(data.total).toBe(2);
     expect(data.filters.status).toBeUndefined();
@@ -85,7 +73,7 @@ describe('runs page server load — URL query params drive filters', () => {
 
   it('?status=FAILED narrows the result and round-trips into filters', async () => {
     const { project } = await seedFixture();
-    const data = await callLoad(buildEvent(project.id, { status: 'FAILED' }));
+    const data = await callLoad(buildEvent(project, { status: 'FAILED' }));
 
     expect(data.filters.status).toBe('FAILED');
     expect(data.total).toBe(1);
@@ -94,7 +82,7 @@ describe('runs page server load — URL query params drive filters', () => {
 
   it('combines ?source=CI&environment=staging', async () => {
     const { project } = await seedFixture();
-    const data = await callLoad(buildEvent(project.id, { source: 'CI', environment: 'staging' }));
+    const data = await callLoad(buildEvent(project, { source: 'CI', environment: 'staging' }));
 
     expect(data.filters.source).toBe('CI');
     expect(data.filters.environment).toBe('staging');
@@ -104,7 +92,7 @@ describe('runs page server load — URL query params drive filters', () => {
 
   it('?feature=<id> narrows to one feature', async () => {
     const { project, fApi } = await seedFixture();
-    const data = await callLoad(buildEvent(project.id, { feature: fApi.id }));
+    const data = await callLoad(buildEvent(project, { feature: fApi.id }));
 
     expect(data.filters.featureId).toBe(fApi.id);
     expect(data.total).toBe(1);
@@ -114,12 +102,12 @@ describe('runs page server load — URL query params drive filters', () => {
   it('?group=<id> narrows to one group, ?group=ungrouped picks NULL group_id', async () => {
     const { project, group } = await seedFixture();
 
-    const grouped = await callLoad(buildEvent(project.id, { group: group.id }));
+    const grouped = await callLoad(buildEvent(project, { group: group.id }));
     expect(grouped.filters.groupId).toBe(group.id);
     expect(grouped.total).toBe(1);
     expect(grouped.rows[0]?.featureName).toBe('Login API');
 
-    const ungrouped = await callLoad(buildEvent(project.id, { group: 'ungrouped' }));
+    const ungrouped = await callLoad(buildEvent(project, { group: 'ungrouped' }));
     expect(ungrouped.filters.groupId).toBe('ungrouped');
     expect(ungrouped.total).toBe(1);
     expect(ungrouped.rows[0]?.featureName).toBe('Login UI');
@@ -127,7 +115,7 @@ describe('runs page server load — URL query params drive filters', () => {
 
   it('rejects unknown status/source values (no filter applied)', async () => {
     const { project } = await seedFixture();
-    const data = await callLoad(buildEvent(project.id, { status: 'NOPE' }));
+    const data = await callLoad(buildEvent(project, { status: 'NOPE' }));
 
     expect(data.filters.status).toBeUndefined();
     expect(data.total).toBe(2);

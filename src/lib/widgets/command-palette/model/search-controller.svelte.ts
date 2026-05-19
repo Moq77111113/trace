@@ -3,7 +3,9 @@ import type { executions } from '$lib/server/db/schema';
 export type SearchResult = {
   featureId:   string;
   featureName: string;
+  featureCode: string;
   projectId:   string;
+  projectSlug: string;
   projectName: string;
   groupName:   string | null;
   status:      typeof executions.status.enumValues[number] | null;

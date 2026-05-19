@@ -29,9 +29,9 @@
 <div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
   {#if data.welcome}
     <WelcomeCard
-      projectId={data.welcome.projectId}
+      projectSlug={data.welcome.projectSlug}
       projectName={data.welcome.projectName}
-      featureId={data.welcome.featureId}
+      featureCode={data.welcome.featureCode}
       ondismiss={() => invalidateAll()}
     />
   {/if}
@@ -54,7 +54,7 @@
     <div class="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3">
       {#each data.projects as p (p.id)}
         <a
-          href="/projects/{p.id}"
+          href="/p/{p.slug}"
           class="flex flex-col gap-3 bg-surface border border-border rounded-xl p-3.5 hover:border-border-strong transition-colors"
         >
           <div class="flex items-center gap-2.5">
@@ -84,7 +84,7 @@
     <div class="bg-surface border border-border rounded-xl overflow-hidden">
       {#each data.recentRuns as r (r.id)}
         <a
-          href="/projects/{r.projectId}/executions/{r.id}"
+          href="/p/{r.projectSlug}/executions/{r.id}"
           class="flex items-start gap-2.5 px-3.5 py-2.5 border-t border-border first:border-t-0 hover:bg-surface-2 transition-colors"
         >
           <Pill kind={toStatusKind(r.status)}>{r.status.toLowerCase()}</Pill>

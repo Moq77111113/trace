@@ -17,17 +17,19 @@
   type Feature = {
     id:          string;
     name:        string;
+    codeSeq:     number;
     content:     string;
     version:     number;
     parseErrors: ParseErrors;
     groupId:     string | null;
   };
 
+  type ProjectRef = { codePrefix: string };
   type ProjectTag = { name: string; count: number };
   type Group      = { id: string; name: string };
 
   type Props = {
-    data: { feature: Feature; projectTags: ProjectTag[]; groups: Group[] };
+    data: { feature: Feature; project: ProjectRef; projectTags: ProjectTag[]; groups: Group[] };
     onSaved?: (feature: Feature) => void;
   };
 
@@ -104,6 +106,7 @@
 
   <EditorHeader
     featureName={data.feature.name}
+    featureCode={`${data.project.codePrefix}-${data.feature.codeSeq}`}
     featureId={data.feature.id}
     {version}
     {dirty}

@@ -21,6 +21,7 @@ const fakeData = {
     id:          'f1',
     projectId:   'p1',
     groupId:     null,
+    codeSeq:     1,
     name:        'Login',
     content:     'Feature: F\n',
     parseErrors: null,
@@ -32,6 +33,8 @@ const fakeData = {
   project: {
     id:          'p1',
     name:        'P',
+    slug:        'p1',
+    codePrefix:  'p1',
     description: null,
     archived:    false,
     createdAt:   new Date(),

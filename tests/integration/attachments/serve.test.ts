@@ -2,9 +2,10 @@
 import { describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { db } from '$lib/server/db/client';
-import { attachments, executions, features, projects, scenarioResults } from '$lib/server/db/schema';
+import { attachments, executions, scenarioResults } from '$lib/server/db/schema';
 import { putObject, deleteObject } from '$lib/server/storage/s3';
 import { GET } from '../../../src/routes/(public)/api/attachments/[aid]/+server';
+import { mkFeature, mkProject } from '../../fixtures';
 
 type AttachmentEvent = Parameters<typeof GET>[0];
 
@@ -26,14 +27,8 @@ async function invoke(event: AttachmentEvent) {
 }
 
 async function seedRunWithScenario() {
-  const [p] = await db.insert(projects).values({ name: `Att ${Date.now()}-${Math.random()}` }).returning();
-  if (!p) throw new Error('seed: project insert failed');
-
-  const [f] = await db
-    .insert(features)
-    .values({ projectId: p.id, name: 'Att', content: 'Feature: Att\n\n  Scenario: A\n    Given x\n' })
-    .returning();
-  if (!f) throw new Error('seed: feature insert failed');
+  const p = await mkProject({ name: `Att ${Date.now()}-${Math.random()}` });
+  const f = await mkFeature(p.id, { name: 'Att', content: 'Feature: Att\n\n  Scenario: A\n    Given x\n' });
 
   const [r] = await db
     .insert(executions)

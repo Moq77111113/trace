@@ -1,27 +1,29 @@
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
-import { featureTags, tags } from '$lib/server/db/schema';
+import { featureTags, features, projects, tags } from '$lib/server/db/schema';
 import { stringFields } from '$lib/server/forms';
 import { resolveLiveExecutor } from '$lib/server/executions/auth';
 import { listRecentExecutionsForFeature } from '$lib/server/executions/queries';
 import { appendCrumb, type Crumb } from '$lib/shared/lib/breadcrumbs';
+import { parseFeatureCode } from '$lib/shared/lib/slug';
 import { archiveFeature } from './archive';
-import { getFeature } from './queries';
+import { getFeatureByCode } from './queries';
 import { saveFeature } from './save';
 import { listGroups } from '$lib/server/groups/queries';
 
-type Params = { pid: string; fid: string };
+type Params = { slug: string; code: string };
+type ProjectRef = { id: string; slug: string; codePrefix: string };
+type ParentData = { breadcrumbs: Crumb[]; project: ProjectRef };
 
-const saveBody = z.object({
-  content: z.string().max(200_000),
-  version: z.coerce.number().int().nonnegative(),
-  groupId: z.string().uuid().nullable().optional(),
-});
+export const load = async ({ params, parent }: { params: Params; parent: () => Promise<ParentData> }) => {
+  const { project, breadcrumbs } = await parent();
 
-export const load = async ({ params, parent }: { params: Params; parent: () => Promise<{ breadcrumbs: Crumb[] }> }) => {
-  const feature = await getFeature(params.fid);
+  const parsed = parseFeatureCode(params.code);
+  if (!parsed || parsed.prefix !== project.codePrefix) throw error(404, 'Feature not found');
+
+  const feature = await getFeatureByCode(project.id, parsed.seq);
   if (!feature) throw error(404, 'Feature not found');
 
   const tagCounts = db.$with('tag_counts').as(
@@ -39,20 +41,36 @@ export const load = async ({ params, parent }: { params: Params; parent: () => P
     })
     .from(tags)
     .leftJoin(tagCounts, eq(tagCounts.tagId, tags.id))
-    .where(eq(tags.projectId, params.pid))
+    .where(eq(tags.projectId, project.id))
     .orderBy(desc(sql`COALESCE(${tagCounts.count}, 0)`), tags.name);
 
-  const recentRuns = await listRecentExecutionsForFeature(params.fid, 5);
-  const { breadcrumbs } = await parent();
+  const recentRuns = await listRecentExecutionsForFeature(feature.id, 5);
 
   return {
     feature,
     projectTags,
-    groups: await listGroups(params.pid),
+    groups: await listGroups(project.id),
     recentRuns,
     breadcrumbs: appendCrumb(breadcrumbs, { label: feature.name }),
   };
 };
+
+const saveBody = z.object({
+  content: z.string().max(200_000),
+  version: z.coerce.number().int().nonnegative(),
+  groupId: z.string().uuid().nullable().optional(),
+});
+
+async function resolveFeatureId(slug: string, code: string): Promise<string | null> {
+  const parsed = parseFeatureCode(code);
+  if (!parsed) return null;
+  const [row] = await db
+    .select({ id: features.id })
+    .from(features)
+    .innerJoin(projects, eq(projects.id, features.projectId))
+    .where(and(eq(projects.slug, slug), eq(projects.codePrefix, parsed.prefix), eq(features.codeSeq, parsed.seq)));
+  return row?.id ?? null;
+}
 
 export const actions = {
   save: async (event: RequestEvent<Params>) => {
@@ -62,10 +80,13 @@ export const actions = {
     const parsed  = saveBody.safeParse({ ...data, groupId });
     if (!parsed.success) return fail(400, { error: parsed.error.message });
 
+    const featureId = await resolveFeatureId(params.slug, params.code);
+    if (!featureId) throw error(404, 'Feature not found');
+
     const editor = resolveLiveExecutor(event);
 
     const result = await saveFeature({
-      featureId:       params.fid,
+      featureId,
       content:         parsed.data.content,
       expectedVersion: parsed.data.version,
       editor,
@@ -80,9 +101,12 @@ export const actions = {
   },
 
   archive: async ({ params }: RequestEvent<Params>) => {
-    const result = await archiveFeature(params.fid);
+    const featureId = await resolveFeatureId(params.slug, params.code);
+    if (!featureId) throw error(404, 'Feature not found');
+
+    const result = await archiveFeature(featureId);
     if (!result.ok) throw error(404, 'Feature not found');
 
-    throw redirect(303, `/projects/${params.pid}`);
+    throw redirect(303, `/p/${params.slug}`);
   },
 };

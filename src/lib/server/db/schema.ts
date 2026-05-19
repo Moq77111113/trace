@@ -19,6 +19,8 @@ export const projects = pgTable(
   {
     id:          pk(),
     name:        text('name').notNull(),
+    slug:        text('slug').notNull(),
+    codePrefix:  text('code_prefix').notNull(),
     description: text('description'),
     archived:    boolean('archived').notNull().default(false),
     createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -28,6 +30,15 @@ export const projects = pgTable(
     uniqueIndex('projects_name_unique')
       .on(sql`LOWER(${t.name})`)
       .where(sql`${t.archived} = FALSE`),
+    uniqueIndex('projects_slug_unique').on(t.slug),
+    check(
+      'projects_slug_kebab',
+      sql`${t.slug} ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' AND char_length(${t.slug}) BETWEEN 2 AND 40`,
+    ),
+    check(
+      'projects_code_prefix_kebab',
+      sql`${t.codePrefix} ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' AND char_length(${t.codePrefix}) BETWEEN 2 AND 15`,
+    ),
   ],
 );
 
@@ -50,6 +61,7 @@ export const features = pgTable(
     id:          pk(),
     projectId:   uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
     groupId:     uuid('group_id').references(() => featureGroups.id, { onDelete: 'set null' }),
+    codeSeq:     integer('code_seq').notNull(),
     name:        text('name').notNull(),
     content:     text('content').notNull(),
     parseErrors: jsonb('parse_errors').$type<ParseError[] | null>(),
@@ -62,6 +74,8 @@ export const features = pgTable(
     uniqueIndex('features_project_name_unique')
       .on(t.projectId, sql`LOWER(${t.name})`)
       .where(sql`${t.archived} = FALSE`),
+    uniqueIndex('features_project_code_seq_unique').on(t.projectId, t.codeSeq),
+    check('features_code_seq_positive', sql`${t.codeSeq} >= 1`),
   ],
 );
 

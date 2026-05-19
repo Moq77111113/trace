@@ -1,17 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, projects, executions, scenarioResults } from '$lib/server/db/schema';
+import { scenarioResults } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/start';
 import { finishExecution } from '$lib/server/executions/finish';
+import { mkFeature, mkProject } from '../../fixtures';
 
 async function seedRun(content: string) {
-  const [p] = await db.insert(projects).values({ name: `Fin ${Date.now()}-${Math.random()}` }).returning();
-  if (!p) throw new Error('seed: project insert failed');
-
-  const [f] = await db.insert(features).values({ projectId: p.id, name: 'F', content }).returning();
-  if (!f) throw new Error('seed: feature insert failed');
-
+  const p = await mkProject({ name: `Fin ${Date.now()}-${Math.random()}` });
+  const f = await mkFeature(p.id, { name: 'F', content });
   return startExecution({ featureId: f.id, executedBy: 'Alice' });
 }
 

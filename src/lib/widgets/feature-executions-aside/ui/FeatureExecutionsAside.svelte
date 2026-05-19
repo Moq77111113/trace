@@ -17,11 +17,11 @@
   };
 
   type Props = {
-    projectId:  string;
-    recentRuns: RecentRun[];
+    projectSlug: string;
+    recentRuns:  RecentRun[];
   };
 
-  let { projectId, recentRuns }: Props = $props();
+  let { projectSlug, recentRuns }: Props = $props();
 
   const latest = $derived(recentRuns[0]);
   const latestIsRunning = $derived(latest?.status === 'IN_PROGRESS');
@@ -47,7 +47,7 @@
         </span>
       </div>
       <a
-        href="/projects/{projectId}/executions/{latest.id}"
+        href="/p/{projectSlug}/executions/{latest.id}"
         class="flex items-center justify-center gap-1.5 px-3 h-[28px] text-[12px] font-medium rounded-md border border-border text-ink-2 hover:bg-surface-2 hover:text-ink hover:border-border-strong w-full"
       >
         <Icon name={latestIsRunning ? 'Play' : 'Eye'} size={12} />
@@ -63,7 +63,7 @@
           {@const kind = toStatusKind(r.status)}
           <li>
             <a
-              href="/projects/{projectId}/executions/{r.id}"
+              href="/p/{projectSlug}/executions/{r.id}"
               class="grid grid-cols-[14px_auto_1fr_auto] items-center gap-2 py-1 text-[12px] hover:bg-surface-2 rounded-md px-1.5 -mx-1.5"
             >
               <Status kind={kind} size={11} />

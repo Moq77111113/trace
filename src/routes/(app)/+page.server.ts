@@ -11,20 +11,20 @@ const DEMO_NAME = 'Trace Demo';
 async function loadWelcome(locals: App.Locals) {
 	if (!locals.user || locals.user.welcomedAt) return null;
 	const [demo] = await db
-		.select({ id: projects.id, name: projects.name })
+		.select({ id: projects.id, slug: projects.slug, name: projects.name, codePrefix: projects.codePrefix })
 		.from(projects)
 		.where(eq(projects.name, DEMO_NAME));
 	if (!demo) return null;
 	const [firstFeature] = await db
-		.select({ id: features.id })
+		.select({ codeSeq: features.codeSeq })
 		.from(features)
 		.where(eq(features.projectId, demo.id))
 		.orderBy(asc(features.createdAt))
 		.limit(1);
 	return {
-		projectId:   demo.id,
+		projectSlug: demo.slug,
 		projectName: demo.name,
-		featureId:   firstFeature?.id ?? null,
+		featureCode: firstFeature ? `${demo.codePrefix}-${firstFeature.codeSeq}` : null,
 	};
 }
 

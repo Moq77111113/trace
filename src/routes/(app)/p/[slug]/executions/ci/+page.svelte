@@ -8,8 +8,9 @@
 
   let { data } = $props();
 
-  const projectId = $derived(page.params.pid ?? '');
-  const baseUrl   = $derived(typeof window === 'undefined' ? 'https://your-trace-instance' : window.location.origin);
+  const projectSlug = $derived(page.params.slug ?? '');
+  const projectId   = $derived(data.project.id);
+  const baseUrl     = $derived(typeof window === 'undefined' ? 'https://your-trace-instance' : window.location.origin);
 </script>
 
 <PageTitle title={m.page_title_executions_ci()} />
@@ -17,7 +18,7 @@
 <div class="flex-1 min-h-0 overflow-auto p-7 max-lg:p-6 max-md:p-4">
   <section class="max-w-3xl">
     <a
-      href="/projects/{projectId}/executions"
+      href="/p/{projectSlug}/executions"
       class="inline-flex items-center gap-1.5 text-[12px] text-ink-3 hover:text-ink mb-3"
     >
       ← Back to executions
@@ -31,9 +32,9 @@
     </p>
 
     {#if !data.hasUsableKey}
-      <CiKeyEmptyState {projectId} />
+      <CiKeyEmptyState {projectSlug} />
     {:else}
-      <CiCurlSnippet {projectId} {baseUrl} />
+      <CiCurlSnippet {projectId} {projectSlug} {baseUrl} />
       <CiReference />
     {/if}
   </section>

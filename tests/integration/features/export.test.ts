@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
-import { createProject } from '$lib/server/projects/create';
+import { mkProject } from '../../fixtures';
 import { createFeature } from '$lib/server/features/create';
 import { createGroup } from '$lib/server/groups/create';
 import { exportFeature } from '$lib/server/features/export';
 
 describe('exportFeature', () => {
   it('returns content with safe slugged filename', async () => {
-    const p = await createProject({ name: `Exp ${Date.now()}` });
+    const p = await mkProject({ name: `Exp ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'User Login Flow' });
 
     const out = await exportFeature(f.id);
@@ -21,7 +21,7 @@ describe('exportFeature', () => {
   });
 
   it('falls back to "feature" when name slug is empty', async () => {
-    const p = await createProject({ name: `Empty ${Date.now()}` });
+    const p = await mkProject({ name: `Empty ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: '!!!' });
 
     const out = await exportFeature(f.id);
@@ -30,7 +30,7 @@ describe('exportFeature', () => {
   });
 
   it('returns null for archived features', async () => {
-    const p = await createProject({ name: `Arc ${Date.now()}` });
+    const p = await mkProject({ name: `Arc ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'Archived' });
     await db.update(features).set({ archived: true }).where(eq(features.id, f.id));
 
@@ -42,7 +42,7 @@ describe('exportFeature', () => {
   });
 
   it('prepends a # trace-group meta line when the feature is in a group', async () => {
-    const p = await createProject({ name: `Grp ${Date.now()}` });
+    const p = await mkProject({ name: `Grp ${Date.now()}` });
     const g = await createGroup({ projectId: p.id, name: 'Auth' });
     if ('error' in g) throw new Error('createGroup failed');
     const f = await createFeature({ projectId: p.id, name: 'Login', groupId: g.id });

@@ -8,9 +8,20 @@ describe('projects domain', () => {
   });
 
   it('inserts and returns the row', async () => {
-    const p = await createProject({ name: `Demo ${Date.now()}` });
-    expect(p.id).toBeDefined();
-    expect(p.archived).toBe(false);
+    const result = await createProject({ name: `Demo ${Date.now()}` });
+    if ('error' in result) throw new Error(`createProject failed: ${result.error}`);
+    expect(result.id).toBeDefined();
+    expect(result.archived).toBe(false);
+    expect(result.slug).toMatch(/^demo/);
+    expect(result.codePrefix).toMatch(/^demo/);
+  });
+
+  it('returns slug-taken error when the slug is already used', async () => {
+    const first = await createProject({ name: 'Twin', slug: `twin-${Date.now().toString(36)}` });
+    if ('error' in first) throw new Error('first insert failed');
+
+    const dupe = await createProject({ name: 'Twin Dupe', slug: first.slug });
+    expect(dupe).toEqual({ error: 'slug-taken' });
   });
 
   it('listProjectsWithStats includes new project', async () => {

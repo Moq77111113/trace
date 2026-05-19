@@ -2,32 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { db } from '$lib/server/db/client';
-import { features, projects } from '$lib/server/db/schema';
 import { createTestApiKey } from '../_helpers/api-key';
 import { POST, type IngestSuccess } from '../../../src/routes/(public)/api/executions/ingest/+server';
+import { mkFeature, mkProject } from '../../fixtures';
 
 type IngestEvent = Parameters<typeof POST>[0];
 
 async function seedProjectWithKey(featureName = 'Login') {
-  const [p] = await db
-    .insert(projects)
-    .values({ name: `IngestApi ${Date.now()}-${Math.random()}` })
-    .returning();
-  if (!p) throw new Error('seed: project insert failed');
-
-  const [f] = await db
-    .insert(features)
-    .values({
-      projectId: p.id,
-      name:      featureName,
-      content:   `Feature: ${featureName}\n\n  Scenario: Successful login\n    Given x\n`,
-    })
-    .returning();
-  if (!f) throw new Error('seed: feature insert failed');
-
+  const p = await mkProject({ name: `IngestApi ${Date.now()}-${Math.random()}` });
+  const f = await mkFeature(p.id, {
+    name:    featureName,
+    content: `Feature: ${featureName}\n\n  Scenario: Successful login\n    Given x\n`,
+  });
   const { rawKey } = await createTestApiKey(p.id, 'ci-token');
-
-  return { project: p, rawKey };
+  return { project: p, feature: f, rawKey };
 }
 
 function buildEvent(body: string, headers: Record<string, string> = {}, searchParams: Record<string, string> = {}) {
@@ -78,6 +66,20 @@ describe('POST /api/executions/ingest', () => {
       scenarios_matched: 1,
       scenarios_unknown: 0,
     });
+  });
+
+  it('matches by X-CI-Feature-Code when present, ignoring the parsed feature name', async () => {
+    const { project, feature, rawKey } = await seedProjectWithKey('Some other name on disk');
+    const body                         = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
+
+    const res = await invoke(buildEvent(body, {
+      'x-project-id':       project.id,
+      'authorization':      `Bearer ${rawKey}`,
+      'x-ci-feature-code':  `${project.codePrefix}-${feature.codeSeq}`,
+    }));
+
+    expect(res.status).toBe(201);
+    expect(expectSuccess(res.body).scenarios_matched).toBe(1);
   });
 
   it('persists ci_metadata from X-CI-Branch and X-CI-Commit headers', async () => {

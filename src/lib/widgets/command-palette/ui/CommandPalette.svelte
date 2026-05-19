@@ -32,7 +32,7 @@
 
   function pick(r: SearchResult): void {
     onOpenChange(false);
-    void goto(`/projects/${r.projectId}/features/${r.featureId}`);
+    void goto(`/p/${r.projectSlug}/${r.featureCode}`);
   }
 
   function onKey(e: KeyboardEvent): void {

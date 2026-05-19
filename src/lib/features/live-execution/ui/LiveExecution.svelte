@@ -52,6 +52,7 @@
     {selection}
     {terminal}
     featureName={data.feature.name}
+    featureCode={`${data.project.codePrefix}-${data.feature.codeSeq}`}
     executionId={data.execution.id}
     source={data.execution.source}
     environment={data.execution.environment}

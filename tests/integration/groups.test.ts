@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { featureGroups, features } from '$lib/server/db/schema';
-import { createProject } from '$lib/server/projects/create';
+import { mkProject } from '../fixtures';
 import { createFeature } from '$lib/server/features/create';
 import { createGroup } from '$lib/server/groups/create';
 import { listGroups } from '$lib/server/groups/queries';
@@ -14,7 +14,7 @@ import { saveFeature } from '$lib/server/features/save';
 
 describe('feature_groups schema', () => {
   it('cascades on project delete and sets null on group delete', async () => {
-    const p = await createProject({ name: `Schema ${Date.now()}` });
+    const p = await mkProject({ name: `Schema ${Date.now()}` });
 
     const [g] = await db.insert(featureGroups)
       .values({ projectId: p.id, name: 'Auth', position: 0 })
@@ -30,7 +30,7 @@ describe('feature_groups schema', () => {
   });
 
   it('rejects duplicate (projectId, name)', async () => {
-    const p = await createProject({ name: `Dup ${Date.now()}` });
+    const p = await mkProject({ name: `Dup ${Date.now()}` });
     await db.insert(featureGroups).values({ projectId: p.id, name: 'X', position: 0 });
     await expect(
       db.insert(featureGroups).values({ projectId: p.id, name: 'X', position: 1 }),
@@ -40,7 +40,7 @@ describe('feature_groups schema', () => {
 
 describe('createGroup + listGroups', () => {
   it('assigns increasing positions and lists by position', async () => {
-    const p = await createProject({ name: `LG ${Date.now()}` });
+    const p = await mkProject({ name: `LG ${Date.now()}` });
 
     const a = await createGroup({ projectId: p.id, name: 'A' });
     const b = await createGroup({ projectId: p.id, name: 'B' });
@@ -56,7 +56,7 @@ describe('createGroup + listGroups', () => {
   });
 
   it('returns duplicate-name error when name is taken', async () => {
-    const p = await createProject({ name: `DupCreate ${Date.now()}` });
+    const p = await mkProject({ name: `DupCreate ${Date.now()}` });
     await createGroup({ projectId: p.id, name: 'Auth' });
 
     const dup = await createGroup({ projectId: p.id, name: 'Auth' });
@@ -64,8 +64,8 @@ describe('createGroup + listGroups', () => {
   });
 
   it('allows same name across different projects', async () => {
-    const p1 = await createProject({ name: `Cross1 ${Date.now()}` });
-    const p2 = await createProject({ name: `Cross2 ${Date.now()}` });
+    const p1 = await mkProject({ name: `Cross1 ${Date.now()}` });
+    const p2 = await mkProject({ name: `Cross2 ${Date.now()}` });
 
     const a = await createGroup({ projectId: p1.id, name: 'Shared' });
     const b = await createGroup({ projectId: p2.id, name: 'Shared' });
@@ -77,7 +77,7 @@ describe('createGroup + listGroups', () => {
 
 describe('renameGroup', () => {
   it('renames a group', async () => {
-    const p = await createProject({ name: `Ren ${Date.now()}` });
+    const p = await mkProject({ name: `Ren ${Date.now()}` });
     const g = await createGroup({ projectId: p.id, name: 'Old' });
     if ('error' in g) throw new Error('setup failed');
 
@@ -86,7 +86,7 @@ describe('renameGroup', () => {
   });
 
   it('returns duplicate-name when target exists', async () => {
-    const p = await createProject({ name: `RenDup ${Date.now()}` });
+    const p = await mkProject({ name: `RenDup ${Date.now()}` });
     await createGroup({ projectId: p.id, name: 'A' });
     const b = await createGroup({ projectId: p.id, name: 'B' });
     if ('error' in b) throw new Error('setup failed');
@@ -103,7 +103,7 @@ describe('renameGroup', () => {
 
 describe('deleteGroup', () => {
   it('deletes a group and reports the number of features moved to ungrouped', async () => {
-    const p = await createProject({ name: `Del ${Date.now()}` });
+    const p = await mkProject({ name: `Del ${Date.now()}` });
     const g = await createGroup({ projectId: p.id, name: 'Auth' });
     if ('error' in g) throw new Error('setup failed');
 
@@ -127,7 +127,7 @@ describe('deleteGroup', () => {
 
 describe('reorderGroups', () => {
   it('rewrites positions according to provided order', async () => {
-    const p = await createProject({ name: `Reo ${Date.now()}` });
+    const p = await mkProject({ name: `Reo ${Date.now()}` });
     const a = await createGroup({ projectId: p.id, name: 'A' });
     const b = await createGroup({ projectId: p.id, name: 'B' });
     const c = await createGroup({ projectId: p.id, name: 'C' });
@@ -144,7 +144,7 @@ describe('reorderGroups', () => {
   });
 
   it('rejects when ids do not match project groups exactly', async () => {
-    const p = await createProject({ name: `ReoBad ${Date.now()}` });
+    const p = await mkProject({ name: `ReoBad ${Date.now()}` });
     const a = await createGroup({ projectId: p.id, name: 'A' });
     if ('error' in a) throw new Error('setup failed');
 
@@ -161,7 +161,7 @@ describe('reorderGroups', () => {
 
 describe('listFeaturesByGroup', () => {
   it('groups features by position, sorts features by name, splits ungrouped', async () => {
-    const p = await createProject({ name: `LFG ${Date.now()}` });
+    const p = await mkProject({ name: `LFG ${Date.now()}` });
     const auth     = await createGroup({ projectId: p.id, name: 'Auth' });
     const checkout = await createGroup({ projectId: p.id, name: 'Checkout' });
     if ('error' in auth || 'error' in checkout) throw new Error('setup failed');
@@ -188,7 +188,7 @@ describe('listFeaturesByGroup', () => {
   });
 
   it('excludes archived features', async () => {
-    const p = await createProject({ name: `LFGArch ${Date.now()}` });
+    const p = await mkProject({ name: `LFGArch ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'Hidden' });
     await db.update(features).set({ archived: true }).where(eq(features.id, f.id));
 
@@ -199,7 +199,7 @@ describe('listFeaturesByGroup', () => {
 
 describe('feature create/save with groupId', () => {
   it('createFeature accepts a same-project groupId', async () => {
-    const p = await createProject({ name: `CF ${Date.now()}` });
+    const p = await mkProject({ name: `CF ${Date.now()}` });
     const g = await createGroup({ projectId: p.id, name: 'X' });
     if ('error' in g) throw new Error('setup failed');
 
@@ -208,8 +208,8 @@ describe('feature create/save with groupId', () => {
   });
 
   it('createFeature rejects a foreign-project groupId', async () => {
-    const p1 = await createProject({ name: `CFP1 ${Date.now()}` });
-    const p2 = await createProject({ name: `CFP2 ${Date.now()}` });
+    const p1 = await mkProject({ name: `CFP1 ${Date.now()}` });
+    const p2 = await mkProject({ name: `CFP2 ${Date.now()}` });
     const g  = await createGroup({ projectId: p2.id, name: 'X' });
     if ('error' in g) throw new Error('setup failed');
 
@@ -219,7 +219,7 @@ describe('feature create/save with groupId', () => {
   });
 
   it('saveFeature accepts a same-project groupId and persists it', async () => {
-    const p = await createProject({ name: `SF ${Date.now()}` });
+    const p = await mkProject({ name: `SF ${Date.now()}` });
     const g = await createGroup({ projectId: p.id, name: 'X' });
     if ('error' in g) throw new Error('setup failed');
     const f = await createFeature({ projectId: p.id, name: 'F' });
@@ -237,8 +237,8 @@ describe('feature create/save with groupId', () => {
   });
 
   it('saveFeature rejects a foreign-project groupId', async () => {
-    const p1 = await createProject({ name: `SFP1 ${Date.now()}` });
-    const p2 = await createProject({ name: `SFP2 ${Date.now()}` });
+    const p1 = await mkProject({ name: `SFP1 ${Date.now()}` });
+    const p2 = await mkProject({ name: `SFP2 ${Date.now()}` });
     const g  = await createGroup({ projectId: p2.id, name: 'X' });
     if ('error' in g) throw new Error('setup failed');
     const f = await createFeature({ projectId: p1.id, name: 'F' });

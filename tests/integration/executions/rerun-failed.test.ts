@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, projects, scenarioResults } from '$lib/server/db/schema';
+import { scenarioResults } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/start';
 import { markScenario } from '$lib/server/executions/mark-scenario';
 import { finishExecution } from '$lib/server/executions/finish';
 import { rerunFailed } from '$lib/server/executions/rerun-failed';
+import { mkFeature, mkProject } from '../../fixtures';
 
 const FEATURE_CONTENT = `Feature: Login
 
@@ -26,14 +27,8 @@ const FEATURE_CONTENT = `Feature: Login
 `;
 
 async function seedFinishedRun() {
-  const [project] = await db.insert(projects).values({ name: `Rerun ${Date.now()}-${Math.random()}` }).returning();
-  if (!project) throw new Error('seed: project');
-
-  const [feature] = await db
-    .insert(features)
-    .values({ projectId: project.id, name: 'Login', content: FEATURE_CONTENT })
-    .returning();
-  if (!feature) throw new Error('seed: feature');
+  const project = await mkProject({ name: `Rerun ${Date.now()}-${Math.random()}` });
+  const feature = await mkFeature(project.id, { name: 'Login', content: FEATURE_CONTENT });
 
   const run       = await startExecution({ featureId: feature.id, executedBy: 'Alice', environment: 'staging' });
   const scenarios = await db

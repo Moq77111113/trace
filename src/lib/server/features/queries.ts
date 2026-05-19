@@ -1,7 +1,9 @@
 import { and, asc, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, featureGroups, executions, scenarioResults } from '$lib/server/db/schema';
+import { features, featureGroups, projects, executions, scenarioResults } from '$lib/server/db/schema';
 import type { ScenarioCounts } from '$lib/entities/execution/lib/format';
+
+const featureCodeSql = sql<string>`${projects.codePrefix} || '-' || ${features.codeSeq}`;
 
 export async function listFeatures(projectId: string) {
   const ranked = db.$with('ranked_runs').as(
@@ -24,13 +26,16 @@ export async function listFeatures(projectId: string) {
     .select({
       id:                   features.id,
       projectId:            features.projectId,
+      projectSlug:          projects.slug,
       name:                 features.name,
+      code:                 featureCodeSql,
       parseErrors:          features.parseErrors,
       version:              features.version,
       updatedAt:            features.updatedAt,
       latestFinishedStatus: ranked.status,
     })
     .from(features)
+    .innerJoin(projects, eq(projects.id, features.projectId))
     .leftJoin(ranked, and(eq(ranked.featureId, features.id), eq(ranked.rn, 1)))
     .where(and(eq(features.projectId, projectId), eq(features.archived, false)))
     .orderBy(desc(features.updatedAt));
@@ -40,10 +45,18 @@ export async function getFeature(featureId: string) {
   return db.query.features.findFirst({ where: eq(features.id, featureId) });
 }
 
+export async function getFeatureByCode(projectId: string, codeSeq: number) {
+  return db.query.features.findFirst({
+    where: and(eq(features.projectId, projectId), eq(features.codeSeq, codeSeq)),
+  });
+}
+
 type FeatureRow = {
   id:                   string;
   projectId:            string;
+  projectSlug:          string;
   name:                 string;
+  code:                 string;
   parseErrors:          (typeof features.$inferSelect)['parseErrors'];
   version:              number;
   updatedAt:            Date;
@@ -93,8 +106,10 @@ export async function listFeaturesByGroup(projectId: string): Promise<FeaturesBy
     .select({
       id:                   features.id,
       projectId:            features.projectId,
+      projectSlug:          projects.slug,
       groupId:              features.groupId,
       name:                 features.name,
+      code:                 featureCodeSql,
       parseErrors:          features.parseErrors,
       version:              features.version,
       updatedAt:            features.updatedAt,
@@ -103,6 +118,7 @@ export async function listFeaturesByGroup(projectId: string): Promise<FeaturesBy
       lastRunAt:            lastStarted.lastStartedAt,
     })
     .from(features)
+    .innerJoin(projects,       eq(projects.id,           features.projectId))
     .leftJoin(ranked,      and(eq(ranked.featureId,      features.id), eq(ranked.rn, 1)))
     .leftJoin(lastStarted,     eq(lastStarted.featureId, features.id))
     .where(and(eq(features.projectId, projectId), eq(features.archived, false)))

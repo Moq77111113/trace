@@ -10,6 +10,7 @@
 
   type Props = {
     featureName:  string;
+    featureCode:  string;
     featureId:    string;
     version:      number;
     dirty:        boolean;
@@ -25,7 +26,7 @@
   };
 
   let {
-    featureName, featureId, version, dirty, parseErrors, groups, snippets,
+    featureName, featureCode, featureId, version, dirty, parseErrors, groups, snippets,
     saving, conflictOpen, groupId = $bindable(), onGroupChange, onInsert, onArchive,
   }: Props = $props();
 
@@ -34,6 +35,7 @@
 </script>
 
 <header class="flex items-center gap-2.5 px-4 py-2 border-b border-border bg-bg max-md:gap-2 max-md:px-3">
+  <span class="font-mono text-[11.5px] text-ink-3 tabular-nums">{featureCode}</span>
   <span class="font-mono text-[12px] text-ink-2 flex items-center gap-1">
     <span class="text-ink-3">{dirname}</span>
     {#if featureName.includes('/')}<span class="text-ink-3">/</span>{/if}

@@ -10,16 +10,16 @@ import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { PageServerLoad } from './$types';
 
-export const load = (async ({ params, url, parent }) => {
+export const load = (async ({ url, parent }) => {
   const { filters, dateRange } = parseExecutionFilters(url);
+  const { project, breadcrumbs } = await parent();
 
-  const [runsResult, environments, allFeatures, allGroups, flakeFeatureIds, parentData] = await Promise.all([
-    listExecutionsForProject(params.pid, filters),
-    listExecutionEnvironments(params.pid),
-    listFeatures(params.pid),
-    listGroups(params.pid),
-    listFlakeFeatureIds(params.pid),
-    parent(),
+  const [runsResult, environments, allFeatures, allGroups, flakeFeatureIds] = await Promise.all([
+    listExecutionsForProject(project.id, filters),
+    listExecutionEnvironments(project.id),
+    listFeatures(project.id),
+    listGroups(project.id),
+    listFlakeFeatureIds(project.id),
   ]);
 
   return {
@@ -30,6 +30,6 @@ export const load = (async ({ params, url, parent }) => {
     features:    allFeatures.map((f) => ({ id: f.id, name: f.name })),
     groups:      allGroups.map((g) => ({ id: g.id, name: g.name })),
     flakeFeatureIds,
-    breadcrumbs: appendCrumb(parentData.breadcrumbs, { label: m.nav_executions() }),
+    breadcrumbs: appendCrumb(breadcrumbs, { label: m.nav_executions() }),
   };
 }) satisfies PageServerLoad;

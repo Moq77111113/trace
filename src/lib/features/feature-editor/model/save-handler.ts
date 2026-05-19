@@ -3,6 +3,7 @@ import type { SubmitFunction } from '@sveltejs/kit';
 type Feature = {
   id:          string;
   name:        string;
+  codeSeq:     number;
   content:     string;
   version:     number;
   parseErrors: { line: number; column?: number; message: string }[] | null;

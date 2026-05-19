@@ -2,8 +2,8 @@
   import Button from '$lib/shared/ui/Button.svelte';
   import Icon   from '$lib/shared/ui/Icon.svelte';
 
-  type Props = { projectId: string };
-  let { projectId }: Props = $props();
+  type Props = { projectSlug: string };
+  let { projectSlug }: Props = $props();
 </script>
 
 <div class="bg-surface border border-border rounded-xl px-4 py-5 flex items-start gap-3">
@@ -14,7 +14,7 @@
       CI ingestion authenticates with a project-scoped bearer token.
       Create one before pasting the snippet into your pipeline.
     </p>
-    <Button href="/projects/{projectId}/settings/api-keys" variant="primary" size="sm">
+    <Button href="/p/{projectSlug}/settings/api-keys" variant="primary" size="sm">
       <Icon name="Plus" size={13} /> Create an API key
     </Button>
   </div>
