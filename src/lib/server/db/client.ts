@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import postgres   from 'postgres';
+import postgres from 'postgres';
 import { sql as rawSql } from 'drizzle-orm';
 import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
@@ -10,14 +10,35 @@ const MIGRATIONS_FOLDER = 'drizzle';
 const MIGRATIONS_SCHEMA = 'drizzle';
 const MIGRATIONS_TABLE  = '__drizzle_migrations';
 
-const databaseUrl = process.env.DATABASE_URL ?? env.DATABASE_URL;
-if (!databaseUrl) throw new Error('DATABASE_URL is not set');
+type Drizzle = ReturnType<typeof drizzle<typeof schema>>;
 
-const sql = postgres(databaseUrl, { max: 10 });
+let cached: Drizzle | null = null;
 
-export const db = drizzle(sql, { schema });
+function init(): Drizzle {
+	const url = process.env.DATABASE_URL ?? env.DATABASE_URL;
+	if (!url) throw new Error('DATABASE_URL is not set');
+	const sql = postgres(url, {
+		max: 10,
+		onnotice: (notice) => {
+			if (notice.severity !== 'NOTICE') console.warn(notice);
+		}
+	});
+	return drizzle(sql, { schema });
+}
 
-export type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+function getDb(): Drizzle {
+	return (cached ??= init());
+}
+
+export const db = new Proxy({} as Drizzle, {
+	get(_target, prop, receiver) {
+		const inst = getDb();
+		const value = Reflect.get(inst, prop, receiver);
+		return typeof value === 'function' ? value.bind(inst) : value;
+	}
+});
+
+export type DbTx = Parameters<Parameters<Drizzle['transaction']>[0]>[0];
 
 async function countApplied(): Promise<number> {
 	try {
@@ -33,7 +54,7 @@ async function countApplied(): Promise<number> {
 
 async function ensureMigrations(): Promise<void> {
 	const before = await countApplied();
-	await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+	await migrate(getDb(), { migrationsFolder: MIGRATIONS_FOLDER });
 	const after = await countApplied();
 	const applied = Math.max(0, after - before);
 	if (applied === 0) console.log('[db] migrations up to date');
