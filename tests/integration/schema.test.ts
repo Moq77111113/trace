@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres   from 'postgres';
 import { eq }     from 'drizzle-orm';
+import { requireEnv } from '$lib/server/config/env';
 import * as schema from '$lib/server/db/schema';
 
-const sql = postgres(process.env.DATABASE_URL!, { max: 1 });
+const sql = postgres(requireEnv('DATABASE_URL'), { max: 1 });
 const db  = drizzle(sql, { schema });
 
 describe('schema', () => {

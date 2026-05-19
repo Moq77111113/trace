@@ -2,41 +2,33 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { apiKey, genericOAuth } from 'better-auth/plugins';
-import { env } from '$env/dynamic/private';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db/client';
+import { readEnv, requireEnv } from '$lib/server/config/env';
 import { signupGateBefore } from '$lib/server/instance/signup-gate';
 import { seedDemoProject } from '$lib/server/onboarding/seed';
 
-export const isOidcEnabled =
-	Boolean(env.OIDC_DISCOVERY_URL) && Boolean(env.OIDC_CLIENT_ID) && Boolean(env.OIDC_CLIENT_SECRET);
-
-function readAuthSecret(): string {
-	if (env.TRACE_AUTH_SECRET) return env.TRACE_AUTH_SECRET;
-	if (env.BETTER_AUTH_SECRET) {
-		console.warn(
-			'[auth] BETTER_AUTH_SECRET is deprecated and will be removed in a future release; rename it to TRACE_AUTH_SECRET.'
-		);
-		return env.BETTER_AUTH_SECRET;
-	}
-	throw new Error('TRACE_AUTH_SECRET is not set');
+export function isOidcEnabled(): boolean {
+	return Boolean(readEnv('OIDC_DISCOVERY_URL'))
+		&& Boolean(readEnv('OIDC_CLIENT_ID'))
+		&& Boolean(readEnv('OIDC_CLIENT_SECRET'));
 }
 
 function init() {
-	const oidcConfig = isOidcEnabled
+	const oidcConfig = isOidcEnabled()
 		? [
 				{
-					providerId: 'oidc',
-					clientId: env.OIDC_CLIENT_ID!,
-					clientSecret: env.OIDC_CLIENT_SECRET!,
-					discoveryUrl: env.OIDC_DISCOVERY_URL!
+					providerId:   'oidc',
+					clientId:     requireEnv('OIDC_CLIENT_ID'),
+					clientSecret: requireEnv('OIDC_CLIENT_SECRET'),
+					discoveryUrl: requireEnv('OIDC_DISCOVERY_URL')
 				}
 			]
 		: [];
 
 	return betterAuth({
-		baseURL: env.ORIGIN,
-		secret: readAuthSecret(),
+		baseURL: readEnv('ORIGIN'),
+		secret:  requireEnv('TRACE_AUTH_SECRET'),
 		database: drizzleAdapter(db, { provider: 'pg' }),
 		emailAndPassword: { enabled: true },
 		advanced: { database: { generateId: false } },

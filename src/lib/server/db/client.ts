@@ -3,7 +3,7 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
 import { sql as rawSql } from 'drizzle-orm';
 import { building } from '$app/environment';
-import { env } from '$env/dynamic/private';
+import { requireEnv } from '$lib/server/config/env';
 import * as schema from './schema';
 
 const MIGRATIONS_FOLDER = 'drizzle';
@@ -15,9 +15,7 @@ type Drizzle = ReturnType<typeof drizzle<typeof schema>>;
 let cached: Drizzle | null = null;
 
 function init(): Drizzle {
-	const url = process.env.DATABASE_URL ?? env.DATABASE_URL;
-	if (!url) throw new Error('DATABASE_URL is not set');
-	const sql = postgres(url, {
+	const sql = postgres(requireEnv('DATABASE_URL'), {
 		max: 10,
 		onnotice: (notice) => {
 			if (notice.severity !== 'NOTICE') console.warn(notice);
