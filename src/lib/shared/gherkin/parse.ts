@@ -2,7 +2,7 @@ import { Parser, AstBuilder, GherkinClassicTokenMatcher } from '@cucumber/gherki
 import { IdGenerator } from '@cucumber/messages';
 import type { ParseResult, ParsedScenario } from './types';
 
-const builder = new AstBuilder(IdGenerator.uuid());
+const builder = new AstBuilder(IdGenerator.incrementing());
 const matcher = new GherkinClassicTokenMatcher();
 
 function stripAt(s: string): string {
