@@ -7,9 +7,11 @@ import { dropPreview, getPreview } from './buffer';
 
 export type Decision = 'import' | 'skip' | 'overwrite' | 'rename';
 
+export type CommitRowInput = { decision: Decision; groupName: string | null };
+
 export type CommitInput = {
   previewId: string;
-  decisions: Record<string, Decision>;
+  rows:      Record<string, CommitRowInput>;
   editor?:   string;
 };
 
@@ -31,7 +33,9 @@ export async function commitBatch(input: CommitInput): Promise<CommitOutcome> {
   const outcome: CommitOutcome = { imported: 0, skipped: 0, failed: [] };
 
   for (const row of entry.preview.rows) {
-    const decision = input.decisions[row.rowId] ?? 'skip';
+    const rowInput = input.rows[row.rowId] ?? { decision: 'skip', groupName: row.groupName };
+    const decision = rowInput.decision;
+    const groupName = rowInput.groupName;
 
     if (decision === 'skip') { outcome.skipped += 1; continue; }
 
@@ -51,8 +55,8 @@ export async function commitBatch(input: CommitInput): Promise<CommitOutcome> {
         const current = await db.query.features.findFirst({ where: eq(features.id, row.collidesWithId) });
         if (!current) throw new Error('overwrite target no longer exists');
 
-        const groupId = row.groupName
-          ? await db.transaction((tx) => findOrCreateGroup(tx, entry.preview.projectId, row.groupName!))
+        const groupId = groupName
+          ? await db.transaction((tx) => findOrCreateGroup(tx, entry.preview.projectId, groupName))
           : null;
 
         const result = await saveFeature({
@@ -71,7 +75,7 @@ export async function commitBatch(input: CommitInput): Promise<CommitOutcome> {
             projectId: entry.preview.projectId,
             content,
             renameTo:  safeName,
-            groupName: row.groupName,
+            groupName,
           });
         });
       } else {
@@ -79,7 +83,7 @@ export async function commitBatch(input: CommitInput): Promise<CommitOutcome> {
           await importFeatureFromContent(tx, {
             projectId: entry.preview.projectId,
             content,
-            groupName: row.groupName,
+            groupName,
           });
         });
       }

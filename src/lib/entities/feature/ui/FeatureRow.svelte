@@ -26,11 +26,12 @@
   import * as m from '$lib/paraglide/messages';
 
   type Props = {
-    feature: FeatureRowData;
-    isFlaky: boolean;
+    feature:      FeatureRowData;
+    isFlaky:      boolean;
+    onDragStart?: (e: DragEvent) => void;
   };
 
-  let { feature, isFlaky }: Props = $props();
+  let { feature, isFlaky, onDragStart }: Props = $props();
 
   const status = $derived(featureStatusPill(feature));
   const counts = $derived(feature.latestCounts ?? { passed: 0, failed: 0, skipped: 0, pending: 0 });
@@ -38,6 +39,8 @@
 
 <a
   href="/p/{feature.projectSlug}/{feature.code}"
+  draggable={onDragStart !== undefined}
+  ondragstart={onDragStart}
   class="grid grid-cols-[minmax(0,1fr)_120px_120px_80px] max-lg:grid-cols-[minmax(0,1fr)_96px_120px] max-md:grid-cols-[minmax(0,1fr)_120px] gap-3.5 items-center px-3.5 py-2 border-t border-border first:border-t-0 hover:bg-surface-2 transition-colors"
 >
   <span class="flex items-center gap-2.5 min-w-0">

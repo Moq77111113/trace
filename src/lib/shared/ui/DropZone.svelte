@@ -1,26 +1,34 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { collectDroppedFiles, filterByExtension, type DroppedFile } from '$lib/shared/io/dropped-files';
 
   type Props = {
-    onDrop: (files: File[]) => void;
+    onDrop: (items: DroppedFile[]) => void;
     accept?: string;
     multiple?: boolean;
+    directories?: boolean;
     children?: Snippet;
   };
-  let { onDrop, accept = '*', multiple = true, children }: Props = $props();
+  let { onDrop, accept = '*', multiple = true, directories = false, children }: Props = $props();
 
   let hover  = $state(false);
   let inputEl: HTMLInputElement;
 
-  function handleDrop(e: DragEvent) {
+  async function handleDrop(e: DragEvent) {
     e.preventDefault();
     hover = false;
-    if (e.dataTransfer?.files) onDrop(Array.from(e.dataTransfer.files));
+    if (!e.dataTransfer) return;
+
+    const items = directories
+      ? await collectDroppedFiles(e.dataTransfer)
+      : Array.from(e.dataTransfer.files).map((f) => ({ file: f, path: '' }));
+    onDrop(filterByExtension(items, accept));
   }
 
   function handlePick(e: Event) {
     const files = (e.target as HTMLInputElement).files;
-    if (files) onDrop(Array.from(files));
+    if (!files) return;
+    onDrop(Array.from(files).map((f) => ({ file: f, path: '' })));
   }
 </script>
 

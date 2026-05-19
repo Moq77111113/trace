@@ -38,6 +38,7 @@
   let initialContent = $state(untrack(() => data.feature.content));
   let content        = $state(untrack(() => data.feature.content));
   let version        = $state(untrack(() => data.feature.version));
+  let initialGroupId = $state(untrack(() => data.feature.groupId ?? ''));
   let groupId        = $state<string>(untrack(() => data.feature.groupId ?? ''));
   let conflictOpen   = $state(false);
   let conflictWith   = $state<Feature | null>(null);
@@ -52,7 +53,7 @@
 
   const snippets = $derived(buildSnippets(data.feature.name));
   const empty    = $derived(content.trim() === '');
-  const dirty    = $derived(content !== initialContent);
+  const dirty    = $derived(content !== initialContent || groupId !== initialGroupId);
   const markers  = $derived(
     parsed.errors.map((e) =>
       e.column === undefined
@@ -82,6 +83,7 @@
       initialContent = f.content;
       content        = f.content;
       version        = f.version;
+      initialGroupId = f.groupId ?? '';
       groupId        = f.groupId ?? '';
       onSaved?.(f);
     },
@@ -96,6 +98,8 @@
       initialContent = data.feature.content;
       content        = data.feature.content;
       version        = data.feature.version;
+      initialGroupId = data.feature.groupId ?? '';
+      groupId        = data.feature.groupId ?? '';
     });
   }
 </script>

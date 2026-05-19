@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
   import Button    from '$lib/shared/ui/Button.svelte';
   import DropZone  from '$lib/shared/ui/DropZone.svelte';
   import Select    from '$lib/shared/ui/Select.svelte';
@@ -18,7 +19,10 @@
 
   let { data } = $props();
 
-  const ctrl = untrack(() => new ImportPreviewController(createImportApi(data.project.id)));
+  const ctrl = untrack(() => new ImportPreviewController(createImportApi(data.project.id), {
+    onCommitted: () => { void invalidateAll(); },
+  }));
+  const existingGroups = $derived(data.tree.groups.map((g) => g.group.name));
 
   const bulkCollisionOptions: { value: Decision; label: string }[] = [
     { value: 'skip',      label: 'Skip all'      },
@@ -61,7 +65,7 @@
       </div>
       <Button variant="secondary" onclick={() => ctrl.reset()}>Import more files</Button>
     {:else if !ctrl.preview}
-      <DropZone accept=".feature" multiple onDrop={(files) => ctrl.upload(files)}>
+      <DropZone accept=".feature" multiple directories onDrop={(files) => ctrl.upload(files)}>
         {#if ctrl.uploading}
           Parsing files…
         {:else}
@@ -112,18 +116,23 @@
         </div>
       </header>
 
+      <datalist id="import-groups">
+        {#each existingGroups as name (name)}<option value={name}></option>{/each}
+      </datalist>
+
       <div class="bg-surface border border-border rounded-xl overflow-hidden">
-        <div class="grid grid-cols-[32px_1.5fr_1.5fr_80px_1.2fr_140px] gap-3 px-4 py-2.5 bg-surface-2 text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3 border-b border-border">
+        <div class="grid grid-cols-[32px_1.3fr_1.3fr_80px_1.1fr_1fr_140px] gap-3 px-4 py-2.5 bg-surface-2 text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3 border-b border-border">
           <div></div>
           <div>File</div>
           <div>Feature</div>
           <div class="tabular-nums">Scenarios</div>
           <div>Tags</div>
+          <div>Group</div>
           <div>Action</div>
         </div>
 
         {#each ctrl.preview.rows as row (row.rowId)}
-          <div class="grid grid-cols-[32px_1.5fr_1.5fr_80px_1.2fr_140px] gap-3 px-4 py-3 text-[13px] border-t border-border items-center {statusRowClass(row.status)}">
+          <div class="grid grid-cols-[32px_1.3fr_1.3fr_80px_1.1fr_1fr_140px] gap-3 px-4 py-3 text-[13px] border-t border-border items-center {statusRowClass(row.status)}">
             <div class="font-mono text-[14px] {statusTextClass(row.status)}">{statusSymbol(row.status)}</div>
             <div class="text-ink truncate font-mono text-[12.5px]">{row.filename}</div>
             <div class="truncate">
@@ -135,15 +144,20 @@
               {:else if row.status === 'parse-error'}
                 <span class="text-[10.5px] text-fail-ink ml-1">· {row.parseErrors.length} parse error{row.parseErrors.length === 1 ? '' : 's'}</span>
               {/if}
-              {#if row.groupName}
-                <div class="text-[10.5px] text-ink-mute mt-0.5">
-                  Group: <span class="text-ink-3">{row.groupName}</span>
-                </div>
-              {/if}
             </div>
             <div class="text-ink-3 tabular-nums">{row.status === 'parse-error' ? '—' : row.scenarioCount}</div>
             <div class="text-[11px] font-mono text-ink-3 truncate">
               {row.tags.length ? row.tags.map((t) => `@${t}`).join(' ') : '—'}
+            </div>
+            <div>
+              <input
+                type="text"
+                list="import-groups"
+                value={ctrl.groups[row.rowId] ?? ''}
+                oninput={(e) => ctrl.setGroup(row.rowId, e.currentTarget.value.trim() || null)}
+                placeholder="ungrouped"
+                class="w-full h-[30px] px-2.5 text-[12.5px] rounded-md bg-surface text-ink border border-border hover:border-border-strong focus:border-accent focus:outline-none"
+              />
             </div>
             <div>
               <Select

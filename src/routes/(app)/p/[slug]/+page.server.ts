@@ -4,6 +4,7 @@ import { createGroup, groupCreateInput } from '$lib/server/groups/create';
 import { deleteGroup, groupDeleteInput } from '$lib/server/groups/delete';
 import { renameGroup, groupRenameInput } from '$lib/server/groups/rename';
 import { reorderGroups, groupReorderInput } from '$lib/server/groups/reorder';
+import { moveFeature, featureMoveInput } from '$lib/server/features/move';
 import { getProjectDashboardStats, getProjectIdBySlug } from '$lib/server/projects/queries';
 import { stringFields } from '$lib/server/forms';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
@@ -62,6 +63,20 @@ export const actions = {
 
     const result = await deleteGroup(parsed.data);
     if (!result.ok) return fail(404, { error: result.error, action: 'deleteGroup' });
+
+    throw redirect(303, `/p/${params.slug}`);
+  },
+
+  moveFeature: async ({ request, params }: RequestEvent<Params>) => {
+    const data    = stringFields(await request.formData());
+    const groupId = data.groupId === '' || data.groupId === undefined ? null : data.groupId;
+    const parsed  = featureMoveInput.safeParse({ featureId: data.featureId, groupId });
+    if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'moveFeature' });
+
+    const result = await moveFeature(parsed.data);
+    if (!result.ok) {
+      return fail(result.error === 'feature-not-found' ? 404 : 400, { error: result.error, action: 'moveFeature' });
+    }
 
     throw redirect(303, `/p/${params.slug}`);
   },

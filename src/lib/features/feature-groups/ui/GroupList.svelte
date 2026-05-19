@@ -7,7 +7,6 @@
   import DeleteGroupModal, { type DeleteGroupTarget } from './DeleteGroupModal.svelte';
   import { enhance } from '$app/forms';
   import { browser } from '$app/environment';
-  import { dndzone, type DndEvent } from 'svelte-dnd-action';
   import { invalidateAll } from '$app/navigation';
 
   type GroupNode = {
@@ -55,26 +54,6 @@
     if (browser) localStorage.setItem(storageKey, JSON.stringify([...next]));
   }
 
-  type DragItem = { id: string; payload: GroupNode };
-  let dragOverride = $state<DragItem[] | null>(null);
-  const dragItems  = $derived<DragItem[]>(
-    dragOverride ?? groups.map((g) => ({ id: g.group.id, payload: g })),
-  );
-
-  function onDndConsider(e: CustomEvent<DndEvent<DragItem>>) {
-    dragOverride = e.detail.items;
-  }
-
-  async function onDndFinalize(e: CustomEvent<DndEvent<DragItem>>) {
-    const orderedIds = e.detail.items.map((i) => i.id);
-    dragOverride = e.detail.items;
-    const form = new FormData();
-    form.set('orderedIds', JSON.stringify(orderedIds));
-    await fetch('?/reorderGroups', { method: 'POST', body: form });
-    await invalidateAll();
-    dragOverride = null;
-  }
-
   function startRename(g: GroupNode) {
     renamingId  = g.group.id;
     renameValue = g.group.name;
@@ -85,21 +64,31 @@
     renamingId  = null;
     renameError = null;
   }
+
+  function onFeatureDragStart(e: DragEvent, featureId: string) {
+    if (!e.dataTransfer) return;
+    e.dataTransfer.setData('application/x-trace-feature', featureId);
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  async function dropOnGroup(e: DragEvent, targetGroupId: string | null) {
+    const featureId = e.dataTransfer?.getData('application/x-trace-feature');
+    if (!featureId) return;
+    const fd = new FormData();
+    fd.set('featureId', featureId);
+    fd.set('groupId',   targetGroupId ?? '');
+    await fetch('?/moveFeature', { method: 'POST', body: fd });
+    await invalidateAll();
+  }
 </script>
 
-<div
-  use:dndzone={{ items: dragItems, flipDurationMs: 150 }}
-  onconsider={onDndConsider}
-  onfinalize={onDndFinalize}
->
-  {#each dragItems as it (it.id)}
-    {@const g = it.payload}
+{#each groups as g (g.group.id)}
     <GroupSection
       title={renamingId === g.group.id ? '' : g.group.name}
       count={g.features.length}
-      draggable={true}
       collapsed={collapsed.has(g.group.id)}
       onToggle={() => toggle(g.group.id)}
+      onFeatureDrop={(e) => dropOnGroup(e, g.group.id)}
     >
       {#snippet header()}
         {#if renamingId === g.group.id}
@@ -155,24 +144,35 @@
         <div class="px-3.5 py-2.5 text-[12.5px] text-ink-3">No features yet</div>
       {:else}
         {#each g.features as f (f.id)}
-          <FeatureRow feature={f} isFlaky={flakeFeatureIds.has(f.id)} />
+          <FeatureRow
+            feature={f}
+            isFlaky={flakeFeatureIds.has(f.id)}
+            onDragStart={(e) => onFeatureDragStart(e, f.id)}
+          />
         {/each}
       {/if}
     </GroupSection>
-  {/each}
-</div>
+{/each}
 
-{#if ungrouped.length > 0}
+{#if groups.length > 0 || ungrouped.length > 0}
   <GroupSection
     title="Ungrouped"
     count={ungrouped.length}
-    draggable={false}
     collapsed={collapsed.has('__ungrouped__')}
     onToggle={() => toggle('__ungrouped__')}
+    onFeatureDrop={(e) => dropOnGroup(e, null)}
   >
-    {#each ungrouped as f (f.id)}
-      <FeatureRow feature={f} isFlaky={flakeFeatureIds.has(f.id)} />
-    {/each}
+    {#if ungrouped.length === 0}
+      <div class="px-3.5 py-2.5 text-[12.5px] text-ink-3">Drop here to ungroup</div>
+    {:else}
+      {#each ungrouped as f (f.id)}
+        <FeatureRow
+          feature={f}
+          isFlaky={flakeFeatureIds.has(f.id)}
+          onDragStart={(e) => onFeatureDragStart(e, f.id)}
+        />
+      {/each}
+    {/if}
   </GroupSection>
 {/if}
 

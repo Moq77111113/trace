@@ -3,30 +3,47 @@
   import Icon from '$lib/shared/ui/Icon.svelte';
 
   type Props = {
-    title:     string;
-    count:     number;
-    draggable: boolean;
-    collapsed: boolean;
-    onToggle:  () => void;
-    header?:   Snippet;
-    children?: Snippet;
+    title:           string;
+    count:           number;
+    collapsed:       boolean;
+    onToggle:        () => void;
+    onFeatureDrop?:  (e: DragEvent) => void;
+    header?:         Snippet;
+    children?:       Snippet;
   };
 
-  let { title, count, draggable, collapsed, onToggle, header, children }: Props = $props();
+  let { title, count, collapsed, onToggle, onFeatureDrop, header, children }: Props = $props();
+
+  let dragHover = $state(false);
+
+  function handleDragOver(e: DragEvent) {
+    if (!onFeatureDrop) return;
+    if (!e.dataTransfer?.types.includes('application/x-trace-feature')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    dragHover = true;
+  }
+
+  function handleDragLeave() {
+    dragHover = false;
+  }
+
+  function handleDrop(e: DragEvent) {
+    dragHover = false;
+    if (!onFeatureDrop) return;
+    if (!e.dataTransfer?.types.includes('application/x-trace-feature')) return;
+    e.preventDefault();
+    onFeatureDrop(e);
+  }
 </script>
 
-<section class="mb-3.5 bg-surface border border-border rounded-xl overflow-hidden">
+<section
+  aria-label={title}
+  ondragover={handleDragOver}
+  ondragleave={handleDragLeave}
+  ondrop={handleDrop}
+  class="mb-3.5 bg-surface border rounded-xl overflow-hidden transition-colors {dragHover ? 'border-accent bg-accent-soft' : 'border-border'}">
   <div class="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border">
-    {#if draggable}
-      <span
-        data-testid="drag-handle"
-        class="text-ink-3 cursor-grab inline-flex items-center select-none active:cursor-grabbing"
-        aria-hidden="true"
-      >
-        <Icon name="GripVertical" size={14} />
-      </span>
-    {/if}
-
     <button
       type="button"
       data-testid="group-toggle"

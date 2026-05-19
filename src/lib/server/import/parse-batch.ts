@@ -24,7 +24,7 @@ export async function parseBatch(projectId: string, inputs: ImportBuffer[]): Pro
 
     const content   = input.bytes.toString('utf-8');
     const parsed    = parse(content);
-    const groupName = extractGroupName(content);
+    const groupName = extractGroupName(content) ?? input.presetGroup;
     const lower     = parsed.name?.toLowerCase() ?? null;
 
     const collidesDbId   = lower ? dbByLowerName.get(lower)    ?? null : null;
