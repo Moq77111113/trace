@@ -14,10 +14,12 @@ License: [MIT](./LICENSE).
 ## Quickstart
 
 ```sh
-docker compose up -d db
-pnpm install && pnpm db:push
-pnpm dev
+cp .env.example .env                              # fill TRACE_AUTH_SECRET (openssl rand -hex 32)
+docker compose up -d postgres minio minio-init    # dev deps: pg + S3
+pnpm install && pnpm dev
 ```
+
+The app applies database migrations on boot — no `db:push` needed.
 
 Set `TRACE_BOOTSTRAP_ADMIN_EMAIL` in `.env` — the first sign-up with that address
 becomes admin. From there, open a signup window in instance settings to invite the
