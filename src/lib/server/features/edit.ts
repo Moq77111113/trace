@@ -12,6 +12,13 @@ import { archiveFeature } from './archive';
 import { getFeatureByCode } from './queries';
 import { saveFeature } from './save';
 import { listGroups } from '$lib/server/groups/queries';
+import {
+  addManualScenario,
+  archiveManualScenario,
+  listManualScenarios,
+  renameManualScenario,
+  reorderManualScenarios,
+} from './manual-scenarios';
 
 type Params = { slug: string; code: string };
 type ProjectRef = { id: string; slug: string; codePrefix: string };
@@ -51,9 +58,30 @@ export const load = async ({ params, parent }: { params: Params; parent: () => P
     projectTags,
     groups: await listGroups(project.id),
     recentRuns,
+    manualScenarios: await listManualScenarios({ featureId: feature.id }),
     breadcrumbs: appendCrumb(breadcrumbs, { label: feature.name }),
   };
 };
+
+export async function addManualScenarioAction(input: { featureId: string; name: string }) {
+  const scenario = await addManualScenario(input);
+  return { scenario };
+}
+
+export async function renameManualScenarioAction(input: { scenarioId: string; name: string }) {
+  const scenario = await renameManualScenario(input);
+  return { scenario };
+}
+
+export async function archiveManualScenarioAction(input: { scenarioId: string }) {
+  await archiveManualScenario(input);
+  return { ok: true as const };
+}
+
+export async function reorderManualScenariosAction(input: { featureId: string; order: string[] }) {
+  await reorderManualScenarios(input);
+  return { ok: true as const };
+}
 
 const saveBody = z.object({
   content: z.string().max(200_000),
@@ -109,5 +137,37 @@ export const actions = {
     if (!archived.ok) throw error(404, 'Feature not found');
 
     throw redirect(303, `/p/${params.slug}`);
+  },
+
+  addManualScenario: async ({ request }: RequestEvent<Params>) => {
+    const data = await request.formData();
+    return addManualScenarioAction({
+      featureId: String(data.get('featureId') ?? ''),
+      name:      String(data.get('name') ?? ''),
+    });
+  },
+
+  renameManualScenario: async ({ request }: RequestEvent<Params>) => {
+    const data = await request.formData();
+    return renameManualScenarioAction({
+      scenarioId: String(data.get('scenarioId') ?? ''),
+      name:       String(data.get('name') ?? ''),
+    });
+  },
+
+  archiveManualScenario: async ({ request }: RequestEvent<Params>) => {
+    const data = await request.formData();
+    return archiveManualScenarioAction({
+      scenarioId: String(data.get('scenarioId') ?? ''),
+    });
+  },
+
+  reorderManualScenarios: async ({ request }: RequestEvent<Params>) => {
+    const data  = await request.formData();
+    const order = String(data.get('order') ?? '').split(',').filter(Boolean);
+    return reorderManualScenariosAction({
+      featureId: String(data.get('featureId') ?? ''),
+      order,
+    });
   },
 };
