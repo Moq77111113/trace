@@ -7,6 +7,8 @@ import { db } from '$lib/server/db/client';
 import { readEnv, requireEnv } from '$lib/server/config/env';
 import { signupGateBefore } from '$lib/server/instance/signup-gate';
 import { seedDemoProject } from '$lib/server/onboarding/seed';
+import { PASSWORD_RESET_TTL_S } from './auth/constants';
+import { dispatchResetMail } from './auth/send-reset-mail';
 
 export function isOidcEnabled(): boolean {
 	return Boolean(readEnv('OIDC_DISCOVERY_URL'))
@@ -30,7 +32,11 @@ function init() {
 		baseURL: readEnv('ORIGIN'),
 		secret:  requireEnv('TRACE_AUTH_SECRET'),
 		database: drizzleAdapter(db, { provider: 'pg' }),
-		emailAndPassword: { enabled: true },
+		emailAndPassword: {
+			enabled: true,
+			resetPasswordTokenExpiresIn: PASSWORD_RESET_TTL_S,
+			sendResetPassword: async ({ user, url }) => dispatchResetMail({ user, url }),
+		},
 		advanced: { database: { generateId: false } },
 		user: {
 			additionalFields: {
