@@ -239,12 +239,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "feature_content_at_start": {
           "name": "feature_content_at_start",
           "type": "text",
@@ -919,6 +913,12 @@
         },
         "error_message": {
           "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
           "type": "text",
           "primaryKey": false,
           "notNull": false
