@@ -181,7 +181,7 @@
     {
       "id": "campaigns",
       "title": "Group all tests for a release",
-      "status": "later",
+      "status": "next",
       "public": true,
       "summary": "Bundle every test that needs to pass for a release in one place. Track progress as the team works through it. Lock the result once it's signed off.",
       "notes": "campaigns (id, project_id, name, app_version nullable, status planned|running|closed, opened_at, closed_at nullable, created_by). campaign_features (campaign_id, feature_id, position, required boolean). executions.campaign_id nullable: links manual or CI execution to a campaign. Absorbs per-execution app_version column — do not add it standalone (collapses the earlier cheap-first-cut for release tracking). Surfaces: project Campaigns tab (list with status pills + progress: executed/passing/total required), campaign detail (ordered feature list, last execution per feature, 'start manual run' inline). Closure snapshots results, locks the campaign — pairs with [[html-reports]] at campaign level as the IVV-readable artefact. CI ingest: optional X-CI-Campaign-Id header attaches the ingested execution to a campaign. Out of scope first cut: campaign templates, milestones across campaigns, gantt-style sequencing, campaign-level branching."
@@ -242,14 +242,6 @@
       "public": false,
       "summary": "Every merge to main produces a live run on the demo instance.",
       "notes": ".github/workflows/demo-runs.yml. Triggers: push to main (every merged commit becomes a real run in the demo), pull_request (PR-scoped env=pr-<n>), workflow_dispatch (manual replay for screenshots / sales), schedule cron '0 */6 * * *' only if push activity is too sparse to keep the dashboard alive. Steps: build app, bring up Postgres + trace server, run e2e/self-demo Cucumber suite with JSON formatter, then curl -X POST each cucumber.json to https://<demo-host>/api/runs/ingest with secrets.TRACE_DEMO_API_KEY + environment header (ci / pr-<n>). One curl per feature so history shows multiple rows per commit."
-    },
-    {
-      "id": "landing-port",
-      "title": "Port the landing site",
-      "status": "later",
-      "public": false,
-      "summary": "Move from prototype to Astro on GH Pages.",
-      "notes": "trace.io repo, src/ is Astro. Designer's site/ was the prototype shipped with the design bundle (Babel-in-browser, zero build). Two viable shapes were considered (as-is copy under /docs vs Astro rewrite); designer recommended Astro for better Lighthouse and easier extension. Already Astro now — verify what 'port' still means or close."
     },
     {
       "id": "landing-wire-demo",
