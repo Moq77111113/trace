@@ -6,6 +6,7 @@ import {
 import { sql } from 'drizzle-orm';
 import { pk } from './columns';
 import { user } from './auth.schema';
+import { SMTP_DEFAULT_PORT } from '$lib/server/email/constants';
 import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 
 export const executionSource = pgEnum('execution_source', ['MANUAL', 'CI']);
@@ -151,13 +152,30 @@ export const instanceSettings = pgTable('instance_settings', {
   id:                 smallint('id').primaryKey().default(1),
   signupBudget:       integer('signup_budget').notNull().default(0),
   signupWindowEndsAt: timestamp('signup_window_ends_at', { withTimezone: true }),
+  smtpHost:           text('smtp_host').notNull().default(''),
+  smtpPort:           integer('smtp_port').notNull().default(SMTP_DEFAULT_PORT),
+  smtpUser:           text('smtp_user').notNull().default(''),
+  smtpPasswordEnc:    text('smtp_password_enc').notNull().default(''),
+  smtpFrom:           text('smtp_from').notNull().default(''),
+  smtpSecure:         boolean('smtp_secure').notNull().default(false),
+  smtpTestedAt:       timestamp('smtp_tested_at', { withTimezone: true }),
   updatedAt:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   updatedBy:          uuid('updated_by').references(() => user.id, { onDelete: 'set null' }),
 }, (t) => [
   check('instance_settings_singleton',     sql`${t.id} = 1`),
   check('instance_settings_budget_nonneg', sql`${t.signupBudget} >= 0`),
+  check('instance_settings_smtp_port',     sql`${t.smtpPort} BETWEEN 1 AND 65535`),
 ]);
 
-// Auth tables are re-exported here so drizzle-kit picks them up when M6 activates
-// Better Auth. The file is currently empty until `pnpm auth:schema` runs in M6.1.
+export const adminResetLinks = pgTable('admin_reset_links', {
+  id:              pk(),
+  targetUserId:    uuid('target_user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  mintedByUserId:  uuid('minted_by_user_id').references(() => user.id, { onDelete: 'set null' }),
+  mintedAt:        timestamp('minted_at',  { withTimezone: true }).notNull().defaultNow(),
+  usedAt:          timestamp('used_at',    { withTimezone: true }),
+}, (t) => [
+  index('admin_reset_links_target_idx').on(t.targetUserId),
+  index('admin_reset_links_minted_at_desc').on(sql`${t.mintedAt} DESC`),
+]);
+
 export * from './auth.schema';
