@@ -1,3 +1,8 @@
-onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
-  - esbuild
+allowBuilds:
+  esbuild: true
+  '@tailwindcss/oxide': true
+  '@prisma/client': false
+  better-sqlite3: false
+  cpu-features: false
+  protobufjs: false
+  ssh2: false
