@@ -88,6 +88,7 @@ export const actions = {
     const result = await saveFeature({
       featureId,
       content:         parsed.data.content,
+      description:     null,
       expectedVersion: parsed.data.version,
       editor,
       groupId:         parsed.data.groupId ?? null,

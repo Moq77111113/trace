@@ -15,6 +15,7 @@ describe('exportFeature', () => {
     await saveFeature({
       featureId:       f.id,
       content:         'Feature: User Login Flow\n',
+      description:     null,
       expectedVersion: f.version,
       editor:          'test',
     });
@@ -56,6 +57,7 @@ describe('exportFeature', () => {
     await saveFeature({
       featureId:       f.id,
       content:         'Feature: Login\n',
+      description:     null,
       expectedVersion: f.version,
       editor:          'test',
     });

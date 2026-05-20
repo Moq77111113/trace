@@ -12,7 +12,7 @@ describe('saveFeature', () => {
     const p = await mkProject({ name: `S ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'X' });
 
-    const r = await saveFeature({ featureId: f.id, content: goodGherkin('X'), expectedVersion: f.version, editor: 'alice' });
+    const r = await saveFeature({ featureId: f.id, content: goodGherkin('X'), description: null, expectedVersion: f.version, editor: 'alice' });
 
     expect(r.conflict).toBe(false);
     if (r.conflict) throw new Error('expected non-conflict result');
@@ -24,8 +24,8 @@ describe('saveFeature', () => {
     const p = await mkProject({ name: `S2 ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'X' });
 
-    await saveFeature({ featureId: f.id, content: goodGherkin('X'), expectedVersion: f.version, editor: 'alice' });
-    const r2 = await saveFeature({ featureId: f.id, content: goodGherkin('X'), expectedVersion: f.version, editor: 'bob' });
+    await saveFeature({ featureId: f.id, content: goodGherkin('X'), description: null, expectedVersion: f.version, editor: 'alice' });
+    const r2 = await saveFeature({ featureId: f.id, content: goodGherkin('X'), description: null, expectedVersion: f.version, editor: 'bob' });
 
     expect(r2.conflict).toBe(true);
     if (!r2.conflict) throw new Error('expected conflict result');
@@ -36,7 +36,7 @@ describe('saveFeature', () => {
     const p = await mkProject({ name: `S3 ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'X' });
 
-    const r = await saveFeature({ featureId: f.id, content: badGherkin, expectedVersion: f.version, editor: 'alice' });
+    const r = await saveFeature({ featureId: f.id, content: badGherkin, description: null, expectedVersion: f.version, editor: 'alice' });
 
     expect(r.conflict).toBe(false);
     if (r.conflict) throw new Error('expected non-conflict result');

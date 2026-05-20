@@ -186,6 +186,7 @@ describe('feature create/save with groupId', () => {
     const result = await saveFeature({
       featureId:       f.id,
       content:         'Feature: F\n',
+      description:     null,
       expectedVersion: f.version,
       editor:          'tester',
       groupId:         g.id,
@@ -205,6 +206,7 @@ describe('feature create/save with groupId', () => {
       saveFeature({
         featureId:       f.id,
         content:         'Feature: F\n',
+        description:     null,
         expectedVersion: f.version,
         editor:          'tester',
         groupId:         g.id,
