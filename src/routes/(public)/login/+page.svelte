@@ -89,6 +89,15 @@
 			<Button type="submit" variant="primary">{cta}</Button>
 		</form>
 
+		{#if mode === 'signin' && !bootstrap}
+			<a
+				href="/forgot-password"
+				class="mt-3 inline-block text-[12px] text-ink-3 hover:text-ink underline-offset-2 hover:underline"
+			>
+				{m.login_forgot_password()}
+			</a>
+		{/if}
+
 		{#if canSignup && !bootstrap}
 			<button
 				type="button"
