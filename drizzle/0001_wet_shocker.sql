@@ -1,1 +1,0 @@
-ALTER TYPE "public"."execution_status" ADD VALUE 'ABORTED';

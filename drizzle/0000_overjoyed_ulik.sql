@@ -1,5 +1,5 @@
 CREATE TYPE "public"."execution_source" AS ENUM('MANUAL', 'CI');--> statement-breakpoint
-CREATE TYPE "public"."execution_status" AS ENUM('IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED');--> statement-breakpoint
+CREATE TYPE "public"."execution_status" AS ENUM('IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED', 'ABORTED');--> statement-breakpoint
 CREATE TYPE "public"."scenario_status" AS ENUM('PENDING', 'PASSED', 'FAILED', 'SKIPPED');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('admin', 'user');--> statement-breakpoint
 CREATE TABLE "attachments" (
@@ -12,6 +12,19 @@ CREATE TABLE "attachments" (
 	"storage_key" text NOT NULL,
 	"uploaded_by" text NOT NULL,
 	"uploaded_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "executions" (
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
+	"feature_id" uuid NOT NULL,
+	"source" "execution_source" NOT NULL,
+	"executed_by" text NOT NULL,
+	"environment" text,
+	"feature_content_at_start" text NOT NULL,
+	"status" "execution_status" DEFAULT 'IN_PROGRESS' NOT NULL,
+	"started_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"finished_at" timestamp with time zone,
+	"ci_metadata" jsonb
 );
 --> statement-breakpoint
 CREATE TABLE "feature_groups" (
@@ -63,27 +76,8 @@ CREATE TABLE "projects" (
 	"archived" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "projects_slug_kebab" CHECK (
-		"projects"."slug" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$'
-		AND char_length("projects"."slug") BETWEEN 2 AND 40
-	),
-	CONSTRAINT "projects_code_prefix_kebab" CHECK (
-		"projects"."code_prefix" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$'
-		AND char_length("projects"."code_prefix") BETWEEN 2 AND 15
-	)
-);
---> statement-breakpoint
-CREATE TABLE "executions" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
-	"feature_id" uuid NOT NULL,
-	"source" "execution_source" NOT NULL,
-	"executed_by" text NOT NULL,
-	"environment" text,
-	"notes" text,
-	"feature_content_at_start" text NOT NULL,
-	"status" "execution_status" DEFAULT 'IN_PROGRESS' NOT NULL,
-	"started_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"finished_at" timestamp with time zone
+	CONSTRAINT "projects_slug_kebab" CHECK ("projects"."slug" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' AND char_length("projects"."slug") BETWEEN 2 AND 40),
+	CONSTRAINT "projects_code_prefix_kebab" CHECK ("projects"."code_prefix" ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' AND char_length("projects"."code_prefix") BETWEEN 2 AND 15)
 );
 --> statement-breakpoint
 CREATE TABLE "scenario_results" (
@@ -94,6 +88,7 @@ CREATE TABLE "scenario_results" (
 	"duration_ms" integer,
 	"logs" text,
 	"error_message" text,
+	"notes" text,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -180,25 +175,25 @@ CREATE TABLE "verification" (
 --> statement-breakpoint
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_execution_id_executions_id_fk" FOREIGN KEY ("execution_id") REFERENCES "public"."executions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_scenario_result_id_scenario_results_id_fk" FOREIGN KEY ("scenario_result_id") REFERENCES "public"."scenario_results"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "executions" ADD CONSTRAINT "executions_feature_id_features_id_fk" FOREIGN KEY ("feature_id") REFERENCES "public"."features"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "feature_groups" ADD CONSTRAINT "feature_groups_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "feature_tags" ADD CONSTRAINT "feature_tags_feature_id_features_id_fk" FOREIGN KEY ("feature_id") REFERENCES "public"."features"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "feature_tags" ADD CONSTRAINT "feature_tags_tag_id_tags_id_fk" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "features" ADD CONSTRAINT "features_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "features" ADD CONSTRAINT "features_group_id_feature_groups_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."feature_groups"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "instance_settings" ADD CONSTRAINT "instance_settings_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "executions" ADD CONSTRAINT "executions_feature_id_features_id_fk" FOREIGN KEY ("feature_id") REFERENCES "public"."features"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "scenario_results" ADD CONSTRAINT "scenario_results_execution_id_executions_id_fk" FOREIGN KEY ("execution_id") REFERENCES "public"."executions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tags" ADD CONSTRAINT "tags_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "apikey" ADD CONSTRAINT "apikey_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "executions_feature_started_idx" ON "executions" USING btree ("feature_id","started_at" DESC);--> statement-breakpoint
 CREATE UNIQUE INDEX "feature_groups_project_name_idx" ON "feature_groups" USING btree ("project_id","name");--> statement-breakpoint
 CREATE INDEX "feature_tags_tag_idx" ON "feature_tags" USING btree ("tag_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "features_project_name_unique" ON "features" USING btree ("project_id",LOWER("name")) WHERE "features"."archived" = FALSE;--> statement-breakpoint
+CREATE UNIQUE INDEX "features_project_code_seq_unique" ON "features" USING btree ("project_id","code_seq");--> statement-breakpoint
 CREATE UNIQUE INDEX "projects_name_unique" ON "projects" USING btree (LOWER("name")) WHERE "projects"."archived" = FALSE;--> statement-breakpoint
 CREATE UNIQUE INDEX "projects_slug_unique" ON "projects" USING btree ("slug");--> statement-breakpoint
-CREATE UNIQUE INDEX "features_project_code_seq_unique" ON "features" USING btree ("project_id","code_seq");--> statement-breakpoint
-CREATE INDEX "executions_feature_started_idx" ON "executions" USING btree ("feature_id","started_at" DESC);--> statement-breakpoint
 CREATE UNIQUE INDEX "scenario_results_execution_name_unique" ON "scenario_results" USING btree ("execution_id","scenario_name");--> statement-breakpoint
 CREATE UNIQUE INDEX "tags_project_name_unique" ON "tags" USING btree ("project_id",LOWER("name"));--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint

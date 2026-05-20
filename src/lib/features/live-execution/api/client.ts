@@ -42,8 +42,8 @@ export function createExecutionApi(executionId: string) {
       if (!res.ok) throw new RunsApiError(await readErrorMessage(res, 'Save failed'), res.status);
     },
 
-    async patchNotes(notes: string | null): Promise<void> {
-      const res = await fetch(`/api/executions/${executionId}/notes`, {
+    async patchScenarioNotes(scenarioResultId: string, notes: string | null): Promise<void> {
+      const res = await fetch(`/api/executions/${executionId}/scenarios/${scenarioResultId}/notes`, {
         method:  'PATCH',
         headers: { 'content-type': 'application/json' },
         body:    JSON.stringify({ notes }),

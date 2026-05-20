@@ -7,7 +7,7 @@ import { markScenario } from '$lib/server/executions/mark-scenario';
 import { uploadAttachment } from '$lib/server/executions/upload-attachment';
 import { mkFeature, mkProject } from '../../fixtures';
 
-async function seedFailedScenario() {
+async function seedRun() {
   const p = await mkProject({ name: `Att ${Date.now()}-${Math.random()}` });
   const f = await mkFeature(p.id, {
     name:    'F',
@@ -22,20 +22,22 @@ async function seedFailedScenario() {
 }
 
 describe('uploadAttachment', () => {
-  it('refuses upload when scenario is not FAILED', async () => {
-    const { run, scenario } = await seedFailedScenario();
+  it('accepts uploads on a PENDING scenario (no FAILED gate)', async () => {
+    const { run, scenario } = await seedRun();
 
-    await expect(uploadAttachment({
-      executionId:            run.id,
+    const row = await uploadAttachment({
+      executionId:      run.id,
       scenarioResultId: scenario.id,
-      filename:         'a.txt',
-      mimeType:         'text/plain',
-      body:             Buffer.from('hi'),
-    })).rejects.toThrow(/FAILED scenarios/i);
+      filename:         'before-decision.png',
+      mimeType:         'image/png',
+      body:             Buffer.from('fake-png-bytes'),
+    });
+
+    expect(row.scenarioResultId).toBe(scenario.id);
   });
 
   it('uploads and records an attachment after FAIL', async () => {
-    const { run, scenario } = await seedFailedScenario();
+    const { run, scenario } = await seedRun();
 
     await markScenario({ executionId: run.id, scenarioResultId: scenario.id, status: 'FAILED' });
 
@@ -53,7 +55,7 @@ describe('uploadAttachment', () => {
   });
 
   it('refuses files over the size limit', async () => {
-    const { run, scenario } = await seedFailedScenario();
+    const { run, scenario } = await seedRun();
     await markScenario({ executionId: run.id, scenarioResultId: scenario.id, status: 'FAILED' });
 
     const tooBig = Buffer.alloc(10 * 1024 * 1024 + 1);

@@ -30,7 +30,6 @@
     startedAt={data.execution.startedAt}
     finishedAt={data.execution.finishedAt}
     executedBy={data.execution.executedBy}
-    notes={data.execution.notes}
     {failedCount}
     onSnapshot={() => (showSnapshot = true)}
   />

@@ -95,7 +95,6 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 			environment:         runFile.environment,
 			featureContentAtStart: runFeatureContent,
 			status:              'IN_PROGRESS',
-			notes:               null,
 		})
 		.returning();
 	if (!run) throw new Error('demo seed: run insert failed');
@@ -114,13 +113,8 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 		else if (s.status === 'SKIPPED' && aggregate !== 'FAILED') aggregate = 'SKIPPED';
 	}
 
-	const noteLines = runFile.scenarios
-		.filter((s) => s.note)
-		.map((s) => `• ${s.name}: ${s.note}`)
-		.join('\n');
-
 	await db
 		.update(executions)
-		.set({ status: aggregate, finishedAt: new Date(), notes: noteLines || null })
+		.set({ status: aggregate, finishedAt: new Date() })
 		.where(eq(executions.id, run.id));
 }
