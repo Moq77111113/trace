@@ -49,6 +49,7 @@ const fakeData = {
       durationMs:   800,
       logs:         null,
       errorMessage: 'Expected red banner',
+      notes:        null,
       updatedAt:    new Date(),
     },
   ],

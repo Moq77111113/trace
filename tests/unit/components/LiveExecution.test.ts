@@ -49,6 +49,7 @@ const fakeData = {
       durationMs:   null,
       logs:         null,
       errorMessage: null,
+      notes:        null,
       updatedAt:    new Date(),
     },
     {
@@ -59,6 +60,7 @@ const fakeData = {
       durationMs:   null,
       logs:         null,
       errorMessage: null,
+      notes:        null,
       updatedAt:    new Date(),
     },
   ],
