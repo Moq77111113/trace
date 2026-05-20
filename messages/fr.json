@@ -89,6 +89,16 @@
 	"execution_abort_modal_confirm": "Interrompre",
 	"execution_abort_error": "Impossible d'interrompre l'exécution.",
 
+	"live_execution_notes_label": "Notes – {scenarioName}",
+	"live_execution_notes_placeholder": "Observations, étapes de reproduction, navigateur…",
+	"live_execution_notes_saving": "Enregistrement…",
+	"live_execution_notes_saved": "Enregistré",
+	"live_execution_notes_save_error": "Échec de l'enregistrement",
+	"live_execution_notes_retry": "Réessayer",
+	"live_execution_evidence_label": "Preuves – {scenarioName}",
+	"live_execution_evidence_drop": "Déposez captures, logs ou fichiers, ou cliquez pour parcourir",
+	"live_execution_evidence_empty": "Aucune preuve pour l'instant",
+
 	"feature_aside_open_live_execution": "Ouvrir l'exécution en cours",
 	"feature_aside_view_execution": "Voir l'exécution",
 	"feature_aside_no_executions_yet": "Aucune exécution",
