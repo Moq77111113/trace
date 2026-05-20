@@ -47,7 +47,9 @@
     </DropZone>
   </div>
 
-  {#if attachments.uploadError}
-    <p class="mt-2 text-[11.5px] text-fail-ink" role="alert">{attachments.uploadError}</p>
-  {/if}
+  <div class="mt-1 min-h-[15px] text-[11px]">
+    {#if attachments.uploadError}
+      <span class="text-fail-ink" role="alert">⚠ {attachments.uploadError}</span>
+    {/if}
+  </div>
 </section>
