@@ -8,6 +8,60 @@ need stated.
 
 ---
 
+## Product vision (read before designing features)
+
+Trace is a **simple, fast tool** for:
+
+- writing Gherkin scenarios
+- organising features
+- exporting `.feature` files
+- recording test runs
+- consulting execution history
+
+That is the whole product. Trace is **not** a Zephyr/Xray replacement, a Jira clone,
+an enterprise QA platform, a CI/CD orchestrator, a workflow engine, an analytics
+suite, a real-time collaboration platform, or an "AI-augmented" anything.
+
+The optimised path is:
+
+```
+write a scenario  →  export  →  run  →  see the result
+```
+
+A feature that does not directly serve this path probably does not belong in the product.
+
+### Five questions before any new feature
+
+Run every proposal through these. A "no" on any one is a strong signal the feature
+does not belong:
+
+1. Is it used **frequently**?
+2. Is it **critical** for the daily workflow?
+3. Does it actually **simplify** the work?
+4. Can it be **explained in one sentence**?
+5. Is the **maintenance cost** justified?
+
+Surface this filter explicitly in brainstorming when you propose anything new.
+
+### Defaults
+
+- Prefer **fewer features, well used** over more features.
+- Prefer **plain text** (the `.feature` file is the source of truth) over visual
+  builders, drag-and-drop, or magic layers.
+- Prefer **simple, robust** over future-proof or hyperscale. No premature event
+  sourcing, no microservices, no abstractions for tomorrow's hypothetical needs.
+- Reject "just a small feature." Every addition is permanent maintenance cost,
+  UX debt, and complexity. There is no such thing as a free feature.
+
+### The trap
+
+The danger is not lacking features. The danger is **recreating an enterprise tool
+by accident** — a thousand "small features" that turn a sober tool into a maze.
+
+> Do less. But do it extremely well.
+
+---
+
 ## Hard rules
 
 - **Match the commit pattern** `{type}({scope}): {short}`. No AI signatures, no `--amend`
