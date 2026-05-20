@@ -16,7 +16,7 @@
       "status": "shipped",
       "public": true,
       "summary": "Every test gets a short code like AUTH-42. Quick to mention in chat or in a meeting. The link keeps working even if you rename the test later.",
-      "notes": "A17. projects.slug (URL, unique global), projects.code_prefix (display, unique per project), features.code_seq (int sequence per project). Both slug + code_prefix locked after creation. See drizzle/0002 and tmp/todo.md A17."
+      "notes": "projects.slug (URL, unique global, regex ^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$, length 2..40), projects.code_prefix (display, unique per project, same regex, length 2..15), features.code_seq (int sequence per project — Postgres sequence or MAX(seq)+1 under advisory lock). Routing: /p/<slug>/<feature_code>; uuid never in URLs. Both slug + code_prefix locked after creation — typo means new project (trade-off: shared client/IVV links never die). Create form auto-suggests both from project name (slug = kebab-case the name; code_prefix = first slug segment, or full slug if 1–2 segments), visible + editable before submit, then frozen. Code stable across archive/delete. Rendered everywhere user reads a feature (sidebar tree, history rows, cockpit header, CSV, HTML report). Command palette indexes the code (AUTH-42 jumps). CI ingest: optional X-CI-Feature-Code header takes precedence over feature name. Backfill on migration derives both from projects.name, slug collision-safe with -2/-3 suffix. Schema in drizzle/0002. Out of scope: cross-project codes, custom code patterns (AUTH-FEAT-42 vs AUTH-42), code reservation for unborn features, slug/prefix rename with alias history."
     },
     {
       "id": "feature-groups",
@@ -32,7 +32,7 @@
       "status": "shipped",
       "public": true,
       "summary": "Click through a test step by step as you run it. Mark each step pass, fail, or skip. Drop in screenshots or short notes when something looks off.",
-      "notes": "Verdict shortcuts, S3-backed attachments, per-scenario notes. See src/lib/widgets/cockpit and tmp/todo.md A3."
+      "notes": "Verdict shortcuts, S3-backed attachments, per-scenario notes. See src/lib/widgets/cockpit."
     },
     {
       "id": "abort-run",
@@ -40,7 +40,7 @@
       "status": "shipped",
       "public": true,
       "summary": "Need to cancel a run halfway? One click and the rest of the steps are marked skipped, so the run closes cleanly.",
-      "notes": "A3. Abort flow shipped without Pause (PAUSED deferred). Marks pending scenarios SKIPPED, execution ABORTED."
+      "notes": "Abort flow shipped without Pause (PAUSED deferred — see [[pause-running-run]]). Marks pending scenarios SKIPPED, execution ABORTED."
     },
     {
       "id": "rerun-failed",
@@ -96,7 +96,7 @@
       "status": "shipped",
       "public": true,
       "summary": "Every run remembers which version of the app was tested. Search old runs by version, branch, or where they ran.",
-      "notes": "A9. execution.environment / ci_branch / ci_commit / ci_source columns. drizzle/0002. Surfaces in history filters."
+      "notes": "execution.environment / ci_branch / ci_commit / ci_source columns. drizzle/0002. Surfaces in history filters."
     },
     {
       "id": "history-filters",
@@ -128,7 +128,7 @@
       "status": "shipped",
       "public": true,
       "summary": "Each project has its own private keys that automated tools use to send results in. Change them whenever you like from the project settings.",
-      "notes": "better-auth apiKey plugin. Rotate UI in Project Settings · API keys. Last-used + scope still on the A11 list."
+      "notes": "better-auth apiKey plugin. Rotate UI in Project Settings · API keys. Remaining ergonomics: last-used timestamp column on keys (one column + update on auth), per-key scope (feature / feature group) — schema change, lower priority than last-used."
     },
     {
       "id": "i18n",
@@ -144,7 +144,7 @@
       "status": "shipped",
       "public": true,
       "summary": "Run a single command and trace is up. No subscription, no account, your data stays on your machine.",
-      "notes": "curl | docker compose -f - up -d. Default TRACE_AUTH_SECRET=change-the-secret-for-prod. Compose lives in trace.io repo at public/compose.yml. GHCR image ghcr.io/moq77111113/trace:main (latest pending v* tag)."
+      "notes": "curl -fsSL <url> | docker compose -f - up -d (pipe-stdin, portable). Default TRACE_AUTH_SECRET=change-the-secret-for-prod (loud enough that anyone exposing the instance will rotate). Copy button on every install snippet. Multi-stage Node Dockerfile (build → slim runtime, @sveltejs/adapter-node). Compose brings up app + postgres + minio + minio-init with persistent volumes (pgdata, miniodata). Env via .env beside compose (TRACE_BOOTSTRAP_ADMIN_EMAIL, DATABASE_URL, S3 creds, PORT). Lazy env init (db/client.ts + auth.ts are Proxies — connection/betterAuth() fire on first access, not on import) so production build needs zero env placeholders. Auth env renamed BETTER_AUTH_SECRET → TRACE_AUTH_SECRET (one-release deprecated fallback with console.warn). Compose hosted at trace.io repo public/compose.yml. GHCR image ghcr.io/moq77111113/trace:main (latest pending v* tag — see [[ghcr-release-tag]])."
     },
     {
       "id": "manual-features",
@@ -152,7 +152,7 @@
       "status": "in-progress",
       "public": true,
       "summary": "Some tests are not automated, you run them by hand. Soon you can write those tests in trace too, in the same place as the rest.",
-      "notes": "A12. features.kind ('gherkin' | 'manual'). Editor swaps Monaco grammar for markdown when manual. Scenarios = '## Scenario name' sections."
+      "notes": "features.kind ('gherkin' | 'manual', default 'gherkin'). Editor swaps Monaco grammar for markdown when manual; parser bypassed, parse_errors stays null. Scenarios = '## Scenario name' sections — marked PASS/FAIL/SKIP + evidence the same way in cockpit. Reuses execution / cockpit / history surfaces unchanged (single browsing surface, half the schema vs a parallel test-case entity). Zip import/export handles both kinds. CI ingest stays Gherkin-only (manual features are not CI-runnable). Out of scope: rich-text WYSIWYG, step parameterization for manual, manual scenarios mixed into a Gherkin feature."
     },
     {
       "id": "tags-v2",
@@ -160,7 +160,7 @@
       "status": "next",
       "public": true,
       "summary": "Add labels like \"smoke\" or \"login\" to your tests. Then filter, group, or rename them from one place across the whole tool.",
-      "notes": "A20. Surface @tags from featureContentAtStart on execution finish, persist to scenario_results.tags. Add tag filter to history + feature list. Per-project Tags management page (rename, merge, delete-with-reassignment). Command palette: '#smoke' search."
+      "notes": "Surface scenario @tags from featureContentAtStart on execution finish, persist to scenario_results.tags (text[], denormalized for query speed, indexed). Add tag filter to executions history + feature list (URL params same shape as date/status filters; chips in history rows and feature cards). Per-project Tags management page: list, rename, merge, delete-with-reassignment (today tags are created implicitly; this page makes them governable). Command palette: '#smoke' searches tags. Tag column on CSV / HTML report rows. Out of scope: tag colors, hierarchical tags, tag-based [[pbac]] conditions (the PBAC condition jsonb slot already covers it once that lands)."
     },
     {
       "id": "html-reports",
@@ -168,7 +168,7 @@
       "status": "next",
       "public": true,
       "summary": "A clean summary of a run that you can hand to a client or a manager. Print it, or save it as a PDF.",
-      "notes": "A19. Self-contained HTML per execution + filtered set. Header (project, feature code, env, branch@commit, durations), summary tile, per-scenario blocks with inline attachments, footer (version + stamp + signature line). Print stylesheet, no headless-Chrome."
+      "notes": "Self-contained HTML per execution + filtered set. Per-execution header: project name, feature name + code (see [[feature-codes]]), environment, branch@commit, started/finished, run by, total duration. Summary tile: total/pass/fail/skip/pass rate + distribution bar (same shape as in history). Per-scenario block: status pill, steps with per-step status, error/log on failure, attachments rendered inline (image preview, download link otherwise). Footer: trace version, generated-at timestamp, optional signature line. Print stylesheet → browser Save-as-PDF for the first cut (no headless-Chrome). Endpoints: GET /projects/:pid/executions/:eid/report.html (single), GET /projects/:pid/executions/report.html?<filters> (aggregated over same filter chain as CSV export). PBAC action: execution.read covers it (no new action). Pairs with [[campaigns]] at campaign level as the IVV-readable artefact. Out of scope first cut: signed reports, watermarking, custom per-project branding, scheduled email delivery."
     },
     {
       "id": "pbac",
@@ -176,7 +176,7 @@
       "status": "next",
       "public": true,
       "summary": "Choose, project by project, who can read, run, or change tests. Lets you safely show your work to a client without giving them edit rights.",
-      "notes": "A16. policies table: subject × action × resource × optional condition × effect. Closed action enum (feature.read, execution.start, etc.). Single can(user, action, resource) evaluator. Project creator gets allow *; instance admin keeps built-in *."
+      "notes": "PBAC, not RBAC — policies as data, evaluated at request time (no role names baked into schema/UI). policies (id, subject_kind, subject_id, action, resource_kind, resource_id nullable, condition jsonb nullable, effect, priority, created_at, created_by). Indexed on (subject_kind, subject_id, resource_kind, resource_id). Subject: user id (later: group id, api-key id). Closed action enum, one entry per real verb (feature.read, feature.write, execution.start, execution.read, execution.write, project.admin, …). Resource: project | feature | execution (id or '*' for project-wide). Condition jsonb keeps ABAC door open ({tag: 'smoke'}, {environment: 'staging'}). Effect allow|deny; deny overrides allow. Default-deny on any resource with a matching policy; default-allow stays for instance admin (built-in '*' policy). Single can(user, action, resource) → bool evaluator. Bootstrap: project creator gets allow * on that project; instance admin keeps built-in *. UI: per-project Access page lists subjects + effective actions with a '+ policy' form (action picker + optional condition); no role labels in the UI — actions speak for themselves. Out of scope first cut: group subjects, policy templates, audit log of policy changes (small follow-up)."
     },
     {
       "id": "campaigns",
@@ -184,7 +184,7 @@
       "status": "later",
       "public": true,
       "summary": "Bundle every test that needs to pass for a release in one place. Track progress as the team works through it. Lock the result once it's signed off.",
-      "notes": "A21. campaigns (planned | running | closed) + campaign_features (id, feature_id, position, required) + executions.campaign_id nullable. Absorbs A14's app_version column. CI ingest accepts X-CI-Campaign-Id."
+      "notes": "campaigns (id, project_id, name, app_version nullable, status planned|running|closed, opened_at, closed_at nullable, created_by). campaign_features (campaign_id, feature_id, position, required boolean). executions.campaign_id nullable: links manual or CI execution to a campaign. Absorbs per-execution app_version column — do not add it standalone (collapses the earlier cheap-first-cut for release tracking). Surfaces: project Campaigns tab (list with status pills + progress: executed/passing/total required), campaign detail (ordered feature list, last execution per feature, 'start manual run' inline). Closure snapshots results, locks the campaign — pairs with [[html-reports]] at campaign level as the IVV-readable artefact. CI ingest: optional X-CI-Campaign-Id header attaches the ingested execution to a campaign. Out of scope first cut: campaign templates, milestones across campaigns, gantt-style sequencing, campaign-level branching."
     },
     {
       "id": "run-diff",
@@ -192,7 +192,7 @@
       "status": "later",
       "public": true,
       "summary": "Pick any two past runs of the same test. See at a glance which steps changed verdict between them.",
-      "notes": "A10. Picker + table of scenarios that flipped pass<->fail between the two."
+      "notes": "Fresh diff view, not in design bundle. Picker (two runs of the same feature) + table of scenarios that flipped pass<->fail between the two. Brief explicit: 'filtres (…), comparaison.'"
     },
     {
       "id": "webhooks",
@@ -200,7 +200,7 @@
       "status": "later",
       "public": true,
       "summary": "When a run finishes (or fails), trace can drop a message into Slack, Teams, or anywhere else your team hangs out.",
-      "notes": "A13. webhooks (project_id, url, secret, events[], active) + webhook_deliveries. HMAC-signed payload. Retry with backoff, give up after N attempts. Delivery log in project settings."
+      "notes": "Push notifications to external systems on execution events (finished, failed, flake detected). Replaces typical Zephyr/Slack-bot setups. webhooks (project_id, url, secret, events[], active) + webhook_deliveries (webhook_id, payload, response_code, attempted_at). Per-project URLs 1..N, optional event filter (on: ['finished', 'failed']). HMAC-signed payload with project secret so receivers can verify. Retry on 5xx with exponential backoff, give up after N attempts. Delivery log surface in project settings for debugging. Out of scope first cut: per-feature webhooks, custom payload templates, OAuth-based receivers."
     },
     {
       "id": "source-traceability",
@@ -208,7 +208,15 @@
       "status": "later",
       "public": true,
       "summary": "Click straight from a step that failed to the part of the project where that step lives. Faster bug hunting.",
-      "notes": "A15. Three sub-shapes: (1) X-CI-Repo-Url/Commit/Feature-Path headers + 'View on GitHub' links (cheap), (2) stepDefinitions.json glue-file index uploaded alongside cucumber.json (medium), (3) source-of-truth toggle showing drift between repo .feature and snapshot."
+      "notes": "Goal: from a failing scenario, jump to the matching .feature file + line, and on to the step definitions backing it. Also enables 'this scenario failed in 3 of the last 10 commits on main' (links executions back to source-control state, overlaps [[ci-metadata]]). Three sub-shapes, ordered cheapest to costliest: (1) X-CI-Repo-Url + X-CI-Commit + X-CI-Feature-Path ingest headers + 'View on GitHub' link next to each cockpit scenario — cheap, no schema beyond ci-metadata; (2) consumer CI uploads stepDefinitions.json (regex/expression → file:line) alongside cucumber.json — trace renders 'implemented at src/steps/login.steps.ts:42' per scenario step (medium); (3) source-of-truth toggle: when the .feature file in the repo drifts from featureContentAtExecution snapshot, surface a diff pill ('this execution ran an older revision of the feature') — helps QAs understand stale results. Out of scope first cut: bidirectional sync (editing in trace pushes back to the repo), AST-level step-definition discovery."
+    },
+    {
+      "id": "auth-ui-polish",
+      "title": "Polished sign in / sign up",
+      "status": "later",
+      "public": true,
+      "summary": "A cleaner welcome screen so the very first impression of trace feels finished.",
+      "notes": "Better sign in / sign up page. Replace the current minimal form with a layout that matches the rest of the app (theme tokens, accent, OIDC button affordances). No scope decisions locked yet — design pass before scoping."
     },
 
     {
@@ -217,7 +225,7 @@
       "status": "later",
       "public": false,
       "summary": "Reachable on the open internet, real instance for prospects to play with.",
-      "notes": "B1. One Node + one Postgres on Fly.io / Render / Hetzner. Reuse TRACE_BOOTSTRAP_ADMIN_EMAIL. Seed demo project on install."
+      "notes": "One Node + one Postgres on Fly.io / Render / Hetzner. Reuse TRACE_BOOTSTRAP_ADMIN_EMAIL. Seed demo project on install."
     },
     {
       "id": "demo-self-test",
@@ -225,7 +233,7 @@
       "status": "later",
       "public": false,
       "summary": "Demo data comes from a real cucumber suite testing trace itself, not fabricated content.",
-      "notes": "B2. e2e/self-demo/ folder. cucumber-js + Playwright (UI) + fetch (API). Feature set: auth/signin, projects/create, features/edit, runs/live-cockpit, runs/ci-ingest, import-export/roundtrip. cucumber.json artifact pushed to demo instance."
+      "notes": "Don't fabricate a synthetic cucumber project — write a small Cucumber suite that exercises trace's own behavior, and let CI push those results to the demo on every commit. Landing can claim 'trace tests itself with itself' without lying. e2e/self-demo/ folder (separate from vitest, which stays the unit/integration harness). Stack: @cucumber/cucumber (cucumber-js) runner, Playwright for UI-level steps (sign-in, feature CRUD, cockpit marking, evidence upload), fetch for API-level steps (CI ingest, key auth). Feature set covers all run states naturally: auth/signin, projects/create, features/edit, runs/live-cockpit, runs/ci-ingest, import-export/roundtrip. Output cucumber.json per feature, uploaded as CI artifact (so PRs show their runs) AND pushed to demo instance."
     },
     {
       "id": "demo-runs-workflow",
@@ -233,7 +241,7 @@
       "status": "later",
       "public": false,
       "summary": "Every merge to main produces a live run on the demo instance.",
-      "notes": "B3. .github/workflows/demo-runs.yml. Triggers: push main, PR (env=pr-<n>), workflow_dispatch, schedule. One curl per feature so history shows multiple rows per commit. secrets.TRACE_DEMO_API_KEY."
+      "notes": ".github/workflows/demo-runs.yml. Triggers: push to main (every merged commit becomes a real run in the demo), pull_request (PR-scoped env=pr-<n>), workflow_dispatch (manual replay for screenshots / sales), schedule cron '0 */6 * * *' only if push activity is too sparse to keep the dashboard alive. Steps: build app, bring up Postgres + trace server, run e2e/self-demo Cucumber suite with JSON formatter, then curl -X POST each cucumber.json to https://<demo-host>/api/runs/ingest with secrets.TRACE_DEMO_API_KEY + environment header (ci / pr-<n>). One curl per feature so history shows multiple rows per commit."
     },
     {
       "id": "landing-port",
@@ -241,7 +249,7 @@
       "status": "later",
       "public": false,
       "summary": "Move from prototype to Astro on GH Pages.",
-      "notes": "B4. trace.io repo, src/ is Astro. Designer's site/ was the prototype. Already Astro now — verify what 'port' still means or close."
+      "notes": "trace.io repo, src/ is Astro. Designer's site/ was the prototype shipped with the design bundle (Babel-in-browser, zero build). Two viable shapes were considered (as-is copy under /docs vs Astro rewrite); designer recommended Astro for better Lighthouse and easier extension. Already Astro now — verify what 'port' still means or close."
     },
     {
       "id": "landing-wire-demo",
@@ -249,7 +257,7 @@
       "status": "later",
       "public": false,
       "summary": "Replace APP_URL placeholder with the real demo URL on the landing.",
-      "notes": "B5. 'Try the live cockpit' button in hero. Depends on demo-instance."
+      "notes": "Replace prototype's APP_URL placeholder with the real demo cockpit URL. Add 'Try the live cockpit →' button in the hero. Depends on [[demo-instance]]."
     },
     {
       "id": "cockpit-recording",
@@ -257,7 +265,7 @@
       "status": "later",
       "public": false,
       "summary": "Replace the skeleton placeholder in the landing's Live Demo section with a real recording.",
-      "notes": "B6. ~15-25s loop, webm or gif. Capture path: open cockpit, walk scenarios pass/fail/skip, attach evidence, finish. Output to trace.io public/cockpit-walkthrough.webm + poster. Possibly via chrome-devtools MCP."
+      "notes": "Landing's 'Live cockpit' section ships as a skeleton placeholder today (Gherkin on the left, scenario list on the right, hand-coded status pills, 'recording soon' tag). Replace with real recording so the section stops hedging. Capture path (planned via chrome-devtools MCP): drive a clean demo project end-to-end — open cockpit, walk a few scenarios (pass / fail / skip), attach evidence on the fail, finish. Output ~15-25s loop, webm or gif sized to card width, plus a poster frame for first paint. Drop asset in trace.io public/cockpit-walkthrough.webm; swap skeleton in src/components/LiveDemo.astro for <video autoplay muted loop playsinline poster=...>. Optional polish: on-card Replay button resetting currentTime — not interactive (no Svelte/React island), just media."
     },
     {
       "id": "ghcr-release-tag",
@@ -265,7 +273,7 @@
       "status": "later",
       "public": false,
       "summary": "Push a versioned tag to publish :latest on GHCR.",
-      "notes": "C4. Workflow already publishes :main on push and :latest on v*.*.* tag. Just need the tag + release notes. Unlocks landing eyebrow 'v0.1.0-mvp' chip and image pinning."
+      "notes": "Workflow already publishes :main on push and :latest on v*.*.* tag. Just need the tag + GitHub release notes + image push. Unlocks landing eyebrow 'v0.1.0-mvp' chip in the hero, image pinning in [[self-host-one-liner]], and [[trace-readme-quickstart]]."
     },
     {
       "id": "trace-readme-quickstart",
@@ -273,7 +281,7 @@
       "status": "later",
       "public": false,
       "summary": "Once GHCR :latest exists, replace the dev-loop quickstart with the one-compose path.",
-      "notes": "C5. Dev-loop moves to CONTRIBUTING.md."
+      "notes": "Once [[ghcr-release-tag]] lands and GHCR :latest exists, replace the current dev-loop quickstart in trace's README with the one-compose path (see [[self-host-one-liner]]). Dev-loop moves to CONTRIBUTING.md."
     },
 
     {
@@ -281,8 +289,8 @@
       "title": "Pause an in-flight run",
       "status": "deferred",
       "public": false,
-      "summary": "PAUSED status alongside RUNNING. Deferred when A3 shipped Abort only.",
-      "notes": "Deferred per the roadmap. Revisit after manual-features ships."
+      "summary": "PAUSED status alongside RUNNING. Deferred when [[abort-run]] shipped Abort only.",
+      "notes": "Deferred per the roadmap. Revisit after [[manual-features]] ships."
     },
     {
       "id": "step-bindings",
@@ -290,7 +298,7 @@
       "status": "deferred",
       "public": false,
       "summary": "Out of scope: that is a Cucumber-runtime concern, not trace's mandate.",
-      "notes": "Partially overlaps with source-traceability (A15)'s stepDefinitions.json sub-shape."
+      "notes": "Partially overlaps with [[source-traceability]]'s stepDefinitions.json sub-shape."
     },
     {
       "id": "dashboard-activity-rail",
