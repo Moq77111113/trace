@@ -4,10 +4,10 @@ import { createFeature } from '$lib/server/features/create';
 import { listFeatures, getFeature } from '$lib/server/features/queries';
 
 describe('features CRUD plain', () => {
-  it('creates a feature with a template', async () => {
+  it('creates a feature with empty content', async () => {
     const p = await mkProject({ name: `Fp ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'Login' });
-    expect(f.content).toContain('Feature: Login');
+    expect(f.content).toBeNull();
     const fetched = await getFeature(f.id);
     expect(fetched?.id).toBe(f.id);
   });
