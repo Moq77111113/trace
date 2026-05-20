@@ -20,14 +20,13 @@
     startedAt:   Date | string;
     finishedAt:  Date | string | null;
     executedBy:  string;
-    notes:       string | null;
     failedCount: number;
     onSnapshot:  () => void;
   };
 
   let {
     featureName, featureCode, projectSlug, featureId, status, executionId, source, environment,
-    startedAt, finishedAt, executedBy, notes, failedCount, onSnapshot,
+    startedAt, finishedAt, executedBy, failedCount, onSnapshot,
   }: Props = $props();
 
   const runKind = $derived(toStatusKind(status));
@@ -68,11 +67,4 @@
       <ExecutionLauncher {projectSlug} {featureId} />
     </div>
   </div>
-
-  {#if notes}
-    <div class="text-[12.5px] text-ink-2 leading-relaxed border border-border rounded-md px-3 py-2 bg-surface whitespace-pre-wrap max-w-3xl">
-      <span class="text-[10.5px] uppercase tracking-[0.07em] text-ink-3 font-medium block mb-1">Notes</span>
-      {notes}
-    </div>
-  {/if}
 </header>

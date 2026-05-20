@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Pill           from '$lib/shared/ui/Pill.svelte';
-  import Status         from '$lib/shared/ui/Status.svelte';
-  import Icon           from '$lib/shared/ui/Icon.svelte';
-  import ScenarioSteps  from '$lib/entities/execution/ui/ScenarioSteps.svelte';
+  import Pill                  from '$lib/shared/ui/Pill.svelte';
+  import Status                from '$lib/shared/ui/Status.svelte';
+  import ScenarioSteps         from '$lib/entities/execution/ui/ScenarioSteps.svelte';
+  import ReadonlyNotesBlock    from './ReadonlyNotesBlock.svelte';
+  import ReadonlyEvidenceBlock from './ReadonlyEvidenceBlock.svelte';
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
   import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
-  import { isImageMime }          from '$lib/shared/lib/mime';
   import type { ExecutionPageData } from '$lib/server/executions/queries';
 
   type RunData    = NonNullable<ExecutionPageData>;
@@ -50,34 +50,7 @@
   </details>
 {/if}
 
-{#if attachments.length > 0}
-  <div class="pt-4 border-t border-dashed border-border">
-    <div class="text-[11px] uppercase tracking-[0.07em] text-ink-3 mb-2 font-medium flex items-center gap-1.5">
-      <Icon name="Paperclip" size={11} />
-      <span>Attachments</span>
-    </div>
-    <ul class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-2 list-none m-0 p-0">
-      {#each attachments as attachment (attachment.id)}
-        <li class="border border-border rounded-md overflow-hidden bg-surface">
-          <a href="/api/attachments/{attachment.id}" target="_blank" rel="noopener" class="block">
-            {#if isImageMime(attachment.mimeType)}
-              <img
-                src="/api/attachments/{attachment.id}"
-                alt={attachment.filename}
-                class="block w-full h-20 object-cover border-b border-border"
-              />
-            {:else}
-              <div class="h-20 bg-[repeating-linear-gradient(135deg,var(--surface-2)_0_8px,var(--surface)_8px_16px)] grid place-items-center text-ink-3 font-mono text-[10.5px] border-b border-border">
-                {attachment.mimeType.split('/')[0]}
-              </div>
-            {/if}
-            <div class="px-2 py-1.5 text-[11px]">
-              <div class="font-medium truncate">{attachment.filename}</div>
-              <div class="text-ink-3 mt-0.5 tabular-nums">{(attachment.sizeBytes / 1024).toFixed(1)} KB</div>
-            </div>
-          </a>
-        </li>
-      {/each}
-    </ul>
-  </div>
-{/if}
+<div class="grid grid-cols-[1fr_1fr] gap-4 pt-4 border-t border-dashed border-border max-md:grid-cols-1">
+  <ReadonlyNotesBlock    notes={scenario.notes} scenarioName={scenario.scenarioName} />
+  <ReadonlyEvidenceBlock {attachments}           scenarioName={scenario.scenarioName} />
+</div>
