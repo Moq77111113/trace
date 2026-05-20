@@ -8,6 +8,13 @@
       "when": 1779260478503,
       "tag": "0000_overjoyed_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1779257672592,
+      "tag": "0003_password_reset_and_smtp",
+      "breakpoints": true
     }
   ]
 }

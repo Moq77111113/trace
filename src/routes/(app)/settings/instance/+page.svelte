@@ -1,14 +1,40 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Button    from '$lib/shared/ui/Button.svelte';
-	import Input     from '$lib/shared/ui/Input.svelte';
-	import Pill      from '$lib/shared/ui/Pill.svelte';
-	import PageTitle from '$lib/shared/ui/PageTitle.svelte';
+	import Button          from '$lib/shared/ui/Button.svelte';
+	import Input           from '$lib/shared/ui/Input.svelte';
+	import Pill            from '$lib/shared/ui/Pill.svelte';
+	import PageTitle       from '$lib/shared/ui/PageTitle.svelte';
+	import SmtpConfigCard    from '$lib/features/instance-smtp/ui/SmtpConfigCard.svelte';
+	import MintResetLinkCard from '$lib/features/admin-reset/ui/MintResetLinkCard.svelte';
 	import { plural } from '$lib/shared/i18n/plural';
 	import * as m    from '$lib/paraglide/messages';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	const smtpForm = $derived(smtpFormProps(form));
+	const mintFormState = $derived(mintForm(form));
+
+	function smtpFormProps(f: ActionData) {
+		if (!f) return null;
+		if ('error' in f || 'testOk' in f || 'testFail' in f) {
+			return {
+				error:    'error'    in f ? f.error    ?? null : null,
+				testOk:   'testOk'   in f ? f.testOk   ?? null : null,
+				testFail: 'testFail' in f ? f.testFail ?? null : null,
+			};
+		}
+		return null;
+	}
+
+	function mintForm(f: ActionData) {
+		if (!f) return { url: null, expiresAt: null, error: null };
+		return {
+			url:       'mintedUrl'       in f ? f.mintedUrl       ?? null : null,
+			expiresAt: 'mintedExpiresAt' in f ? f.mintedExpiresAt ?? null : null,
+			error:     'error'           in f ? f.error           ?? null : null,
+		};
+	}
 
 	type SignupState = { signupBudget: number; signupWindowEndsAt: Date | string | null };
 	function describeState(s: SignupState): { label: string; kind: 'neutral' | 'brand' } {
@@ -78,6 +104,26 @@
 				</form>
 			</div>
 		{/if}
+	</section>
+
+	<section id="smtp">
+		<SmtpConfigCard
+			configured={data.smtp.configured}
+			testedAt={data.smtp.testedAt}
+			initial={data.smtp.initial}
+			form={smtpForm}
+		/>
+	</section>
+
+	<section id="admin-reset">
+		<MintResetLinkCard
+			users={data.users.map((u) => ({ id: u.id, email: u.email }))}
+			recent={data.recentAdminResets}
+			ttlMinutes={data.passwordResetTtlMin}
+			mintedUrl={mintFormState.url}
+			mintedExpiresAt={mintFormState.expiresAt}
+			error={mintFormState.error}
+		/>
 	</section>
 
 	<section id="users">

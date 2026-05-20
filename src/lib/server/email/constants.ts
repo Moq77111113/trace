@@ -1,0 +1,3 @@
+export const SMTP_DEFAULT_PORT = 587;
+export const SMTP_CONNECT_TIMEOUT_MS = 10_000;
+export const SMTP_PASSWORD_ENC_VERSION = 1;
