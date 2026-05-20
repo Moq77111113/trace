@@ -12,6 +12,7 @@ import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 export const executionSource = pgEnum('execution_source', ['MANUAL', 'CI']);
 export const executionStatus = pgEnum('execution_status', ['IN_PROGRESS', 'PASSED', 'FAILED', 'SKIPPED', 'ABORTED']);
 export const scenarioStatus  = pgEnum('scenario_status',  ['PENDING', 'PASSED', 'FAILED', 'SKIPPED']);
+export const scenarioSource  = pgEnum('scenario_source',  ['GHERKIN', 'MANUAL']);
 
 export type ParseError = { line: number; column?: number; message: string };
 
@@ -64,7 +65,8 @@ export const features = pgTable(
     groupId:     uuid('group_id').references(() => featureGroups.id, { onDelete: 'set null' }),
     codeSeq:     integer('code_seq').notNull(),
     name:        text('name').notNull(),
-    content:     text('content').notNull(),
+    description: text('description'),
+    content:     text('content'),
     parseErrors: jsonb('parse_errors').$type<ParseError[] | null>(),
     version:     integer('version').notNull().default(1),
     archived:    boolean('archived').notNull().default(false),
@@ -77,6 +79,25 @@ export const features = pgTable(
       .where(sql`${t.archived} = FALSE`),
     uniqueIndex('features_project_code_seq_unique').on(t.projectId, t.codeSeq),
     check('features_code_seq_positive', sql`${t.codeSeq} >= 1`),
+  ],
+);
+
+export const manualScenarios = pgTable(
+  'manual_scenarios',
+  {
+    id:        pk(),
+    featureId: uuid('feature_id').notNull().references(() => features.id, { onDelete: 'cascade' }),
+    position:  integer('position').notNull(),
+    name:      text('name').notNull(),
+    archived:  boolean('archived').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('manual_scenarios_feature_position_unique')
+      .on(t.featureId, t.position)
+      .where(sql`${t.archived} = FALSE`),
+    check('manual_scenarios_position_positive', sql`${t.position} >= 1`),
   ],
 );
 
@@ -126,6 +147,7 @@ export const scenarioResults = pgTable(
     id:           pk(),
     executionId:  uuid('execution_id').notNull().references(() => executions.id, { onDelete: 'cascade' }),
     scenarioName: text('scenario_name').notNull(),
+    source:       scenarioSource('source').notNull().default('GHERKIN'),
     status:       scenarioStatus('status').notNull().default('PENDING'),
     durationMs:   integer('duration_ms'),
     logs:         text('logs'),

@@ -15,6 +15,13 @@
       "when": 1779257672592,
       "tag": "0003_password_reset_and_smtp",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779285688873,
+      "tag": "0004_manual_features",
+      "breakpoints": true
     }
   ]
 }
