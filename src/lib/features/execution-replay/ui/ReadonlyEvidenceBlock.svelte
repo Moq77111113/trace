@@ -6,19 +6,17 @@
 
   type Attachment = NonNullable<ExecutionPageData>['attachmentsByScenario'][string][number];
 
-  type Props = {
-    attachments:  Attachment[];
-    scenarioName: string;
-  };
+  type Props = { attachments: Attachment[] };
 
-  let { attachments, scenarioName }: Props = $props();
+  let { attachments }: Props = $props();
 </script>
 
-<section class="flex flex-col min-h-0">
-  <div class="text-[11px] uppercase tracking-[0.07em] text-ink-3 mb-2 font-medium flex items-center gap-1.5">
+<section class="flex flex-col min-h-0 min-w-0">
+  <div class="text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium flex items-center gap-1.5">
     <Icon name="Paperclip" size={11} />
-    <span class="truncate">{m.live_execution_evidence_label({ scenarioName })}</span>
+    <span>{m.live_execution_evidence_label()}</span>
   </div>
+  <p class="text-[11.5px] text-ink-3 mb-2">{m.live_execution_evidence_hint()}</p>
   {#if attachments.length > 0}
     <ul class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 list-none m-0 p-0">
       {#each attachments as attachment (attachment.id)}

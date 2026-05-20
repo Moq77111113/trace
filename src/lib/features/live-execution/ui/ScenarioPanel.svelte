@@ -80,9 +80,9 @@
       <p class="mt-3 text-[12px] text-fail-ink" role="alert">{marking.saveError}</p>
     {/if}
 
-    <div class="grid grid-cols-[1fr_1fr] gap-4 mt-4 pt-4 border-t border-dashed border-border max-md:grid-cols-1">
-      <NotesBlock {notes} scenarioName={selection.selected.scenarioName} />
-      <EvidenceBlock {selection} {attachments} scenarioName={selection.selected.scenarioName} />
+    <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 mt-4 pt-4 border-t border-dashed border-border max-md:grid-cols-1">
+      <NotesBlock {notes} />
+      <EvidenceBlock {selection} {attachments} />
     </div>
   </section>
 

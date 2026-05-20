@@ -50,7 +50,7 @@
   </details>
 {/if}
 
-<div class="grid grid-cols-[1fr_1fr] gap-4 pt-4 border-t border-dashed border-border max-md:grid-cols-1">
-  <ReadonlyNotesBlock    notes={scenario.notes} scenarioName={scenario.scenarioName} />
-  <ReadonlyEvidenceBlock {attachments}           scenarioName={scenario.scenarioName} />
+<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 pt-4 border-t border-dashed border-border max-md:grid-cols-1">
+  <ReadonlyNotesBlock    notes={scenario.notes} />
+  <ReadonlyEvidenceBlock {attachments} />
 </div>

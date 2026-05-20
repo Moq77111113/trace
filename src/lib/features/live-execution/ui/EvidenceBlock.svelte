@@ -6,23 +6,22 @@
   import type { ScenarioSelection }   from '../model/selection.svelte';
 
   type Props = {
-    selection:    ScenarioSelection;
-    attachments:  AttachmentsUploader;
-    scenarioName: string;
+    selection:   ScenarioSelection;
+    attachments: AttachmentsUploader;
   };
 
-  let { selection, attachments, scenarioName }: Props = $props();
+  let { selection, attachments }: Props = $props();
 
   const uploaded = $derived(
     selection.selected ? (attachments.uploadsByScenario[selection.selected.id] ?? []) : [],
   );
 </script>
 
-<section class="flex flex-col min-h-0">
-  <div class="text-[11px] uppercase tracking-[0.07em] text-ink-3 mb-2 font-medium flex items-center gap-1.5">
-    <Icon name="Paperclip" size={11} />
-    <span class="truncate">{m.live_execution_evidence_label({ scenarioName })}</span>
+<section class="flex flex-col min-h-0 min-w-0">
+  <div class="text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium">
+    {m.live_execution_evidence_label()}
   </div>
+  <p class="text-[11.5px] text-ink-3 mb-2">{m.live_execution_evidence_hint()}</p>
 
   {#if uploaded.length > 0}
     <ul class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 list-none m-0 p-0 mb-2">
@@ -40,11 +39,13 @@
     </ul>
   {/if}
 
-  <DropZone onDrop={(items) => attachments.upload(items.map((i) => i.file))}>
-    <Icon name="Upload" size={14} />
-    <span class="ml-1.5">{m.live_execution_evidence_drop()}</span>
-    {#if attachments.uploading}<span class="block mt-1 text-[11px]">Uploading…</span>{/if}
-  </DropZone>
+  <div class="flex-1 min-h-[88px]">
+    <DropZone onDrop={(items) => attachments.upload(items.map((i) => i.file))}>
+      <Icon name="Upload" size={14} />
+      <span class="ml-1.5">{m.live_execution_evidence_drop()}</span>
+      {#if attachments.uploading}<span class="block mt-1 text-[11px]">Uploading…</span>{/if}
+    </DropZone>
+  </div>
 
   {#if attachments.uploadError}
     <p class="mt-2 text-[11.5px] text-fail-ink" role="alert">{attachments.uploadError}</p>
