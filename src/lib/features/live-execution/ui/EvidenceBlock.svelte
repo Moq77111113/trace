@@ -39,7 +39,7 @@
     </ul>
   {/if}
 
-  <div class="flex-1 min-h-[88px]">
+  <div class="flex-1 min-h-[88px] grid">
     <DropZone onDrop={(items) => attachments.upload(items.map((i) => i.file))}>
       <Icon name="Upload" size={14} />
       <span class="ml-1.5">{m.live_execution_evidence_drop()}</span>
