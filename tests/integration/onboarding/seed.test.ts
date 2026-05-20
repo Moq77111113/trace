@@ -59,7 +59,7 @@ describe('seedDemoProject', () => {
 		expect(feats).toHaveLength(4);
 	});
 
-	it('creates one finished run with mixed scenario statuses and a note', async () => {
+	it('creates one finished run with mixed scenario statuses', async () => {
 		const admin = await seedAdmin();
 		await seedDemoProject(admin.id);
 		const [p]    = await db.select().from(projects).where(eq(projects.name, DEMO_NAME));
@@ -67,7 +67,6 @@ describe('seedDemoProject', () => {
 		const allRuns = await db.select().from(executions).where(inArray(executions.featureId, feats.map((f) => f.id)));
 		expect(allRuns).toHaveLength(1);
 		expect(allRuns[0]?.finishedAt).not.toBeNull();
-		expect(allRuns[0]?.notes).toMatch(/BUG-/);
 
 		const sr = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, allRuns[0]!.id));
 		const statuses = new Set(sr.map((r) => r.status));

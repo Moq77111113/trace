@@ -15,10 +15,10 @@ export type UploadAttachmentInput = {
 export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 /**
- * Validates that the target scenario is in a FAILED state inside a RUNNING run,
- * uploads the blob to S3, and records the attachment row. The route handler is
- * a thin POST wrapper around this function — tests exercise the function
- * directly without needing a dev server.
+ * Uploads an attachment blob to S3 inside a RUNNING run and records the row.
+ * Refuses uploads when the run is not RUNNING. The route handler is a thin POST
+ * wrapper around this function — tests exercise the function directly without
+ * needing a dev server.
  */
 export async function uploadAttachment(input: UploadAttachmentInput) {
   if (input.body.byteLength > MAX_ATTACHMENT_BYTES) {
@@ -33,9 +33,6 @@ export async function uploadAttachment(input: UploadAttachmentInput) {
     .where(and(eq(scenarioResults.id, input.scenarioResultId), eq(scenarioResults.executionId, input.executionId)));
 
   if (!scenario) throw new Error(`uploadAttachment: scenario ${input.scenarioResultId} not found in run ${input.executionId}`);
-  if (scenario.status !== 'FAILED') {
-    throw new Error('uploadAttachment: attachments are only allowed on FAILED scenarios');
-  }
 
   const storageKey = `executions/${input.executionId}/${input.scenarioResultId}/${randomUUID()}-${input.filename}`;
 
