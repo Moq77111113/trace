@@ -3,9 +3,10 @@ import { listExecutionsForExport } from '$lib/server/executions/read/queries';
 import { parseExecutionFilters } from '$lib/server/executions/read/filters';
 import { getProjectIdBySlug } from '$lib/server/projects/queries';
 import { EXPORT_ROW_CAP, executionsCsvFilename, toExecutionsCsv } from '$lib/features/csv-export/lib/csv';
+import { authedHandler } from '$lib/server/route';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ params, url }) => {
+export const GET: RequestHandler = authedHandler(async ({ params, url }) => {
   const projectId = await getProjectIdBySlug(params.slug);
   if (!projectId) throw error(404, 'Project not found');
 
@@ -25,4 +26,4 @@ export const GET: RequestHandler = async ({ params, url }) => {
       'Cache-Control':       'no-store',
     },
   });
-};
+});
