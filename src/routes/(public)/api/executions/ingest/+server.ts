@@ -1,7 +1,7 @@
 import { error, json } from '@sveltejs/kit';
 import { parseCucumberJson } from '$lib/server/executions/cucumber-json/parse';
 import { ingestExecution } from '$lib/server/executions/ingest';
-import { resolveCiExecutor } from '$lib/server/executions/auth';
+import { resolveCiExecutor } from '$lib/server/executions/executor';
 import { readCiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 import type { RequestHandler } from './$types';
 

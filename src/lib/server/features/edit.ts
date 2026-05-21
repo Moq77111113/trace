@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "$lib/server/db/client";
 import { featureTags, features, projects, tags } from "$lib/server/db/schema";
 import { stringFields } from "$lib/server/forms";
-import { resolveLiveExecutor } from "$lib/server/executions/auth";
+import { resolveLiveExecutor } from "$lib/server/executions/executor";
 import { listRecentExecutionsForFeature } from "$lib/server/executions/queries";
 import { appendCrumb, type Crumb } from "$lib/shared/lib/breadcrumbs";
 import { parseFeatureCode } from "$lib/shared/lib/slug";
