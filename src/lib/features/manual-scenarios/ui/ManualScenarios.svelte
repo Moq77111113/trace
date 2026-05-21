@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import CollapsibleSection from '$lib/shared/ui/CollapsibleSection.svelte';
+  import { persistedToggle } from '$lib/shared/storage/persisted-toggle.svelte';
   import Row      from './Row.svelte';
   import AddInput from './AddInput.svelte';
   import { ManualScenariosController } from '../model/controller.svelte';
@@ -16,18 +17,18 @@
 
   const ctrl = untrack(() => new ManualScenariosController(featureId, initial));
 
-  let open = $state(untrack(() => initial.length > 0));
+  const open = untrack(() =>
+    persistedToggle(`feature-editor-manual-scenarios:${featureId}`, initial.length > 0, 'session'),
+  );
 </script>
 
 <CollapsibleSection
   title={m.manual_scenarios_title()}
   subtitle={m.manual_scenarios_subtitle()}
-  storageKey={`feature-editor-manual-scenarios:${featureId}`}
-  {open}
-  empty={ctrl.empty && !open}
+  bind:open={open.value}
+  empty={ctrl.empty && !open.value}
   addLabel={m.manual_scenarios_add()}
-  onOpenChange={(v) => (open = v)}
-  onAdd={() => { open = true; }}
+  onAdd={() => (open.value = true)}
 >
   {#if ctrl.empty}
     <p class="text-sm text-ink-3">{m.manual_scenarios_empty()}</p>

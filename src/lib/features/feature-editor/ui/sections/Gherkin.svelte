@@ -2,6 +2,7 @@
   import { untrack } from 'svelte';
   import type * as Monaco from 'monaco-editor';
   import CollapsibleSection from '$lib/shared/ui/CollapsibleSection.svelte';
+  import { persistedToggle } from '$lib/shared/storage/persisted-toggle.svelte';
   import Pill from '$lib/shared/ui/Pill.svelte';
   import MonacoWrapper, { type EditorApi } from '../MonacoWrapper.svelte';
   import InsertMenu from '../InsertMenu.svelte';
@@ -33,18 +34,21 @@
     onChange, onInsert, api = $bindable<EditorApi | null>(null),
   }: Props = $props();
 
-  let open = $state(untrack(() => !empty));
+  const open = untrack(() =>
+    persistedToggle(`feature-editor-gherkin:${featureId}`, !empty, 'session'),
+  );
 </script>
 
 <CollapsibleSection
   title={m.feature_editor_gherkin_title()}
   subtitle={m.feature_editor_gherkin_subtitle()}
-  storageKey={`feature-editor-gherkin:${featureId}`}
-  {open}
+  bind:open={open.value}
   {empty}
   addLabel={m.feature_editor_gherkin_add()}
-  onOpenChange={(v) => (open = v)}
-  onAdd={() => { open = true; onChange(''); }}
+  onAdd={() => {
+    open.value = true;
+    onChange('');
+  }}
 >
   <div class="flex items-center gap-2">
     <InsertMenu {snippets} {onInsert} />

@@ -4,31 +4,16 @@
   import Icon from './Icon.svelte';
 
   type Props = {
-    title: string;
+    title:     string;
     subtitle?: string;
-    open: boolean;
-    empty: boolean;
-    addLabel: string;
-    storageKey: string;
-    onOpenChange: (open: boolean) => void;
-    onAdd: () => void;
+    open:      boolean;
+    empty:     boolean;
+    addLabel:  string;
+    onAdd:     () => void;
     children?: Snippet;
   };
 
-  let { title, subtitle, open, empty, addLabel, storageKey, onOpenChange, onAdd, children }: Props = $props();
-
-  $effect(() => {
-    if (typeof localStorage === 'undefined') return;
-    const v = localStorage.getItem(storageKey);
-    if (v === null) return;
-    onOpenChange(v === '1');
-  });
-
-  function toggle() {
-    const next = !open;
-    onOpenChange(next);
-    if (typeof localStorage !== 'undefined') localStorage.setItem(storageKey, next ? '1' : '0');
-  }
+  let { title, subtitle, open = $bindable(), empty, addLabel, onAdd, children }: Props = $props();
 </script>
 
 <Card>
@@ -37,7 +22,7 @@
       <button
         type="button"
         class="flex items-center gap-2 text-left bg-transparent border-0 cursor-pointer"
-        onclick={toggle}
+        onclick={() => (open = !open)}
         aria-expanded={open}
       >
         <Icon

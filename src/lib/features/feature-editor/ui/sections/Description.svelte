@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import CollapsibleSection from '$lib/shared/ui/CollapsibleSection.svelte';
+  import { persistedToggle } from '$lib/shared/storage/persisted-toggle.svelte';
   import * as m from '$lib/paraglide/messages';
 
   type Props = {
@@ -11,19 +12,19 @@
 
   let { featureId, value, onChange }: Props = $props();
 
-  let open = $state(untrack(() => value.length > 0));
+  const open = untrack(() =>
+    persistedToggle(`feature-editor-description:${featureId}`, value.length > 0, 'session'),
+  );
 </script>
 
 <CollapsibleSection
   title={m.feature_editor_description_title()}
   subtitle={m.feature_editor_description_subtitle()}
-  storageKey={`feature-editor-description:${featureId}`}
-  {open}
-  empty={value.length === 0 && !open}
+  bind:open={open.value}
+  empty={value.length === 0 && !open.value}
   addLabel={m.feature_editor_description_add()}
-  onOpenChange={(v) => (open = v)}
   onAdd={() => {
-    open = true;
+    open.value = true;
     onChange('');
   }}
 >
