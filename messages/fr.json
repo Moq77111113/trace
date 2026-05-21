@@ -113,6 +113,10 @@
 	"feature_editor_description_add": "+ Ajouter une description",
 	"feature_editor_description_placeholder": "Décris la feature pour les humains : cas nominal, incrémentation, cas failure, cas cancel, invariants, notes…",
 
+	"feature_editor_gherkin_title": "Gherkin",
+	"feature_editor_gherkin_subtitle": "Scénarios exécutables pour l'automatisation.",
+	"feature_editor_gherkin_add": "+ Ajouter du Gherkin",
+
 	"dash_stats_label": "Santé du projet",
 	"dash_tile_pass_rate": "Taux de réussite · 7j",
 	"dash_tile_pass_rate_hint": "Exécutions passées / terminées",

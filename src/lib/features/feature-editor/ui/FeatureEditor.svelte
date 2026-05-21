@@ -2,13 +2,13 @@
   import { untrack } from 'svelte';
   import { enhance } from '$app/forms';
 
-  import MonacoWrapper, { type EditorApi } from './MonacoWrapper.svelte';
-  import EditorHeader     from './EditorHeader.svelte';
-  import ConflictModal    from './modals/ConflictModal.svelte';
-  import ArchiveModal     from './modals/ArchiveModal.svelte';
-  import Description      from './sections/Description.svelte';
-  import SaveError        from './parts/SaveError.svelte';
-  import MonacoEmptyHint  from './parts/MonacoEmptyHint.svelte';
+  import type { EditorApi } from './MonacoWrapper.svelte';
+  import EditorHeader    from './EditorHeader.svelte';
+  import ConflictModal   from './modals/ConflictModal.svelte';
+  import ArchiveModal    from './modals/ArchiveModal.svelte';
+  import Description     from './sections/Description.svelte';
+  import Gherkin         from './sections/Gherkin.svelte';
+  import SaveError       from './parts/SaveError.svelte';
   import type { Snippet } from '$lib/shared/gherkin/snippets';
   import { FeatureForm }   from '../model/feature-form.svelte';
   import { GherkinParser } from '../model/gherkin-parser.svelte';
@@ -63,39 +63,37 @@
     featureId={data.feature.id}
     version={form.version}
     dirty={form.dirty}
-    parseErrors={gherkin.parsed.errors.length}
     groups={data.groups}
-    snippets={gherkin.snippets}
     saving={save.saving}
     conflictOpen={save.conflictOpen}
     bind:groupId={form.fields.groupId}
     onGroupChange={(v) => (form.fields.groupId = v)}
-    onInsert={insertSnippet}
     onArchive={() => (archiveOpen = true)}
-  />
-
-  <Description
-    featureId={data.feature.id}
-    value={form.fields.description}
-    onChange={(v) => (form.fields.description = v)}
   />
 
   {#if save.saveError}
     <SaveError message={save.saveError} />
   {/if}
 
-  <div class="relative flex-1 min-h-0">
-    <MonacoWrapper
-      value={form.fields.content}
-      onChange={(v) => (form.fields.content = v)}
-      markers={gherkin.markers}
-      completionProvider={gherkin.completionProvider}
-      bind:api={editorApi}
+  <div class="flex flex-col gap-4 p-4 overflow-y-auto flex-1 min-h-0">
+    <Description
+      featureId={data.feature.id}
+      value={form.fields.description}
+      onChange={(v) => (form.fields.description = v)}
     />
 
-    {#if gherkin.empty}
-      <MonacoEmptyHint />
-    {/if}
+    <Gherkin
+      featureId={data.feature.id}
+      value={form.fields.content}
+      empty={gherkin.empty}
+      parseErrors={gherkin.parsed.errors.length}
+      markers={gherkin.markers}
+      completionProvider={gherkin.completionProvider}
+      snippets={gherkin.snippets}
+      onChange={(v) => (form.fields.content = v)}
+      onInsert={insertSnippet}
+      bind:api={editorApi}
+    />
   </div>
 </form>
 

@@ -113,6 +113,10 @@
 	"feature_editor_description_add": "+ Add a description",
 	"feature_editor_description_placeholder": "Describe the feature for humans: nominal case, incrementation, failure case, cancel case, invariants, notes…",
 
+	"feature_editor_gherkin_title": "Gherkin",
+	"feature_editor_gherkin_subtitle": "Executable scenarios for automation.",
+	"feature_editor_gherkin_add": "+ Add Gherkin",
+
 	"dash_stats_label": "Project health",
 	"dash_tile_pass_rate": "Pass rate · 7d",
 	"dash_tile_pass_rate_hint": "Passed / finished runs",

@@ -1,10 +1,7 @@
 <script lang="ts">
   import DirtyIndicator from '$lib/shared/ui/DirtyIndicator.svelte';
-  import Pill           from '$lib/shared/ui/Pill.svelte';
   import Button         from '$lib/shared/ui/Button.svelte';
   import Icon           from '$lib/shared/ui/Icon.svelte';
-  import InsertMenu     from './InsertMenu.svelte';
-  import type { Snippet } from '$lib/shared/gherkin/snippets';
 
   type Group = { id: string; name: string };
 
@@ -14,20 +11,17 @@
     featureId:    string;
     version:      number;
     dirty:        boolean;
-    parseErrors:  number;
     groups:       Group[];
-    snippets:     Snippet[];
     saving:       boolean;
     conflictOpen: boolean;
     groupId:      string;
     onGroupChange: (v: string) => void;
-    onInsert:     (snippet: Snippet) => void;
     onArchive:    () => void;
   };
 
   let {
-    featureName, featureCode, featureId, version, dirty, parseErrors, groups, snippets,
-    saving, conflictOpen, groupId = $bindable(), onGroupChange, onInsert, onArchive,
+    featureName, featureCode, featureId, version, dirty, groups,
+    saving, conflictOpen, groupId = $bindable(), onGroupChange, onArchive,
   }: Props = $props();
 
   const dirname  = $derived(featureName.split('/').slice(0, -1).join('/'));
@@ -43,15 +37,7 @@
   </span>
   <DirtyIndicator {dirty} />
 
-  {#if parseErrors > 0}
-    <Pill kind="fail" outline>{parseErrors} parse error{parseErrors === 1 ? '' : 's'}</Pill>
-  {:else}
-    <Pill kind="pass" outline>valid</Pill>
-  {/if}
-
   <div class="ml-auto flex items-center gap-2 flex-wrap">
-    <InsertMenu {snippets} {onInsert} />
-
     <label class="inline-flex items-center gap-2 text-[12px] text-ink-3">
       <span>Group</span>
       <select
@@ -74,7 +60,7 @@
       <Icon name="Download" size={13} /> Export
     </a>
     <span class="text-[12px] text-ink-3 tabular-nums font-mono">v{version}</span>
-    <Button type="button"   variant="ghost"   size="sm" onclick={onArchive}>Archive</Button>
-    <Button type="submit"   variant="primary" disabled={saving || !dirty || conflictOpen}>Save</Button>
+    <Button type="button" variant="ghost"   size="sm" onclick={onArchive}>Archive</Button>
+    <Button type="submit" variant="primary" disabled={saving || !dirty || conflictOpen}>Save</Button>
   </div>
 </header>
