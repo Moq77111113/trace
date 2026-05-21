@@ -1,7 +1,37 @@
 import { and, asc, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, featureGroups, projects, executions, scenarioResults } from '$lib/server/db/schema';
+import { features, featureGroups, projects, executions, scenarioResults, tags, featureTags } from '$lib/server/db/schema';
+import { parseFeatureCode } from '$lib/shared/lib/slug';
 import type { ScenarioCounts } from '$lib/entities/execution/lib/format';
+
+export type ProjectTag = { name: string; count: number };
+
+/**
+ * Lists a project's tags with their usage count, ordered by count desc, then
+ * name asc. Tags not linked to any feature surface with `count = 0`.
+ */
+export async function listProjectTags(projectId: string): Promise<ProjectTag[]> {
+  const tagCounts = db.$with('tag_counts').as(
+    db
+      .select({
+        tagId: featureTags.tagId,
+        count: sql<number>`COUNT(*)::int`.as('count'),
+      })
+      .from(featureTags)
+      .groupBy(featureTags.tagId),
+  );
+
+  return db
+    .with(tagCounts)
+    .select({
+      name:  tags.name,
+      count: sql<number>`COALESCE(${tagCounts.count}, 0)`,
+    })
+    .from(tags)
+    .leftJoin(tagCounts, eq(tagCounts.tagId, tags.id))
+    .where(eq(tags.projectId, projectId))
+    .orderBy(desc(sql`COALESCE(${tagCounts.count}, 0)`), tags.name);
+}
 
 const featureCodeSql = sql<string>`${projects.codePrefix} || '-' || ${features.codeSeq}`;
 
@@ -49,6 +79,28 @@ export async function getFeatureByCode(projectId: string, codeSeq: number) {
   return db.query.features.findFirst({
     where: and(eq(features.projectId, projectId), eq(features.codeSeq, codeSeq)),
   });
+}
+
+/**
+ * Resolves a feature id from a project slug + feature code (e.g. `TRC-7`).
+ * Returns `null` when either side does not match. Used by route actions that
+ * receive the slug+code pair from URL params.
+ */
+export async function resolveFeatureIdByCode(slug: string, code: string): Promise<string | null> {
+  const parsed = parseFeatureCode(code);
+  if (!parsed) return null;
+  const [row] = await db
+    .select({ id: features.id })
+    .from(features)
+    .innerJoin(projects, eq(projects.id, features.projectId))
+    .where(
+      and(
+        eq(projects.slug, slug),
+        eq(projects.codePrefix, parsed.prefix),
+        eq(features.codeSeq, parsed.seq),
+      ),
+    );
+  return row?.id ?? null;
 }
 
 type FeatureRow = {

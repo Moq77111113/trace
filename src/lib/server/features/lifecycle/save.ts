@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { features, featureGroups, manualScenarios } from '$lib/server/db/schema';
 import { parse } from '$lib/shared/gherkin/parse';
@@ -6,6 +7,19 @@ import { syncFeatureTags } from '../internal/tags-sync';
 import { proposeFeatureSave } from './save-proposal';
 
 type Feature = typeof features.$inferSelect;
+
+/**
+ * Form-level input contract for the save action: matches the FormData fields
+ * the editor posts. `featureId` and `editor` are resolved server-side and
+ * combined with this payload before calling `saveFeature`.
+ */
+export const featureSaveBody = z.object({
+  content:     z.string().max(200_000),
+  description: z.string().max(50_000).optional().default(''),
+  version:     z.coerce.number().int().nonnegative(),
+  groupId:     z.uuid({ version: 'v7' }).nullable().optional(),
+});
+export type FeatureSaveBody = z.infer<typeof featureSaveBody>;
 
 type SaveInput = {
   featureId:       string;
