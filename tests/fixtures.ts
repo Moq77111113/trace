@@ -1,4 +1,4 @@
-import { allocateCodeSeq } from '$lib/server/features/code-seq';
+import { allocateCodeSeq } from '$lib/server/features/internal/code-seq';
 import { db } from '$lib/server/db/client';
 import { features, projects } from '$lib/server/db/schema';
 

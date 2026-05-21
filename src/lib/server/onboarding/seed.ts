@@ -9,7 +9,7 @@ import {
 	scenarioResults,
 } from '$lib/server/db/schema';
 import { createProject } from '$lib/server/projects/create';
-import { allocateCodeSeq } from '$lib/server/features/code-seq';
+import { allocateCodeSeq } from '$lib/server/features/internal/code-seq';
 import projectFileJson from './demo/project.json';
 import groupsFileJson from './demo/groups.json';
 import featuresMetaJson from './demo/features-meta.json';
