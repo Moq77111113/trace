@@ -122,10 +122,11 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 	if (!run) throw new Error('demo seed: run insert failed');
 
 	let aggregate: 'PASSED' | 'FAILED' | 'SKIPPED' = 'PASSED';
-	for (const s of runFile.scenarios) {
+	for (const [i, s] of runFile.scenarios.entries()) {
 		await db.insert(scenarioResults).values({
-			executionId:        run.id,
+			executionId:  run.id,
 			scenarioName: s.name,
+			position:     i + 1,
 			status:       s.status === 'PENDING' ? 'SKIPPED' : s.status,
 			durationMs:   s.durationMs,
 			logs:         s.logs,
@@ -134,6 +135,14 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 		if (s.status === 'FAILED') aggregate = 'FAILED';
 		else if (s.status === 'SKIPPED' && aggregate !== 'FAILED') aggregate = 'SKIPPED';
 	}
+
+	await db.insert(scenarioResults).values({
+		executionId:  run.id,
+		scenarioName: 'Visual check of dashboard tiles',
+		source:       'MANUAL',
+		position:     1,
+		status:       'PASSED',
+	});
 
 	await db
 		.update(executions)

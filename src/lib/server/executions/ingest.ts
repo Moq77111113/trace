@@ -88,9 +88,10 @@ export async function ingestExecution(input: IngestExecutionInput): Promise<Inge
 
     if (input.parsed.scenarios.length) {
       await tx.insert(scenarioResults).values(
-        input.parsed.scenarios.map((s) => ({
+        input.parsed.scenarios.map((s, i) => ({
           executionId:  execution.id,
           scenarioName: s.name,
+          position:     i + 1,
           status:       s.status,
           durationMs:   s.durationMs,
           logs:         s.logs,

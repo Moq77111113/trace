@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { scenarioResults } from '$lib/server/db/schema';
 import { ingestExecution } from '$lib/server/executions/ingest';
@@ -60,6 +60,41 @@ describe('ingestExecution', () => {
     });
 
     expect(res.execution.status).toBe('PASSED');
+  });
+
+  it('assigns position 1..N to ingested scenarios in input order', async () => {
+    const project = await mkProject({ name: `Ingest pos ${Date.now()}-${Math.random()}` });
+    await mkFeature(project.id, {
+      name: 'Login',
+      content: 'Feature: Login\n\n  Scenario: A\n  Scenario: B\n  Scenario: C\n',
+    });
+
+    const result = await ingestExecution({
+      projectId:  project.id,
+      executedBy: 'ci-runner',
+      parsed: {
+        featureName: 'Login',
+        scenarios: [
+          { name: 'A', status: 'PASSED', durationMs: 10, logs: null, errorMessage: null },
+          { name: 'B', status: 'FAILED', durationMs: 20, logs: null, errorMessage: 'boom' },
+          { name: 'C', status: 'PASSED', durationMs: 30, logs: null, errorMessage: null },
+        ],
+        unknownCount: 0,
+        warnings:     [],
+      },
+    });
+
+    const rows = await db
+      .select({ name: scenarioResults.scenarioName, position: scenarioResults.position, source: scenarioResults.source })
+      .from(scenarioResults)
+      .where(eq(scenarioResults.executionId, result.execution.id))
+      .orderBy(asc(scenarioResults.position));
+
+    expect(rows.map((r) => ({ name: r.name, position: r.position, source: r.source }))).toEqual([
+      { name: 'A', position: 1, source: 'GHERKIN' },
+      { name: 'B', position: 2, source: 'GHERKIN' },
+      { name: 'C', position: 3, source: 'GHERKIN' },
+    ]);
   });
 
   it('errors when no feature matches in the project', async () => {

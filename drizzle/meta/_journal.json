@@ -36,6 +36,13 @@
       "when": 1779350904179,
       "tag": "0006_content_not_null",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1779360024501,
+      "tag": "0007_manual_scenarios_cockpit",
+      "breakpoints": true
     }
   ]
 }
