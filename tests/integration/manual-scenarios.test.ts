@@ -72,6 +72,7 @@ describe('manual scenarios CRUD', () => {
     const active = await listManualScenarios({ featureId: f.id });
     expect(active).toHaveLength(0);
     const [row] = await db.select().from(manualScenarios).where(eq(manualScenarios.id, a.id));
+    if (!row) throw new Error('manual_scenarios row not found');
     expect(row.archived).toBe(true);
   });
 });
