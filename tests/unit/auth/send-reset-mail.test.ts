@@ -3,8 +3,13 @@ import type { AdminResetCtx } from '$lib/server/auth/admin-reset-context';
 import { adminResetCtx } from '$lib/server/auth/admin-reset-context';
 import { dispatchResetMail } from '$lib/server/auth/send-reset-mail';
 
-const sendMailMock = vi.fn();
-vi.mock('$lib/server/db/client', () => ({ db: {} }));
+const sendMailMock  = vi.fn();
+const dbSelectMock  = vi.fn();
+vi.mock('$lib/server/db/client', () => ({
+  db: {
+    select: () => ({ from: () => ({ where: () => dbSelectMock() }) }),
+  },
+}));
 vi.mock('$lib/server/db/schema', () => ({ account: {} }));
 vi.mock('drizzle-orm', () => ({ eq: vi.fn() }));
 vi.mock('$lib/server/email/transport', () => ({
@@ -20,13 +25,6 @@ vi.mock('$lib/server/email/transport', () => ({
 vi.mock('$lib/server/email/messages', () => ({
   resetPasswordEmail: vi.fn(({ to }: { to: string }) => ({ to, subject: 'Reset', text: '', html: 'reset-password' })),
   oidcOnlyNudgeEmail: vi.fn(({ to }: { to: string }) => ({ to, subject: 'OIDC', text: '', html: 'oidc-nudge' })),
-}));
-
-const dbSelectMock = vi.fn();
-vi.mock('$lib/server/db/client', () => ({
-  db: {
-    select: () => ({ from: () => ({ where: () => dbSelectMock() }) }),
-  },
 }));
 
 const USER = { id: 'u1', email: 'alice@example.com', name: 'Alice' };
