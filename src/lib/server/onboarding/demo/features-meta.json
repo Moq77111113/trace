@@ -1,0 +1,18 @@
+{
+  "01-ticket-lifecycle-create.feature": {
+    "description": "Validates ticket creation: default status, reporter capture, and title validation. The form rejects empty titles and assigns 'Normal' priority by default.",
+    "manualScenarios": ["cas nominal", "duplicate title check", "long title handling"]
+  },
+  "02-ticket-lifecycle-transitions.feature": {
+    "description": "Covers status transitions (Open then In Progress then Closed) and the rules around who can reopen a closed ticket.",
+    "manualScenarios": ["happy path full lifecycle", "reopen by reporter"]
+  },
+  "03-notifications-assignment.feature": {
+    "description": "Notifications fire when a ticket is assigned, reassigned, or watched. Covers email and in-app channels.",
+    "manualScenarios": []
+  },
+  "04-sla-breach.feature": {
+    "description": "Behavior when a ticket exceeds its SLA: escalation, ping to the manager, status badge.",
+    "manualScenarios": ["near-breach alert", "post-breach recovery"]
+  }
+}
