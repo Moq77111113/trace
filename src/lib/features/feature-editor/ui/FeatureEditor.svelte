@@ -8,6 +8,8 @@
   import ArchiveModal    from './modals/ArchiveModal.svelte';
   import Description     from './sections/Description.svelte';
   import Gherkin         from './sections/Gherkin.svelte';
+  import ManualScenarios from '$lib/features/manual-scenarios/ui/ManualScenarios.svelte';
+  import type { ManualScenarioRow } from '$lib/features/manual-scenarios/api/client';
   import SaveError       from './parts/SaveError.svelte';
   import type { Snippet } from '$lib/shared/gherkin/snippets';
   import { FeatureForm }   from '../model/feature-form.svelte';
@@ -32,7 +34,13 @@
   type Group      = { id: string; name: string };
 
   type Props = {
-    data: { feature: Feature; project: ProjectRef; projectTags: ProjectTag[]; groups: Group[] };
+    data: {
+      feature:         Feature;
+      project:         ProjectRef;
+      projectTags:     ProjectTag[];
+      groups:          Group[];
+      manualScenarios: ManualScenarioRow[];
+    };
     onSaved?: (feature: Feature) => void;
   };
 
@@ -80,6 +88,11 @@
       featureId={data.feature.id}
       value={form.fields.description}
       onChange={(v) => (form.fields.description = v)}
+    />
+
+    <ManualScenarios
+      featureId={data.feature.id}
+      initial={data.manualScenarios}
     />
 
     <Gherkin

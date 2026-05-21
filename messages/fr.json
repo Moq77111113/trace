@@ -117,6 +117,13 @@
 	"feature_editor_gherkin_subtitle": "Scénarios exécutables pour l'automatisation.",
 	"feature_editor_gherkin_add": "+ Ajouter du Gherkin",
 
+	"manual_scenarios_title": "Scénarios manuels",
+	"manual_scenarios_subtitle": "Cas que l'équipe joue à la main.",
+	"manual_scenarios_add": "+ Ajouter un scénario",
+	"manual_scenarios_placeholder": "Nom du scénario (ex. cas nominal, cas failure)",
+	"manual_scenarios_archive": "Retirer le scénario",
+	"manual_scenarios_empty": "Aucun scénario manuel pour l'instant.",
+
 	"dash_stats_label": "Santé du projet",
 	"dash_tile_pass_rate": "Taux de réussite · 7j",
 	"dash_tile_pass_rate_hint": "Exécutions passées / terminées",

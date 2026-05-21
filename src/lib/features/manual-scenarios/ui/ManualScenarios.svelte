@@ -1,0 +1,51 @@
+<script lang="ts">
+  import { untrack } from 'svelte';
+  import CollapsibleSection from '$lib/shared/ui/CollapsibleSection.svelte';
+  import Row      from './Row.svelte';
+  import AddInput from './AddInput.svelte';
+  import { ManualScenariosController } from '../model/controller.svelte';
+  import * as m from '$lib/paraglide/messages';
+  import type { ManualScenarioRow } from '../api/client';
+
+  type Props = {
+    featureId: string;
+    initial:   ManualScenarioRow[];
+  };
+
+  let { featureId, initial }: Props = $props();
+
+  const ctrl = untrack(() => new ManualScenariosController(featureId, initial));
+
+  let open = $state(untrack(() => initial.length > 0));
+</script>
+
+<CollapsibleSection
+  title={m.manual_scenarios_title()}
+  subtitle={m.manual_scenarios_subtitle()}
+  storageKey={`feature-editor-manual-scenarios:${featureId}`}
+  {open}
+  empty={ctrl.empty && !open}
+  addLabel={m.manual_scenarios_add()}
+  onOpenChange={(v) => (open = v)}
+  onAdd={() => { open = true; }}
+>
+  {#if ctrl.empty}
+    <p class="text-sm text-ink-3">{m.manual_scenarios_empty()}</p>
+  {:else}
+    <ul class="flex flex-col gap-2">
+      {#each ctrl.rows as row (row.id)}
+        <Row
+          {row}
+          onRename={(name) => ctrl.rename(row.id, name)}
+          onArchive={() => ctrl.archive(row.id)}
+        />
+      {/each}
+    </ul>
+  {/if}
+
+  <AddInput saving={ctrl.saving} onAdd={(name) => ctrl.add(name)} />
+
+  {#if ctrl.error}
+    <p class="text-sm text-fail-ink" role="alert">{ctrl.error}</p>
+  {/if}
+</CollapsibleSection>
