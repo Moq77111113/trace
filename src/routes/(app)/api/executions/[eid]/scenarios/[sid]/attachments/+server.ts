@@ -1,5 +1,5 @@
 import { error, json } from '@sveltejs/kit';
-import { uploadAttachment } from '$lib/server/executions/upload-attachment';
+import { uploadAttachment } from '$lib/server/executions/scenario/upload-attachment';
 import { authedHandler } from '$lib/server/route';
 import type { RequestHandler } from './$types';
 

@@ -3,8 +3,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { scenarioResults } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/run/start';
-import { markScenario } from '$lib/server/executions/mark-scenario';
-import { uploadAttachment } from '$lib/server/executions/upload-attachment';
+import { markScenario } from '$lib/server/executions/scenario/mark-scenario';
+import { uploadAttachment } from '$lib/server/executions/scenario/upload-attachment';
 import { mkFeature, mkProject } from '../../fixtures';
 
 async function seedRun() {
