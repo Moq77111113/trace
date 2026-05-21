@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { browser } from '$app/environment';
+  import { untrack } from 'svelte';
   import { invalidateAll } from '$app/navigation';
-  import { SvelteSet } from 'svelte/reactivity';
+  import { persistedSet } from '$lib/shared/storage/persisted-set.svelte';
   import FeatureGroupRow from './FeatureGroupRow.svelte';
   import UngroupedSection from './UngroupedSection.svelte';
   import DeleteGroupModal, { type DeleteGroupTarget } from './DeleteGroupModal.svelte';
@@ -23,24 +23,11 @@
 
   let deleting = $state<DeleteGroupTarget | null>(null);
 
-  const storageKey = $derived(`trace.groupCollapse.${projectId}`);
-  const collapsed  = new SvelteSet<string>();
-
-  $effect(() => {
-    if (!browser) return;
-    collapsed.clear();
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) for (const id of JSON.parse(raw) as string[]) collapsed.add(id);
-    } catch {
-      /* empty / corrupted entry, ignore */
-    }
-  });
+  const collapsed = untrack(() => persistedSet(`trace.groupCollapse.${projectId}`));
 
   function toggle(id: string): void {
     if (collapsed.has(id)) collapsed.delete(id);
     else                   collapsed.add(id);
-    if (browser) localStorage.setItem(storageKey, JSON.stringify([...collapsed]));
   }
 
   function onFeatureDragStart(e: DragEvent, featureId: string): void {
