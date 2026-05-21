@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { executions, scenarioResults } from '$lib/server/db/schema';
 import { ok, err, type Result } from '$lib/shared/lib/result';
@@ -15,10 +15,13 @@ export type RerunFailedResult = Result<typeof executions.$inferSelect, RerunFail
  * Starts a new run that re-executes only the FAILED scenarios from a finished
  * parent run, against the parent's frozen feature snapshot.
  *
+ * Each failed scenario's `source` (GHERKIN or MANUAL) is carried over, and
+ * `position` is renumbered from 1 within each source section so the unique
+ * constraint (executionId, source, position) is satisfied.
+ *
  * Snapshot semantics: the new run's `featureContentAtStart` is copied from the
  * parent, so edits to the source feature after the parent finished do not
- * affect this re-run. The QA re-tests the scenarios as they were when they
- * failed; a fresh run is the right tool for newer content.
+ * affect this re-run.
  */
 export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedResult> {
   const [parent] = await db.select().from(executions).where(eq(executions.id, input.parentExecutionId));
@@ -26,11 +29,23 @@ export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedR
   if (parent.status === 'IN_PROGRESS') return err('parent-in-progress');
 
   const failed = await db
-    .select({ scenarioName: scenarioResults.scenarioName })
+    .select({
+      scenarioName: scenarioResults.scenarioName,
+      source:       scenarioResults.source,
+    })
     .from(scenarioResults)
-    .where(and(eq(scenarioResults.executionId, parent.id), eq(scenarioResults.status, 'FAILED')));
+    .where(and(eq(scenarioResults.executionId, parent.id), eq(scenarioResults.status, 'FAILED')))
+    .orderBy(asc(scenarioResults.source), asc(scenarioResults.position));
 
   if (failed.length === 0) return err('no-failed-scenarios');
+
+  let gherkinPos = 0;
+  let manualPos  = 0;
+  const rows = failed.map((f) => ({
+    scenarioName: f.scenarioName,
+    source:       f.source,
+    position:     f.source === 'GHERKIN' ? ++gherkinPos : ++manualPos,
+  }));
 
   const created = await db.transaction(async (tx) => {
     const [execution] = await tx
@@ -45,13 +60,7 @@ export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedR
       .returning();
     if (!execution) throw new Error('rerunFailed: execution insert returned no row');
 
-    await tx.insert(scenarioResults).values(
-      failed.map((f) => ({
-        executionId:  execution.id,
-        scenarioName: f.scenarioName,
-      })),
-    );
-
+    await tx.insert(scenarioResults).values(rows.map((r) => ({ ...r, executionId: execution.id })));
     return execution;
   });
 

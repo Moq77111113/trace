@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { executions, features, scenarioResults } from '$lib/server/db/schema';
 import { parse } from '$lib/shared/gherkin/parse';
+import { listManualScenarios } from '$lib/server/features/manual-scenarios';
 
 export type StartRunInput = {
   featureId:    string;
@@ -10,24 +11,28 @@ export type StartRunInput = {
 };
 
 /**
- * Creates a RUNNING run as an immutable snapshot of the feature at this moment.
- * Eagerly inserts one `scenarioResults` row per parsed scenario so the live-run
- * UI has no drift between its iteration and what the DB knows about.
+ * Creates a run as an immutable snapshot of the feature at this moment.
+ * Inserts one `scenario_results` row per Gherkin scenario (source=GHERKIN) and one
+ * per active manual scenario (source=MANUAL), each with a within-source position
+ * starting at 1. Archived manual scenarios are excluded. Positions are densified
+ * so gaps from archiving do not appear in the snapshot.
  *
- * Rejects features with persisted parse errors and features with zero scenarios
- * — both are non-runnable per spec.
+ * Rejects features with persisted parse errors, or when neither Gherkin nor
+ * active manual scenarios exist (nothing to run).
  */
 export async function startExecution(input: StartRunInput) {
   const [feature] = await db.select().from(features).where(eq(features.id, input.featureId));
   if (!feature) throw new Error(`startExecution: feature ${input.featureId} not found`);
 
   if (feature.parseErrors && feature.parseErrors.length > 0) {
-    throw new Error('startExecution: cannot start — feature has parse errors');
+    throw new Error('startExecution: cannot start, feature has parse errors');
   }
 
-  const parsed = parse(feature.content);
-  if (parsed.scenarios.length === 0) {
-    throw new Error('startExecution: cannot start — feature has no scenarios');
+  const parsed  = parse(feature.content);
+  const manuals = await listManualScenarios({ featureId: feature.id });
+
+  if (parsed.scenarios.length === 0 && manuals.length === 0) {
+    throw new Error('startExecution: cannot start, feature has no runnable scenarios');
   }
 
   return db.transaction(async (tx) => {
@@ -43,13 +48,22 @@ export async function startExecution(input: StartRunInput) {
       .returning();
     if (!run) throw new Error('startExecution: run insert returned no row');
 
-    await tx.insert(scenarioResults).values(
-      parsed.scenarios.map((s) => ({
-        executionId:        run.id,
+    const rows = [
+      ...parsed.scenarios.map((s, i) => ({
+        executionId:  run.id,
         scenarioName: s.name,
+        source:       'GHERKIN' as const,
+        position:     i + 1,
       })),
-    );
+      ...manuals.map((m, i) => ({
+        executionId:  run.id,
+        scenarioName: m.name,
+        source:       'MANUAL' as const,
+        position:     i + 1,
+      })),
+    ];
 
+    await tx.insert(scenarioResults).values(rows);
     return run;
   });
 }
