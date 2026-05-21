@@ -4,13 +4,19 @@ import { randomUUID } from 'node:crypto';
 import { db } from '$lib/server/db/client';
 import { attachments, executions, scenarioResults } from '$lib/server/db/schema';
 import { putObject, deleteObject } from '$lib/server/storage/s3';
-import { GET } from '../../../src/routes/(public)/api/attachments/[aid]/+server';
+import { GET } from '../../../src/routes/(app)/api/attachments/[aid]/+server';
 import { mkFeature, mkProject } from '../../fixtures';
 
 type AttachmentEvent = Parameters<typeof GET>[0];
 
-function buildEvent(aid: string) {
-  return { params: { aid } } as unknown as AttachmentEvent;
+function buildEvent(aid: string, opts: { authed?: boolean } = { authed: true }) {
+  const locals = opts.authed
+    ? {
+        user:    { id: 'u', email: 'u@x', name: null, role: 'user', welcomedAt: null },
+        session: { id: 's' },
+      }
+    : { user: null, session: null };
+  return { params: { aid }, locals } as unknown as AttachmentEvent;
 }
 
 async function invoke(event: AttachmentEvent) {
@@ -86,6 +92,11 @@ describe('GET /api/attachments/[aid]', () => {
   it('returns 404 for unknown id', async () => {
     const res = await invoke(buildEvent(randomUUID()));
     expect(res.status).toBe(404);
+  });
+
+  it('returns 401 when no session is present', async () => {
+    const res = await invoke(buildEvent(randomUUID(), { authed: false }));
+    expect(res.status).toBe(401);
   });
 
   it('strips double quotes from filename in Content-Disposition', async () => {

@@ -4,9 +4,10 @@ import { Readable } from 'node:stream';
 import { db } from '$lib/server/db/client';
 import { attachments } from '$lib/server/db/schema';
 import { getObjectStream } from '$lib/server/storage/s3';
+import { authedHandler } from '$lib/server/route';
 import type { RequestHandler } from './$types';
 
-export const GET = (async ({ params }) => {
+export const GET: RequestHandler = authedHandler(async ({ params }) => {
   const [row] = await db
     .select()
     .from(attachments)
@@ -24,4 +25,4 @@ export const GET = (async ({ params }) => {
       'cache-control':       'private, max-age=60',
     },
   });
-}) satisfies RequestHandler;
+});
