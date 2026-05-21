@@ -4,10 +4,10 @@
   import ScenarioSidebar       from '$lib/entities/execution/ui/ScenarioSidebar.svelte';
   import LiveExecutionHeader   from './LiveExecutionHeader.svelte';
   import ScenarioFilterTabs    from './ScenarioFilterTabs.svelte';
-  import ScenarioPanel         from './ScenarioPanel.svelte';
+  import ScenarioPanel         from './scenario/ScenarioPanel.svelte';
   import ShortcutsFooter       from './ShortcutsFooter.svelte';
-  import FinishConfirmModal    from './FinishConfirmModal.svelte';
-  import AbortConfirmModal     from './AbortConfirmModal.svelte';
+  import FinishConfirmModal    from './modals/FinishConfirmModal.svelte';
+  import AbortConfirmModal     from './modals/AbortConfirmModal.svelte';
   import { createLiveExecutionController } from '../model/controller.svelte';
   import { attachLiveExecutionShortcuts }  from '../model/shortcuts';
   import type { ExecutionPageData } from '$lib/server/executions/queries';
