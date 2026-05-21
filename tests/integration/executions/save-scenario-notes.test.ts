@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { scenarioResults } from '$lib/server/db/schema';
-import { startExecution } from '$lib/server/executions/start';
-import { finishExecution } from '$lib/server/executions/finish';
+import { startExecution } from '$lib/server/executions/run/start';
+import { finishExecution } from '$lib/server/executions/run/finish';
 import { saveScenarioNotes } from '$lib/server/executions/save-scenario-notes';
 import { mkFeature, mkProject } from '../../fixtures';
 

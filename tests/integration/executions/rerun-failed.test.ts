@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { scenarioResults } from '$lib/server/db/schema';
-import { startExecution } from '$lib/server/executions/start';
+import { startExecution } from '$lib/server/executions/run/start';
 import { markScenario } from '$lib/server/executions/mark-scenario';
-import { finishExecution } from '$lib/server/executions/finish';
-import { rerunFailed } from '$lib/server/executions/rerun-failed';
+import { finishExecution } from '$lib/server/executions/run/finish';
+import { rerunFailed } from '$lib/server/executions/run/rerun-failed';
 import { addManualScenario } from '$lib/server/features/manual-scenarios';
 import { mkFeature, mkProject } from '../../fixtures';
 
