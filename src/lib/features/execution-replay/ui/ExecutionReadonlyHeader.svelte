@@ -5,7 +5,7 @@
   import Icon   from '$lib/shared/ui/Icon.svelte';
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
   import { formatExecutionDuration } from '$lib/entities/execution/lib/format';
-  import ExecutionLauncher from '$lib/features/execution-launcher/ui/ExecutionLauncher.svelte';
+  import ExecutionLauncher from '$lib/entities/execution/ui/ExecutionLauncher.svelte';
   import RerunFailedForm   from './RerunFailedForm.svelte';
 
   type Props = {
