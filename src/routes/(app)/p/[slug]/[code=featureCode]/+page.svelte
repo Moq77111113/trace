@@ -26,7 +26,9 @@
       />
     </div>
 
-    <FeatureEditor {data} onSaved={(feature) => { parseErrors = feature.parseErrors; }} />
+    {#key data.feature.id}
+      <FeatureEditor {data} onSaved={(feature) => { parseErrors = feature.parseErrors; }} />
+    {/key}
   </div>
 
   <div class="max-lg:hidden">
