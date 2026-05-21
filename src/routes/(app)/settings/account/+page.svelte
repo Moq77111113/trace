@@ -1,10 +1,10 @@
 <script lang="ts">
 	import PageTitle           from '$lib/shared/ui/PageTitle.svelte';
-	import ProfileCard         from '$lib/features/account-profile/ui/ProfileCard.svelte';
-	import AppearanceCard      from '$lib/features/account-appearance/ui/AppearanceCard.svelte';
-	import LanguageCard        from '$lib/features/account-language/ui/LanguageCard.svelte';
-	import ChangePasswordCard  from '$lib/features/change-password/ui/ChangePasswordCard.svelte';
-	import SessionCard         from '$lib/features/account-session/ui/SessionCard.svelte';
+	import ProfileCard         from '$lib/features/account/ui/ProfileCard.svelte';
+	import AppearanceCard      from '$lib/features/account/ui/AppearanceCard.svelte';
+	import LanguageCard        from '$lib/features/account/ui/LanguageCard.svelte';
+	import ChangePasswordCard  from '$lib/features/account/ui/ChangePasswordCard.svelte';
+	import SessionCard         from '$lib/features/account/ui/SessionCard.svelte';
 	import * as m              from '$lib/paraglide/messages';
 
 	let { data } = $props();

@@ -3,7 +3,7 @@
   import { page } from '$app/state';
   import * as m from '$lib/paraglide/messages';
   import FeatureEditor    from '$lib/features/feature-editor/ui/FeatureEditor.svelte';
-  import ExecutionLauncher      from '$lib/features/execution-launcher/ui/ExecutionLauncher.svelte';
+  import ExecutionLauncher      from '$lib/entities/execution/ui/ExecutionLauncher.svelte';
   import FeatureExecutionsAside from '$lib/widgets/feature-executions-aside/ui/FeatureExecutionsAside.svelte';
   import PageTitle        from '$lib/shared/ui/PageTitle.svelte';
   import { parse } from '$lib/shared/gherkin/parse';

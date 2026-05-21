@@ -2,8 +2,8 @@
   import DropZone from '$lib/shared/ui/DropZone.svelte';
   import Icon     from '$lib/shared/ui/Icon.svelte';
   import * as m   from '$lib/paraglide/messages';
-  import type { AttachmentsUploader } from '../model/attachments-uploader.svelte';
-  import type { ScenarioSelection }   from '../model/selection.svelte';
+  import type { AttachmentsUploader } from '../../model/attachments-uploader.svelte';
+  import type { ScenarioSelection }   from '../../model/selection.svelte';
 
   type Props = {
     selection:   ScenarioSelection;

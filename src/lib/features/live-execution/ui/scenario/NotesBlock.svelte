@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as m from '$lib/paraglide/messages';
-  import type { ScenarioNotesEditor } from '../model/notes-editor.svelte';
+  import type { ScenarioNotesEditor } from '../../model/notes-editor.svelte';
 
   type Props = { notes: ScenarioNotesEditor };
 

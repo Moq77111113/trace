@@ -10,10 +10,10 @@
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
   import { extractScenarioSteps, extractScenarioTags } from '$lib/shared/gherkin/steps';
   import { formatScenarioDuration } from '$lib/entities/execution/lib/format';
-  import type { ScenarioSelection }    from '../model/selection.svelte';
-  import type { ScenarioMarking }      from '../model/marking.svelte';
-  import type { ScenarioNotesEditor }  from '../model/notes-editor.svelte';
-  import type { AttachmentsUploader }  from '../model/attachments-uploader.svelte';
+  import type { ScenarioSelection }    from '../../model/selection.svelte';
+  import type { ScenarioMarking }      from '../../model/marking.svelte';
+  import type { ScenarioNotesEditor }  from '../../model/notes-editor.svelte';
+  import type { AttachmentsUploader }  from '../../model/attachments-uploader.svelte';
   import * as m from '$lib/paraglide/messages';
 
   type Props = {

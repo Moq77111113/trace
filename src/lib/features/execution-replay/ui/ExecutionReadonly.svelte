@@ -2,7 +2,7 @@
   import { untrack } from 'svelte';
   import ScenarioSidebar         from '$lib/entities/execution/ui/ScenarioSidebar.svelte';
   import ExecutionReadonlyHeader from './ExecutionReadonlyHeader.svelte';
-  import ReplayScenarioPanel     from './ReplayScenarioPanel.svelte';
+  import ReplayScenarioPanel     from './scenario/ReplayScenarioPanel.svelte';
   import SnapshotModal           from './SnapshotModal.svelte';
   import type { ExecutionPageData } from '$lib/server/executions/queries';
 
