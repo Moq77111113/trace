@@ -19,7 +19,7 @@ describe('saveFeature with description', () => {
     const f = await createFeature({ projectId: p.id, name: 'X' });
     const r = await saveFeature({
       featureId:       f.id,
-      content:         null,
+      content:         '',
       description:     'Cas nominal: création POI valide.',
       expectedVersion: f.version,
       editor:          'alice',
@@ -28,7 +28,7 @@ describe('saveFeature with description', () => {
     if (r.conflict) throw new Error('expected non-conflict result');
     expect(r.feature.version).toBe(f.version + 1);
     expect(r.feature.description).toBe('Cas nominal: création POI valide.');
-    expect(r.feature.content).toBeNull();
+    expect(r.feature.content).toBe('');
     expect(r.feature.parseErrors).toBeNull();
   });
 
@@ -48,7 +48,7 @@ describe('saveFeature with description', () => {
     expect(r.feature.description).toBe('spec libre');
   });
 
-  it('clearing content to null is allowed', async () => {
+  it('clearing content to empty string is allowed', async () => {
     const p = await mkProject({ name: `S ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'X' });
     const r1 = await saveFeature({
@@ -61,14 +61,14 @@ describe('saveFeature with description', () => {
     if (r1.conflict) throw new Error('expected non-conflict r1');
     const r2 = await saveFeature({
       featureId:       f.id,
-      content:         null,
+      content:         '',
       description:     null,
       expectedVersion: r1.feature.version,
       editor:          'alice',
     });
     if (r2.conflict) throw new Error('expected non-conflict r2');
     const [row] = await db.select().from(features).where(eq(features.id, f.id));
-    expect(row?.content).toBeNull();
+    expect(row?.content).toBe('');
     expect(r2.feature.version).toBe(r1.feature.version + 1);
   });
 });

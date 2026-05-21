@@ -34,10 +34,10 @@ export async function startExecution(input: StartRunInput) {
     const [run] = await tx
       .insert(executions)
       .values({
-        featureId:           feature.id,
-        source:              'MANUAL',
-        executedBy:          input.executedBy,
-        environment:         input.environment ?? null,
+        featureId:             feature.id,
+        source:                'MANUAL',
+        executedBy:            input.executedBy,
+        environment:           input.environment ?? null,
         featureContentAtStart: feature.content,
       })
       .returning();

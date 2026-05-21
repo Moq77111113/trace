@@ -7,7 +7,7 @@ describe('features CRUD plain', () => {
   it('creates a feature with empty content', async () => {
     const p = await mkProject({ name: `Fp ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'Login' });
-    expect(f.content).toBeNull();
+    expect(f.content).toBe('');
     const fetched = await getFeature(f.id);
     expect(fetched?.id).toBe(f.id);
   });

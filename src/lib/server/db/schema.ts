@@ -66,7 +66,7 @@ export const features = pgTable(
     codeSeq:     integer('code_seq').notNull(),
     name:        text('name').notNull(),
     description: text('description'),
-    content:     text('content'),
+    content:     text('content').notNull().default(''),
     parseErrors: jsonb('parse_errors').$type<ParseError[] | null>(),
     version:     integer('version').notNull().default(1),
     archived:    boolean('archived').notNull().default(false),

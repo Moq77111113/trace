@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "stamp": "2026-05-19",
+  "stamp": "2026-05-21",
   "items": [
     {
       "id": "gherkin-editor",
@@ -152,7 +152,7 @@
       "status": "in-progress",
       "public": true,
       "summary": "Some tests are not automated, you run them by hand. Soon you can write those tests in trace too, in the same place as the rest.",
-      "notes": "features.kind ('gherkin' | 'manual', default 'gherkin'). Editor swaps Monaco grammar for markdown when manual; parser bypassed, parse_errors stays null. Scenarios = '## Scenario name' sections — marked PASS/FAIL/SKIP + evidence the same way in cockpit. Reuses execution / cockpit / history surfaces unchanged (single browsing surface, half the schema vs a parallel test-case entity). Zip import/export handles both kinds. CI ingest stays Gherkin-only (manual features are not CI-runnable). Out of scope: rich-text WYSIWYG, step parameterization for manual, manual scenarios mixed into a Gherkin feature."
+      "notes": "AND model, not OR: each feature can carry Gherkin AND a free-form description AND a list of manual scenarios. Edition shipped (MR #14): description column (nullable text), manual_scenarios relational table (id, feature_id, position, name, archived) seeded with uuidv7 + check position >= 1, partial unique index on (feature_id, position) where archived=false. Feature editor refactored into three collapsible sections (Description / Manual scenarios / Gherkin) with per-feature session-scoped open state via persistedToggle factory. createFeature no longer auto-fills the Gherkin template. saveFeature persists description alongside content. Manual scenarios CRUD via SvelteKit form actions (addManualScenario, renameManualScenario, archiveManualScenario, reorderManualScenarios) + optimistic client controller. Execution still pending: cockpit cannot yet mark manual scenarios PASS/FAIL/SKIP; ships in feat/manual-features-execution (MR2) by reusing the existing scenario_results table with a scenario_source enum ('GHERKIN' | 'MANUAL') and a feed that merges parsed Gherkin scenarios with active manual scenarios at run start. Zip import/export pending. CI ingest stays Gherkin-only. Out of scope: rich-text WYSIWYG, step parameterization for manual, drag-reorder UI (controller API exists, UI lands in a follow-up)."
     },
     {
       "id": "tags-v2",

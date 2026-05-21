@@ -23,6 +23,7 @@ const fakeData = {
     groupId:     null,
     codeSeq:     1,
     name:        'Login',
+    description: null,
     content:     'Feature: F\n',
     parseErrors: null,
     archived:    false,
@@ -43,8 +44,9 @@ const fakeData = {
   scenarios: [
     {
       id:           's1',
-      executionId:        'r1',
+      executionId:  'r1',
       scenarioName: 'A',
+      source:       'GHERKIN' as const,
       status:       'PENDING' as const,
       durationMs:   null,
       logs:         null,
@@ -54,8 +56,9 @@ const fakeData = {
     },
     {
       id:           's2',
-      executionId:        'r1',
+      executionId:  'r1',
       scenarioName: 'B',
+      source:       'GHERKIN' as const,
       status:       'PENDING' as const,
       durationMs:   null,
       logs:         null,

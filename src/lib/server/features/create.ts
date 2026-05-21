@@ -24,7 +24,7 @@ export async function createFeature(input: FeatureCreateInput) {
       .values({
         projectId:   input.projectId,
         name:        input.name,
-        content:     null,
+        content:     '',
         description: null,
         groupId:     input.groupId ?? null,
         codeSeq,

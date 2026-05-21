@@ -15,7 +15,7 @@ function snapshot(f: FeatureLike): FormFields {
   return {
     content:     f.content,
     description: f.description ?? '',
-    groupId:     f.groupId ?? '',
+    groupId:     f.groupId     ?? '',
   };
 }
 
