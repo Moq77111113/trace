@@ -3,9 +3,9 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
 import { mkProject } from '../../fixtures';
-import { createFeature } from '$lib/server/features/create';
+import { createFeature } from '$lib/server/features/lifecycle/create';
 import { createGroup } from '$lib/server/groups/create';
-import { saveFeature } from '$lib/server/features/save';
+import { saveFeature } from '$lib/server/features/lifecycle/save';
 import { exportFeature } from '$lib/server/features/export';
 
 describe('exportFeature', () => {

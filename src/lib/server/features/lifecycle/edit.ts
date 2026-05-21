@@ -9,7 +9,7 @@ import { listRecentExecutionsForFeature } from "$lib/server/executions/read/quer
 import { appendCrumb, type Crumb } from "$lib/shared/lib/breadcrumbs";
 import { parseFeatureCode } from "$lib/shared/lib/slug";
 import { archiveFeature } from "./archive";
-import { getFeatureByCode } from "./queries";
+import { getFeatureByCode } from "../queries";
 import { saveFeature } from "./save";
 import { listGroups } from "$lib/server/groups/queries";
 import {
@@ -19,7 +19,7 @@ import {
     ManualScenarioNameTakenError,
     renameManualScenario,
     reorderManualScenarios,
-} from "./manual-scenarios";
+} from "../manual-scenarios";
 
 type Params = { slug: string; code: string };
 type ProjectRef = { id: string; slug: string; codePrefix: string };

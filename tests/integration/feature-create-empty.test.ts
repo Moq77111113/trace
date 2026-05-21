@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
 import { mkProject } from '../fixtures';
-import { createFeature } from '$lib/server/features/create';
+import { createFeature } from '$lib/server/features/lifecycle/create';
 
 describe('createFeature with empty content', () => {
   it('creates a feature with empty content and null description', async () => {

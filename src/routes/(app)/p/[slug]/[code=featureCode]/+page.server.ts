@@ -1,1 +1,1 @@
-export { load, actions } from '$lib/server/features/edit';
+export { load, actions } from '$lib/server/features/lifecycle/edit';

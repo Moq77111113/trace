@@ -3,8 +3,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
 import { mkProject } from '../../fixtures';
-import { createFeature } from '$lib/server/features/create';
-import { archiveFeature } from '$lib/server/features/archive';
+import { createFeature } from '$lib/server/features/lifecycle/create';
+import { archiveFeature } from '$lib/server/features/lifecycle/archive';
 import { listFeatures } from '$lib/server/features/queries';
 
 describe('archiveFeature', () => {

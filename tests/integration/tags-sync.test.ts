@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { mkProject } from '../fixtures';
-import { createFeature } from '$lib/server/features/create';
+import { createFeature } from '$lib/server/features/lifecycle/create';
 import { syncFeatureTags } from '$lib/server/features/tags-sync';
 import { db } from '$lib/server/db/client';
 import { tags, featureTags } from '$lib/server/db/schema';

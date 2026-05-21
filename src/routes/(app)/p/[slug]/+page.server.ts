@@ -3,7 +3,7 @@ import { listGroups } from '$lib/server/groups/queries';
 import { createGroup, groupCreateInput } from '$lib/server/groups/create';
 import { deleteGroup, groupDeleteInput } from '$lib/server/groups/delete';
 import { renameGroup, groupRenameInput } from '$lib/server/groups/rename';
-import { moveFeature, featureMoveInput } from '$lib/server/features/move';
+import { moveFeature, featureMoveInput } from '$lib/server/features/lifecycle/move';
 import { getProjectDashboardStats, getProjectIdBySlug } from '$lib/server/projects/queries';
 import { stringFields } from '$lib/server/forms';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { mkProject } from '../fixtures';
-import { createFeature } from '$lib/server/features/create';
+import { createFeature } from '$lib/server/features/lifecycle/create';
 import { listFeatures, getFeature } from '$lib/server/features/queries';
 
 describe('features CRUD plain', () => {

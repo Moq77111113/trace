@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mkProject } from '../../fixtures';
-import { createFeature } from '$lib/server/features/create';
-import { archiveFeature } from '$lib/server/features/archive';
+import { createFeature } from '$lib/server/features/lifecycle/create';
+import { archiveFeature } from '$lib/server/features/lifecycle/archive';
 import { parseBatch } from '$lib/server/import/parse-batch';
 import { getPreview } from '$lib/server/import/buffer';
 
