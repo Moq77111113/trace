@@ -1,8 +1,8 @@
 import { error, json } from '@sveltejs/kit';
 import { parseCucumberJson } from '$lib/server/executions/ingest/cucumber-json/parse';
 import { ingestExecution } from '$lib/server/executions/ingest/pipeline';
-import { resolveCiExecutor } from '$lib/server/executions/executor';
 import { readCiMetadata } from '$lib/entities/execution/lib/ci-metadata';
+import { ciHandler } from '$lib/server/route';
 import type { RequestHandler } from './$types';
 
 export type IngestSuccess = {
@@ -13,14 +13,10 @@ export type IngestSuccess = {
   warnings:          string[];
 };
 
-export const POST = (async (event) => {
-  const projectId   = event.request.headers.get('x-project-id') ?? event.url.searchParams.get('project');
-  if (!projectId) throw error(400, 'X-Project-Id header (or ?project=) required');
-
+export const POST: RequestHandler = ciHandler(async (event, { executor, projectId }) => {
   const environment = event.request.headers.get('x-environment');
   const featureCode = event.request.headers.get('x-ci-feature-code');
   const ciMetadata  = readCiMetadata((name) => event.request.headers.get(name));
-  const executedBy  = await resolveCiExecutor(event);
 
   const payload = await event.request.json().catch(() => null);
   if (payload === null) throw error(400, 'invalid JSON body');
@@ -33,7 +29,7 @@ export const POST = (async (event) => {
   }
 
   try {
-    const result = await ingestExecution({ projectId, executedBy, environment, featureCode, ciMetadata, parsed });
+    const result = await ingestExecution({ projectId, executedBy: executor, environment, featureCode, ciMetadata, parsed });
     return json({
       run_id:            result.execution.id,
       status:            result.execution.status,
@@ -46,4 +42,4 @@ export const POST = (async (event) => {
     if (/no feature matching/i.test(message)) throw error(404, message);
     throw error(500, message);
   }
-}) satisfies RequestHandler;
+});
