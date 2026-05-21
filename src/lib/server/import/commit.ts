@@ -67,7 +67,10 @@ export async function commitBatch(input: CommitInput): Promise<CommitOutcome> {
           editor,
           groupId,
         });
-        if (result.conflict) throw new Error('overwrite blocked by concurrent edit');
+        if (!result.ok) {
+          if (result.reason === 'version-conflict') throw new Error('overwrite blocked by concurrent edit');
+          throw new Error('import: feature save rejected by manual-name-collision: ' + result.collisions.join(', '));
+        }
       } else if (decision === 'rename') {
         const base = row.featureName?.trim() || row.filename.replace(/\.feature$/i, '') || 'Imported';
         await db.transaction(async (tx) => {

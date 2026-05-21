@@ -191,8 +191,8 @@ describe('feature create/save with groupId', () => {
       editor:          'tester',
       groupId:         g.id,
     });
-    expect(result.conflict).toBe(false);
-    if (result.conflict) return;
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
     expect(result.feature.groupId).toBe(g.id);
   });
 

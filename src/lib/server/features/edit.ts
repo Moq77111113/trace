@@ -160,11 +160,11 @@ export const actions = {
             groupId: parsed.data.groupId ?? null,
         });
 
-        if (result.conflict) {
-            return fail(409, {
-                conflict: true,
-                currentFeature: result.currentFeature,
-            });
+        if (!result.ok) {
+            if (result.reason === 'version-conflict') {
+                return fail(409, { conflict: true, currentFeature: result.currentFeature });
+            }
+            return fail(409, { nameCollisions: result.collisions });
         }
 
         return { feature: result.feature };

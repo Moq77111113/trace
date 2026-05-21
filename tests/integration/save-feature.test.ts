@@ -14,8 +14,8 @@ describe('saveFeature', () => {
 
     const r = await saveFeature({ featureId: f.id, content: goodGherkin('X'), description: null, expectedVersion: f.version, editor: 'alice' });
 
-    expect(r.conflict).toBe(false);
-    if (r.conflict) throw new Error('expected non-conflict result');
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
     expect(r.feature.version).toBe(f.version + 1);
     expect(r.feature.parseErrors).toBeNull();
   });
@@ -27,8 +27,10 @@ describe('saveFeature', () => {
     await saveFeature({ featureId: f.id, content: goodGherkin('X'), description: null, expectedVersion: f.version, editor: 'alice' });
     const r2 = await saveFeature({ featureId: f.id, content: goodGherkin('X'), description: null, expectedVersion: f.version, editor: 'bob' });
 
-    expect(r2.conflict).toBe(true);
-    if (!r2.conflict) throw new Error('expected conflict result');
+    expect(r2.ok).toBe(false);
+    if (r2.ok) return;
+    expect(r2.reason).toBe('version-conflict');
+    if (r2.reason !== 'version-conflict') return;
     expect(r2.currentFeature.version).toBe(f.version + 1);
   });
 
@@ -38,8 +40,8 @@ describe('saveFeature', () => {
 
     const r = await saveFeature({ featureId: f.id, content: badGherkin, description: null, expectedVersion: f.version, editor: 'alice' });
 
-    expect(r.conflict).toBe(false);
-    if (r.conflict) throw new Error('expected non-conflict result');
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
     expect(r.feature.parseErrors).not.toBeNull();
     expect(r.feature.parseErrors?.length ?? 0).toBeGreaterThan(0);
   });
