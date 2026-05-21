@@ -5,6 +5,7 @@ type Feature = {
   name:        string;
   codeSeq:     number;
   content:     string;
+  description: string | null;
   version:     number;
   parseErrors: { line: number; column?: number; message: string }[] | null;
   groupId:     string | null;

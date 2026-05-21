@@ -3,11 +3,14 @@
   import { enhance } from '$app/forms';
 
   import MonacoWrapper, { type EditorApi } from './MonacoWrapper.svelte';
-  import ConflictModal from './ConflictModal.svelte';
-  import ArchiveModal  from './ArchiveModal.svelte';
-  import EditorHeader  from './EditorHeader.svelte';
+  import EditorHeader     from './EditorHeader.svelte';
+  import ConflictModal    from './modals/ConflictModal.svelte';
+  import ArchiveModal     from './modals/ArchiveModal.svelte';
+  import Description      from './sections/Description.svelte';
+  import SaveError        from './parts/SaveError.svelte';
+  import MonacoEmptyHint  from './parts/MonacoEmptyHint.svelte';
   import type { Snippet } from '$lib/shared/gherkin/snippets';
-  import { FeatureForm }  from '../model/feature-form.svelte';
+  import { FeatureForm }   from '../model/feature-form.svelte';
   import { GherkinParser } from '../model/gherkin-parser.svelte';
   import { SaveFlow }      from '../model/save.svelte';
 
@@ -18,6 +21,7 @@
     name:        string;
     codeSeq:     number;
     content:     string;
+    description: string | null;
     version:     number;
     parseErrors: ParseErrors;
     groupId:     string | null;
@@ -49,8 +53,9 @@
 </script>
 
 <form method="POST" action="?/save" use:enhance={save.onSubmit} class="flex flex-col min-h-0 flex-1">
-  <input type="hidden" name="version" value={form.version} />
-  <input type="hidden" name="content" value={form.fields.content} />
+  <input type="hidden" name="version"     value={form.version} />
+  <input type="hidden" name="content"     value={form.fields.content} />
+  <input type="hidden" name="description" value={form.fields.description} />
 
   <EditorHeader
     featureName={data.feature.name}
@@ -69,8 +74,14 @@
     onArchive={() => (archiveOpen = true)}
   />
 
+  <Description
+    featureId={data.feature.id}
+    value={form.fields.description}
+    onChange={(v) => (form.fields.description = v)}
+  />
+
   {#if save.saveError}
-    <p class="px-4 py-2 text-[12px] text-fail-ink bg-fail-soft border-b border-fail/30" role="alert">{save.saveError}</p>
+    <SaveError message={save.saveError} />
   {/if}
 
   <div class="relative flex-1 min-h-0">
@@ -83,9 +94,7 @@
     />
 
     {#if gherkin.empty}
-      <div class="pointer-events-none absolute right-4 top-4 text-[11.5px] text-ink-3 italic bg-surface/85 backdrop-blur-sm px-2.5 py-1.5 rounded-md border border-border">
-        Empty — use <span class="not-italic font-semibold text-ink">Insert</span> above to start
-      </div>
+      <MonacoEmptyHint />
     {/if}
   </div>
 </form>

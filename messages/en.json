@@ -108,6 +108,11 @@
 	"feature_aside_no_executions_yet": "No runs yet",
 	"feature_aside_no_executions_hint": "Start one with the button above.",
 
+	"feature_editor_description_title": "Description",
+	"feature_editor_description_subtitle": "Free-form spec for humans (read by the IVV team).",
+	"feature_editor_description_add": "+ Add a description",
+	"feature_editor_description_placeholder": "Describe the feature for humans: nominal case, incrementation, failure case, cancel case, invariants, notes…",
+
 	"dash_stats_label": "Project health",
 	"dash_tile_pass_rate": "Pass rate · 7d",
 	"dash_tile_pass_rate_hint": "Passed / finished runs",
