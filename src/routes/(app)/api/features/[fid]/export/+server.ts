@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { exportFeature } from '$lib/server/features/export';
+import { exportFeature } from '$lib/server/features/read/export';
 import { authedHandler } from '$lib/server/route';
 import type { RequestHandler } from './$types';
 

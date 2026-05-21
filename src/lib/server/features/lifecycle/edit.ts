@@ -9,7 +9,7 @@ import { listRecentExecutionsForFeature } from "$lib/server/executions/read/quer
 import { appendCrumb, type Crumb } from "$lib/shared/lib/breadcrumbs";
 import { parseFeatureCode } from "$lib/shared/lib/slug";
 import { archiveFeature } from "./archive";
-import { getFeatureByCode } from "../queries";
+import { getFeatureByCode } from "../read/queries";
 import { saveFeature } from "./save";
 import { listGroups } from "$lib/server/groups/queries";
 import {

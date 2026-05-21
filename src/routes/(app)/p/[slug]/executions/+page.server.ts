@@ -4,7 +4,7 @@ import {
   listFlakeFeatureIds,
 } from '$lib/server/executions/read/queries';
 import { parseExecutionFilters } from '$lib/server/executions/read/filters';
-import { listFeatures } from '$lib/server/features/queries';
+import { listFeatures } from '$lib/server/features/read/queries';
 import { listGroups } from '$lib/server/groups/queries';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';

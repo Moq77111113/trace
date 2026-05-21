@@ -5,7 +5,7 @@ import { features } from '$lib/server/db/schema';
 import { mkProject } from '../../fixtures';
 import { createFeature } from '$lib/server/features/lifecycle/create';
 import { archiveFeature } from '$lib/server/features/lifecycle/archive';
-import { listFeatures } from '$lib/server/features/queries';
+import { listFeatures } from '$lib/server/features/read/queries';
 
 describe('archiveFeature', () => {
   it('sets archived=true and hides the row from listFeatures', async () => {

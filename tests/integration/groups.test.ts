@@ -8,7 +8,7 @@ import { createGroup } from '$lib/server/groups/create';
 import { listGroups } from '$lib/server/groups/queries';
 import { renameGroup } from '$lib/server/groups/rename';
 import { deleteGroup } from '$lib/server/groups/delete';
-import { listFeaturesByGroup } from '$lib/server/features/queries';
+import { listFeaturesByGroup } from '$lib/server/features/read/queries';
 import { saveFeature } from '$lib/server/features/lifecycle/save';
 import { unwrap } from '$lib/shared/lib/result';
 

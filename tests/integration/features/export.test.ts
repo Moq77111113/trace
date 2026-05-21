@@ -6,7 +6,7 @@ import { mkProject } from '../../fixtures';
 import { createFeature } from '$lib/server/features/lifecycle/create';
 import { createGroup } from '$lib/server/groups/create';
 import { saveFeature } from '$lib/server/features/lifecycle/save';
-import { exportFeature } from '$lib/server/features/export';
+import { exportFeature } from '$lib/server/features/read/export';
 
 describe('exportFeature', () => {
   it('returns content with safe slugged filename', async () => {

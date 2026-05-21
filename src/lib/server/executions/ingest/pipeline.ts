@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db/client';
 import { executions, features, scenarioResults } from '$lib/server/db/schema';
-import { getFeatureByCode } from '$lib/server/features/queries';
+import { getFeatureByCode } from '$lib/server/features/read/queries';
 import { parseFeatureCode } from '$lib/shared/lib/slug';
 import type { IngestedExecution } from './cucumber-json/types';
 import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';

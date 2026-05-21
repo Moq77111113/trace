@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mkProject } from '../fixtures';
 import { createFeature } from '$lib/server/features/lifecycle/create';
-import { listFeatures, getFeature } from '$lib/server/features/queries';
+import { listFeatures, getFeature } from '$lib/server/features/read/queries';
 
 describe('features CRUD plain', () => {
   it('creates a feature with empty content', async () => {
