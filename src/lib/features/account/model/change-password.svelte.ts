@@ -1,4 +1,4 @@
-import { createAuthApi } from '$lib/features/auth/api/client';
+import { createAuthApi } from '$lib/shared/auth/client';
 import { PASSWORD_MIN_LENGTH } from '$lib/shared/auth/constants';
 import * as m from '$lib/paraglide/messages';
 

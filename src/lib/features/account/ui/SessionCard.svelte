@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Button from '$lib/shared/ui/Button.svelte';
-	import { createAuthApi } from '$lib/features/auth/api/client';
+	import { createAuthApi } from '$lib/shared/auth/client';
 	import * as m from '$lib/paraglide/messages';
 
 	type Props = { email: string };
