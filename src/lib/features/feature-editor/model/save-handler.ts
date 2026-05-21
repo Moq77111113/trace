@@ -1,59 +1,55 @@
-import * as m from '$lib/paraglide/messages';
-import type { SubmitFunction } from '@sveltejs/kit';
-
-type Feature = {
-  id:          string;
-  name:        string;
-  codeSeq:     number;
-  content:     string;
-  description: string | null;
-  version:     number;
-  parseErrors: { line: number; column?: number; message: string }[] | null;
-  groupId:     string | null;
-};
+import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { Feature } from './types';
 
 export type SaveSuccess = { feature: Feature };
-export type SaveFailure = { error?: string; conflict?: boolean; currentFeature?: Feature; nameCollisions?: string[] };
-
-export type SaveCallbacks = {
-  onSaving:   () => void;
-  onSaved:    (feature: Feature) => void;
-  onConflict: (current: Feature) => void;
-  onError:    (message: string) => void;
-  onFinally:  () => void;
+export type SaveFailure = {
+  error?:          string;
+  conflict?:       boolean;
+  currentFeature?: Feature;
+  nameCollisions?: string[];
 };
 
-export function createSaveHandler(callbacks: SaveCallbacks): SubmitFunction<SaveSuccess, SaveFailure> {
+/**
+ * Outcome of a save submission, normalised so the caller can dispatch via a
+ * single exhaustive switch instead of repeating `result.type === ...` checks.
+ */
+export type SaveOutcome =
+  | { kind: 'saved';     feature:        Feature }
+  | { kind: 'conflict';  currentFeature: Feature }
+  | { kind: 'collision'; names:          string[] }
+  | { kind: 'error';     message:        string };
+
+export function interpretSaveResult(result: ActionResult<SaveSuccess, SaveFailure>): SaveOutcome {
+  if (result.type === 'success' && result.data?.feature) {
+    return { kind: 'saved', feature: result.data.feature };
+  }
+  if (result.type === 'failure' && result.data?.conflict && result.data.currentFeature) {
+    return { kind: 'conflict', currentFeature: result.data.currentFeature };
+  }
+  if (result.type === 'failure' && result.data?.nameCollisions && result.data.nameCollisions.length > 0) {
+    return { kind: 'collision', names: result.data.nameCollisions };
+  }
+  if (result.type === 'failure' && result.data?.error) {
+    return { kind: 'error', message: result.data.error };
+  }
+  if (result.type === 'error') {
+    return { kind: 'error', message: result.error.message };
+  }
+  return { kind: 'error', message: 'unknown save outcome' };
+}
+
+export type SaveHandlerOptions = {
+  onSaving:  () => void;
+  onFinally: () => void;
+  onOutcome: (outcome: SaveOutcome) => void;
+};
+
+export function createSaveHandler(opts: SaveHandlerOptions): SubmitFunction<SaveSuccess, SaveFailure> {
   return () => {
-    callbacks.onSaving();
-
+    opts.onSaving();
     return async ({ result }) => {
-      callbacks.onFinally();
-
-      if (result.type === 'success' && result.data?.feature) {
-        callbacks.onSaved(result.data.feature);
-        return;
-      }
-
-      if (result.type === 'failure' && result.data?.conflict && result.data.currentFeature) {
-        callbacks.onConflict(result.data.currentFeature);
-        return;
-      }
-
-      if (result.type === 'failure' && result.data?.nameCollisions && result.data.nameCollisions.length > 0) {
-        const names = result.data.nameCollisions.join(', ');
-        callbacks.onError(m.feature_save_manual_name_collision({ name: names }));
-        return;
-      }
-
-      if (result.type === 'failure' && result.data?.error) {
-        callbacks.onError(result.data.error);
-        return;
-      }
-
-      if (result.type === 'error') {
-        callbacks.onError(result.error.message);
-      }
+      opts.onFinally();
+      opts.onOutcome(interpretSaveResult(result));
     };
   };
 }

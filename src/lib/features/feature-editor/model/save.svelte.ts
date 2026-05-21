@@ -1,8 +1,8 @@
 import { invalidateAll } from '$app/navigation';
-import { createSaveHandler, type SaveCallbacks } from './save-handler';
+import * as m from '$lib/paraglide/messages';
+import { createSaveHandler } from './save-handler';
 import type { FeatureForm } from './feature-form.svelte';
-
-type Feature = Parameters<SaveCallbacks['onSaved']>[0];
+import type { Feature } from './types';
 
 export class SaveFlow {
   saving:       boolean         = $state(false);
@@ -13,19 +13,31 @@ export class SaveFlow {
   readonly onSubmit;
 
   constructor(
-    private readonly form:           FeatureForm,
-    private readonly readFeature:    () => Feature,
+    private readonly form:            FeatureForm,
+    private readonly readFeature:     () => Feature,
     private readonly onSavedCallback?: (f: Feature) => void,
   ) {
     this.onSubmit = createSaveHandler({
-      onSaving:   () => { this.saving = true; this.saveError = null; },
-      onFinally:  () => { this.saving = false; },
-      onSaved:    (f) => {
-        this.form.reset(f);
-        this.onSavedCallback?.(f);
+      onSaving:  () => { this.saving = true; this.saveError = null; },
+      onFinally: () => { this.saving = false; },
+      onOutcome: (outcome) => {
+        switch (outcome.kind) {
+          case 'saved':
+            this.form.reset(outcome.feature);
+            this.onSavedCallback?.(outcome.feature);
+            return;
+          case 'conflict':
+            this.conflictWith = outcome.currentFeature;
+            this.conflictOpen = true;
+            return;
+          case 'collision':
+            this.saveError = m.feature_save_manual_name_collision({ name: outcome.names.join(', ') });
+            return;
+          case 'error':
+            this.saveError = outcome.message;
+            return;
+        }
       },
-      onConflict: (current) => { this.conflictWith = current; this.conflictOpen = true; },
-      onError:    (msg)     => { this.saveError = msg; },
     });
   }
 
