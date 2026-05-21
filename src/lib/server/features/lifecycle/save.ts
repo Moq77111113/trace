@@ -3,6 +3,7 @@ import { db } from '$lib/server/db/client';
 import { features, featureGroups, manualScenarios } from '$lib/server/db/schema';
 import { parse } from '$lib/shared/gherkin/parse';
 import { syncFeatureTags } from '../internal/tags-sync';
+import { proposeFeatureSave } from './save-proposal';
 
 type Feature = typeof features.$inferSelect;
 
@@ -22,20 +23,41 @@ export type SaveResult =
 
 /**
  * Persists feature content under an optimistic version lock.
- * On version match: parses Gherkin, refreshes name, bumps version, reconciles tags,
- * and updates groupId if provided (cross-project assignment is rejected before write).
- * On mismatch: returns the current row untouched for the caller to present conflict UI.
- * The `editor` field is reserved for the M6 audit log; not persisted on features.
- * `groupId === undefined` preserves the current value (form did not send it).
- * Explicit `null` means "ungrouped".
+ * Rules (refuse vs apply) live in `proposeFeatureSave`; this wrapper owns I/O:
+ * loads `current`, fetches live manual names for collision checks, validates the
+ * target group exists when an `apply` proposal references one, writes the update
+ * and reconciles tags. The `editor` field is reserved for the M6 audit log.
  */
 export async function saveFeature(input: SaveInput): Promise<SaveResult> {
   return db.transaction(async (tx) => {
     const current = await tx.query.features.findFirst({ where: eq(features.id, input.featureId) });
     if (!current) throw new Error('saveFeature: feature not found');
 
-    if (current.version !== input.expectedVersion) {
-      return { ok: false, reason: 'version-conflict', currentFeature: current };
+    const parsed = parse(input.content);
+
+    const liveManualNames = parsed.scenarios.length > 0
+      ? (await tx
+          .select({ name: manualScenarios.name })
+          .from(manualScenarios)
+          .where(and(eq(manualScenarios.featureId, input.featureId), eq(manualScenarios.archived, false)))
+        ).map((m) => m.name)
+      : [];
+
+    const proposal = proposeFeatureSave({
+      current,
+      expectedVersion: input.expectedVersion,
+      content:         input.content,
+      description:     input.description,
+      groupId:         input.groupId,
+      parsed,
+      liveManualNames,
+    });
+
+    if (proposal.kind === 'version-conflict') {
+      return { ok: false, reason: 'version-conflict', currentFeature: proposal.currentFeature };
+    }
+    if (proposal.kind === 'manual-name-collision') {
+      return { ok: false, reason: 'manual-name-collision', collisions: proposal.collisions };
     }
 
     if (input.groupId) {
@@ -43,41 +65,10 @@ export async function saveFeature(input: SaveInput): Promise<SaveResult> {
       if (!g || g.projectId !== current.projectId) throw new Error('saveFeature: invalid-group');
     }
 
-    const parsed = parse(input.content);
-
-    const gherkinNames = parsed.scenarios.map((s) => s.name.trim().toLowerCase());
-    if (gherkinNames.length > 0) {
-      const liveManual = await tx
-        .select({ name: manualScenarios.name })
-        .from(manualScenarios)
-        .where(and(eq(manualScenarios.featureId, input.featureId), eq(manualScenarios.archived, false)));
-
-      const collisions = liveManual
-        .map((m) => m.name)
-        .filter((name) => gherkinNames.includes(name.trim().toLowerCase()));
-
-      if (collisions.length > 0) {
-        return { ok: false, reason: 'manual-name-collision', collisions };
-      }
-    }
-
-    const errors  = parsed.errors.length > 0 ? parsed.errors : null;
-    const trimmed = parsed.name?.trim();
-    const newName = trimmed ? trimmed : current.name;
-
     const [updated] = await tx.update(features)
-      .set({
-        content:     input.content,
-        description: input.description,
-        name:        newName,
-        parseErrors: errors,
-        version:     current.version + 1,
-        groupId:     input.groupId === undefined ? current.groupId : input.groupId,
-        updatedAt:   new Date(),
-      })
+      .set({ ...proposal.updates, updatedAt: new Date() })
       .where(eq(features.id, input.featureId))
       .returning();
-
     if (!updated) throw new Error('saveFeature: update returned no row');
 
     await syncFeatureTags(tx, { projectId: current.projectId, featureId: input.featureId, parsedTags: parsed.tags });
