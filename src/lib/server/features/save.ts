@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, featureGroups } from '$lib/server/db/schema';
+import { features, featureGroups, manualScenarios } from '$lib/server/db/schema';
 import { parse } from '$lib/shared/gherkin/parse';
 import { syncFeatureTags } from './tags-sync';
 
@@ -16,8 +16,9 @@ type SaveInput = {
 };
 
 export type SaveResult =
-  | { conflict: false; feature:        Feature }
-  | { conflict: true;  currentFeature: Feature };
+  | { ok: true;  feature: Feature }
+  | { ok: false; reason: 'version-conflict';        currentFeature: Feature }
+  | { ok: false; reason: 'manual-name-collision';   collisions: string[] };
 
 /**
  * Persists feature content under an optimistic version lock.
@@ -34,7 +35,7 @@ export async function saveFeature(input: SaveInput): Promise<SaveResult> {
     if (!current) throw new Error('saveFeature: feature not found');
 
     if (current.version !== input.expectedVersion) {
-      return { conflict: true, currentFeature: current };
+      return { ok: false, reason: 'version-conflict', currentFeature: current };
     }
 
     if (input.groupId) {
@@ -42,7 +43,24 @@ export async function saveFeature(input: SaveInput): Promise<SaveResult> {
       if (!g || g.projectId !== current.projectId) throw new Error('saveFeature: invalid-group');
     }
 
-    const parsed  = parse(input.content);
+    const parsed = parse(input.content);
+
+    const gherkinNames = parsed.scenarios.map((s) => s.name.trim().toLowerCase());
+    if (gherkinNames.length > 0) {
+      const liveManual = await tx
+        .select({ name: manualScenarios.name })
+        .from(manualScenarios)
+        .where(and(eq(manualScenarios.featureId, input.featureId), eq(manualScenarios.archived, false)));
+
+      const collisions = liveManual
+        .map((m) => m.name)
+        .filter((name) => gherkinNames.includes(name.trim().toLowerCase()));
+
+      if (collisions.length > 0) {
+        return { ok: false, reason: 'manual-name-collision', collisions };
+      }
+    }
+
     const errors  = parsed.errors.length > 0 ? parsed.errors : null;
     const trimmed = parsed.name?.trim();
     const newName = trimmed ? trimmed : current.name;
@@ -64,6 +82,6 @@ export async function saveFeature(input: SaveInput): Promise<SaveResult> {
 
     await syncFeatureTags(tx, { projectId: current.projectId, featureId: input.featureId, parsedTags: parsed.tags });
 
-    return { conflict: false, feature: updated };
+    return { ok: true, feature: updated };
   });
 }

@@ -97,6 +97,9 @@ export const manualScenarios = pgTable(
     uniqueIndex('manual_scenarios_feature_position_unique')
       .on(t.featureId, t.position)
       .where(sql`${t.archived} = FALSE`),
+    uniqueIndex('manual_scenarios_feature_name_unique')
+      .on(t.featureId, sql`LOWER(${t.name})`)
+      .where(sql`${t.archived} = FALSE`),
     check('manual_scenarios_position_positive', sql`${t.position} >= 1`),
   ],
 );
@@ -148,6 +151,7 @@ export const scenarioResults = pgTable(
     executionId:  uuid('execution_id').notNull().references(() => executions.id, { onDelete: 'cascade' }),
     scenarioName: text('scenario_name').notNull(),
     source:       scenarioSource('source').notNull().default('GHERKIN'),
+    position:     integer('position').notNull(),
     status:       scenarioStatus('status').notNull().default('PENDING'),
     durationMs:   integer('duration_ms'),
     logs:         text('logs'),
@@ -155,7 +159,11 @@ export const scenarioResults = pgTable(
     notes:        text('notes'),
     updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex('scenario_results_execution_name_unique').on(t.executionId, t.scenarioName)],
+  (t) => [
+    uniqueIndex('scenario_results_execution_name_unique').on(t.executionId, t.scenarioName),
+    uniqueIndex('scenario_results_execution_source_position_unique').on(t.executionId, t.source, t.position),
+    check('scenario_results_position_positive', sql`${t.position} >= 1`),
+  ],
 );
 
 export const attachments = pgTable('attachments', {

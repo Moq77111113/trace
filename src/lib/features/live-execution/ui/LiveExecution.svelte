@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { invalidateAll } from '$app/navigation';
-  import ScenarioListItem      from '$lib/entities/execution/ui/ScenarioListItem.svelte';
+  import ScenarioSidebar       from '$lib/entities/execution/ui/ScenarioSidebar.svelte';
   import LiveExecutionHeader   from './LiveExecutionHeader.svelte';
   import ScenarioFilterTabs    from './ScenarioFilterTabs.svelte';
   import ScenarioPanel         from './ScenarioPanel.svelte';
@@ -72,15 +72,11 @@
 
       <ScenarioFilterTabs {selection} />
 
-      <ul class="flex-1 overflow-auto py-1 m-0 p-0 list-none">
-        {#each selection.visibleScenarios as scenario (scenario.id)}
-          <ScenarioListItem
-            {scenario}
-            active={scenario.id === selection.selectedId}
-            onSelect={selection.select}
-          />
-        {/each}
-      </ul>
+      <ScenarioSidebar
+        scenarios={selection.visibleScenarios}
+        selectedId={selection.selectedId}
+        onSelect={selection.select}
+      />
 
       <ShortcutsFooter />
     </aside>

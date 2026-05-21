@@ -5,6 +5,14 @@ type Scenario = RunData['scenarios'][number];
 
 export type ScenarioFilter = 'all' | 'failed' | 'pending';
 
+export type VisibleScenario = {
+  id:           string;
+  scenarioName: string;
+  source:       'GHERKIN' | 'MANUAL';
+  status:       Scenario['status'];
+  durationMs:   number | null;
+};
+
 export class ScenarioSelection {
   scenarios:  Scenario[]     = $state([]);
   selectedId: string         = $state('');
@@ -17,7 +25,17 @@ export class ScenarioSelection {
   readonly pendingCount     = $derived(this.scenarios.filter((s) => s.status === 'PENDING').length);
   readonly failedCount      = $derived(this.scenarios.filter((s) => s.status === 'FAILED').length);
   readonly selected         = $derived<Scenario | undefined>(this.scenarios.find((s) => s.id === this.selectedId));
-  readonly visibleScenarios = $derived<Scenario[]>(this.scenarios.filter((s) => this.matches(s)));
+  readonly visibleScenarios = $derived<VisibleScenario[]>(
+    this.scenarios
+      .filter((s) => this.matches(s))
+      .map((s) => ({
+        id:           s.id,
+        scenarioName: s.scenarioName,
+        source:       s.source,
+        status:       s.status,
+        durationMs:   s.durationMs,
+      })),
+  );
 
   constructor(scenarios: Scenario[]) {
     this.scenarios  = scenarios.slice();

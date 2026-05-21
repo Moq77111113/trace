@@ -1,7 +1,8 @@
-import { and, asc, eq, max, sql } from 'drizzle-orm';
+import { and, asc, eq, max, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '$lib/server/db/client';
-import { manualScenarios } from '$lib/server/db/schema';
+import { db, type DbTx } from '$lib/server/db/client';
+import { features, manualScenarios } from '$lib/server/db/schema';
+import { parse } from '$lib/shared/gherkin/parse';
 
 const featureId = z.uuid({ version: 'v7' });
 const scenarioId = z.uuid({ version: 'v7' });
@@ -18,6 +19,8 @@ export type ManualScenarioRow = typeof manualScenarios.$inferSelect;
 export async function addManualScenario(input: z.infer<typeof addInput>): Promise<ManualScenarioRow> {
   const parsed = addInput.parse(input);
   return db.transaction(async (tx) => {
+    await assertNameAvailable(tx, { featureId: parsed.featureId, name: parsed.name });
+
     const [agg] = await tx
       .select({ next: sql<number>`coalesce(${max(manualScenarios.position)}, 0) + 1` })
       .from(manualScenarios)
@@ -43,13 +46,26 @@ export async function listManualScenarios(input: z.infer<typeof listInput>): Pro
 
 export async function renameManualScenario(input: z.infer<typeof renameInput>): Promise<ManualScenarioRow> {
   const parsed = renameInput.parse(input);
-  const [row] = await db
-    .update(manualScenarios)
-    .set({ name: parsed.name, updatedAt: new Date() })
-    .where(eq(manualScenarios.id, parsed.scenarioId))
-    .returning();
-  if (!row) throw new Error(`renameManualScenario: scenario ${parsed.scenarioId} not found`);
-  return row;
+  return db.transaction(async (tx) => {
+    const [current] = await tx
+      .select({ featureId: manualScenarios.featureId })
+      .from(manualScenarios)
+      .where(eq(manualScenarios.id, parsed.scenarioId));
+    if (!current) throw new Error(`renameManualScenario: scenario ${parsed.scenarioId} not found`);
+
+    await assertNameAvailable(tx, {
+      featureId:         current.featureId,
+      name:              parsed.name,
+      excludeScenarioId: parsed.scenarioId,
+    });
+
+    const [row] = await tx
+      .update(manualScenarios)
+      .set({ name: parsed.name, updatedAt: new Date() })
+      .where(eq(manualScenarios.id, parsed.scenarioId))
+      .returning();
+    return row!;
+  });
 }
 
 export async function archiveManualScenario(input: z.infer<typeof archiveInput>): Promise<ManualScenarioRow> {
@@ -89,4 +105,42 @@ export async function reorderManualScenarios(input: z.infer<typeof reorderInput>
         .where(eq(manualScenarios.id, id));
     }
   });
+}
+
+export class ManualScenarioNameTakenError extends Error {
+  constructor(public readonly conflictWith: 'gherkin' | 'manual') {
+    super(`manual scenario name already in use (conflicts with ${conflictWith})`);
+    this.name = 'ManualScenarioNameTakenError';
+  }
+}
+
+async function assertNameAvailable(
+  tx: DbTx,
+  input: { featureId: string; name: string; excludeScenarioId?: string },
+): Promise<void> {
+  const normalized = input.name.trim().toLowerCase();
+
+  const [feature] = await tx
+    .select({ content: features.content })
+    .from(features)
+    .where(eq(features.id, input.featureId));
+  if (!feature) throw new Error(`assertNameAvailable: feature ${input.featureId} not found`);
+
+  const gherkinNames = parse(feature.content).scenarios.map((s) => s.name.trim().toLowerCase());
+  if (gherkinNames.includes(normalized)) {
+    throw new ManualScenarioNameTakenError('gherkin');
+  }
+
+  const peerConds = [
+    eq(manualScenarios.featureId, input.featureId),
+    eq(manualScenarios.archived, false),
+    sql`LOWER(TRIM(${manualScenarios.name})) = ${normalized}`,
+  ];
+  if (input.excludeScenarioId) peerConds.push(ne(manualScenarios.id, input.excludeScenarioId));
+
+  const [peer] = await tx
+    .select({ id: manualScenarios.id })
+    .from(manualScenarios)
+    .where(and(...peerConds));
+  if (peer) throw new ManualScenarioNameTakenError('manual');
 }

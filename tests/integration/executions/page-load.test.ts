@@ -3,6 +3,9 @@ import { db } from '$lib/server/db/client';
 import { executions, featureGroups } from '$lib/server/db/schema';
 import { load } from '../../../src/routes/(app)/p/[slug]/executions/+page.server';
 import { mkFeature, mkProject } from '../../fixtures';
+import { startExecution } from '$lib/server/executions/start';
+import { loadExecutionPage } from '$lib/server/executions/queries';
+import { addManualScenario } from '$lib/server/features/manual-scenarios';
 
 type LoadEvent = Parameters<typeof load>[0];
 
@@ -119,5 +122,28 @@ describe('runs page server load — URL query params drive filters', () => {
 
     expect(data.filters.status).toBeUndefined();
     expect(data.total).toBe(2);
+  });
+});
+
+describe('loadExecutionPage', () => {
+  it('orders scenarios by source then position (gherkin section first)', async () => {
+    const project = await mkProject({ name: `Order ${Date.now()}-${Math.random()}` });
+    const feature = await mkFeature(project.id, {
+      name: 'Order',
+      content: 'Feature: Order\n\n  Scenario: Zeta\n  Scenario: Alpha\n',
+    });
+    await addManualScenario({ featureId: feature.id, name: 'Manual one' });
+    await addManualScenario({ featureId: feature.id, name: 'Aaa manual' });
+
+    const run = await startExecution({ featureId: feature.id, executedBy: 'Alice' });
+    const page = await loadExecutionPage(run.id);
+    if (!page) throw new Error('page not found');
+
+    expect(page.scenarios.map((s) => ({ name: s.scenarioName, source: s.source }))).toEqual([
+      { name: 'Zeta',       source: 'GHERKIN' },
+      { name: 'Alpha',      source: 'GHERKIN' },
+      { name: 'Manual one', source: 'MANUAL'  },
+      { name: 'Aaa manual', source: 'MANUAL'  },
+    ]);
   });
 });

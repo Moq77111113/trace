@@ -6,6 +6,7 @@ import { startExecution } from '$lib/server/executions/start';
 import { markScenario } from '$lib/server/executions/mark-scenario';
 import { finishExecution } from '$lib/server/executions/finish';
 import { rerunFailed } from '$lib/server/executions/rerun-failed';
+import { addManualScenario } from '$lib/server/features/manual-scenarios';
 import { mkFeature, mkProject } from '../../fixtures';
 
 const FEATURE_CONTENT = `Feature: Login
@@ -102,5 +103,75 @@ describe('rerunFailed', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toBe('parent-not-found');
+  });
+
+  it('carries source over and renumbers positions per section', async () => {
+    const project = await mkProject({ name: `Rerun mix ${Date.now()}-${Math.random()}` });
+    const feature = await mkFeature(project.id, {
+      name: 'Mix',
+      content: 'Feature: Mix\n\n  Scenario: G1\n  Scenario: G2\n  Scenario: G3\n',
+    });
+    await addManualScenario({ featureId: feature.id, name: 'M1' });
+    await addManualScenario({ featureId: feature.id, name: 'M2' });
+
+    const run = await startExecution({ featureId: feature.id, executedBy: 'Alice' });
+    const seeded = await db
+      .select()
+      .from(scenarioResults)
+      .where(eq(scenarioResults.executionId, run.id))
+      .orderBy(asc(scenarioResults.source), asc(scenarioResults.position));
+
+    const [g1, g2, g3, m1, m2] = seeded;
+    if (!g1 || !g2 || !g3 || !m1 || !m2) throw new Error('seed: expected 5 scenarios');
+
+    await markScenario({ executionId: run.id, scenarioResultId: g1.id, status: 'PASSED' });
+    await markScenario({ executionId: run.id, scenarioResultId: g2.id, status: 'FAILED' });
+    await markScenario({ executionId: run.id, scenarioResultId: g3.id, status: 'FAILED' });
+    await markScenario({ executionId: run.id, scenarioResultId: m1.id, status: 'PASSED' });
+    await markScenario({ executionId: run.id, scenarioResultId: m2.id, status: 'FAILED' });
+    await finishExecution(run.id);
+
+    const result = await rerunFailed({ parentExecutionId: run.id, executedBy: 'Alice' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const rerunRows = await db
+      .select({ name: scenarioResults.scenarioName, source: scenarioResults.source, position: scenarioResults.position })
+      .from(scenarioResults)
+      .where(eq(scenarioResults.executionId, result.value.id))
+      .orderBy(asc(scenarioResults.source), asc(scenarioResults.position));
+
+    expect(rerunRows).toEqual([
+      { name: 'G2', source: 'GHERKIN', position: 1 },
+      { name: 'G3', source: 'GHERKIN', position: 2 },
+      { name: 'M2', source: 'MANUAL',  position: 1 },
+    ]);
+  });
+
+  it('returns only manual rows when only manual scenarios failed', async () => {
+    const project = await mkProject({ name: `Rerun manual ${Date.now()}-${Math.random()}` });
+    const feature = await mkFeature(project.id, { name: 'M', content: 'Feature: M\n\n  Scenario: G1\n' });
+    await addManualScenario({ featureId: feature.id, name: 'M1' });
+
+    const run = await startExecution({ featureId: feature.id, executedBy: 'Alice' });
+    const seeded = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, run.id));
+    const g1 = seeded.find((r) => r.source === 'GHERKIN');
+    const m1 = seeded.find((r) => r.source === 'MANUAL');
+    if (!g1 || !m1) throw new Error('seed: expected one of each source');
+
+    await markScenario({ executionId: run.id, scenarioResultId: g1.id, status: 'PASSED' });
+    await markScenario({ executionId: run.id, scenarioResultId: m1.id, status: 'FAILED' });
+    await finishExecution(run.id);
+
+    const result = await rerunFailed({ parentExecutionId: run.id, executedBy: 'Alice' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const rerunRows = await db
+      .select({ name: scenarioResults.scenarioName, source: scenarioResults.source, position: scenarioResults.position })
+      .from(scenarioResults)
+      .where(eq(scenarioResults.executionId, result.value.id));
+
+    expect(rerunRows).toEqual([{ name: 'M1', source: 'MANUAL', position: 1 }]);
   });
 });

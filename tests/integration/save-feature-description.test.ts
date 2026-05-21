@@ -24,8 +24,8 @@ describe('saveFeature with description', () => {
       expectedVersion: f.version,
       editor:          'alice',
     });
-    expect(r.conflict).toBe(false);
-    if (r.conflict) throw new Error('expected non-conflict result');
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
     expect(r.feature.version).toBe(f.version + 1);
     expect(r.feature.description).toBe('Cas nominal: création POI valide.');
     expect(r.feature.content).toBe('');
@@ -42,8 +42,8 @@ describe('saveFeature with description', () => {
       expectedVersion: f.version,
       editor:          'alice',
     });
-    expect(r.conflict).toBe(false);
-    if (r.conflict) throw new Error('expected non-conflict result');
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
     expect(r.feature.content).toBe(VALID_GHERKIN);
     expect(r.feature.description).toBe('spec libre');
   });
@@ -58,7 +58,7 @@ describe('saveFeature with description', () => {
       expectedVersion: f.version,
       editor:          'alice',
     });
-    if (r1.conflict) throw new Error('expected non-conflict r1');
+    if (!r1.ok) throw new Error('setup: first save unexpectedly failed');
     const r2 = await saveFeature({
       featureId:       f.id,
       content:         '',
@@ -66,7 +66,7 @@ describe('saveFeature with description', () => {
       expectedVersion: r1.feature.version,
       editor:          'alice',
     });
-    if (r2.conflict) throw new Error('expected non-conflict r2');
+    if (!r2.ok) throw new Error('setup: second save unexpectedly failed');
     const [row] = await db.select().from(features).where(eq(features.id, f.id));
     expect(row?.content).toBe('');
     expect(r2.feature.version).toBe(r1.feature.version + 1);

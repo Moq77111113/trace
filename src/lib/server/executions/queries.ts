@@ -228,7 +228,7 @@ export async function loadExecutionPage(executionId: string) {
     .select()
     .from(scenarioResults)
     .where(eq(scenarioResults.executionId, executionId))
-    .orderBy(asc(scenarioResults.scenarioName));
+    .orderBy(asc(scenarioResults.source), asc(scenarioResults.position));
 
   const scenarioIds = scenarios.map((s) => s.id);
   const atts = scenarioIds.length

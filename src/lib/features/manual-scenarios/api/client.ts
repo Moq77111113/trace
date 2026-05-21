@@ -1,5 +1,12 @@
 import { deserialize } from '$app/forms';
 
+export class ManualNameTakenError extends Error {
+  constructor(public readonly conflictWith: 'gherkin' | 'manual') {
+    super(`manual scenario name already in use (${conflictWith})`);
+    this.name = 'ManualNameTakenError';
+  }
+}
+
 export type ManualScenarioRow = {
   id:        string;
   featureId: string;
@@ -18,7 +25,12 @@ async function postAction(action: string, body: FormData): Promise<unknown> {
   });
   const result = deserialize(await res.text());
   if (result.type === 'success') return result.data;
-  if (result.type === 'failure') throw new Error(`manual-scenarios ${action} failed`);
+  if (result.type === 'failure') {
+    const reason = (result.data as { reason?: string } | undefined)?.reason;
+    if (reason === 'name-taken-manual') throw new ManualNameTakenError('manual');
+    if (reason === 'name-taken-gherkin') throw new ManualNameTakenError('gherkin');
+    throw new Error(`manual-scenarios ${action} failed`);
+  }
   throw new Error(`manual-scenarios ${action}: ${result.type}`);
 }
 

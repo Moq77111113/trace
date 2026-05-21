@@ -1,5 +1,6 @@
+import * as m from '$lib/paraglide/messages';
 import type { ManualScenarioRow, ManualScenariosClient } from '../api/client';
-import { createManualScenariosClient } from '../api/client';
+import { createManualScenariosClient, ManualNameTakenError } from '../api/client';
 
 export class ManualScenariosController {
   rows:   ManualScenarioRow[] = $state([]);
@@ -57,7 +58,13 @@ export class ManualScenariosController {
     try {
       return await fn();
     } catch (e) {
-      this.error = (e as Error).message;
+      if (e instanceof ManualNameTakenError) {
+        this.error = e.conflictWith === 'gherkin'
+          ? m.manual_scenario_name_taken_gherkin()
+          : m.manual_scenario_name_taken_manual();
+      } else {
+        this.error = (e as Error).message;
+      }
       return null;
     } finally {
       this.saving = false;

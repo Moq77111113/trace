@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import ScenarioListItem        from '$lib/entities/execution/ui/ScenarioListItem.svelte';
+  import ScenarioSidebar         from '$lib/entities/execution/ui/ScenarioSidebar.svelte';
   import ExecutionReadonlyHeader from './ExecutionReadonlyHeader.svelte';
   import ReplayScenarioPanel     from './ReplayScenarioPanel.svelte';
   import SnapshotModal           from './SnapshotModal.svelte';
@@ -41,15 +41,11 @@
         <span class="ml-auto text-ink-2 text-[11px] normal-case tabular-nums tracking-normal">{data.scenarios.length}</span>
       </header>
 
-      <ul class="flex-1 overflow-auto py-1 m-0 p-0 list-none">
-        {#each data.scenarios as scenario (scenario.id)}
-          <ScenarioListItem
-            {scenario}
-            active={scenario.id === selectedId}
-            onSelect={(id) => (selectedId = id)}
-          />
-        {/each}
-      </ul>
+      <ScenarioSidebar
+        scenarios={data.scenarios}
+        {selectedId}
+        onSelect={(id) => (selectedId = id)}
+      />
     </aside>
 
     <article class="overflow-auto min-h-0 px-5 py-4 max-md:px-3.5">

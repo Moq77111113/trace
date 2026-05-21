@@ -117,12 +117,21 @@
 	"feature_editor_gherkin_subtitle": "Automated scenarios.",
 	"feature_editor_gherkin_add": "+ Add Gherkin",
 
+	"cockpit_section_automated": "Automated",
+	"cockpit_section_manual_checks": "Manual checks",
+
 	"manual_scenarios_title": "Manual scenarios",
 	"manual_scenarios_subtitle": "Cases to run by hand.",
 	"manual_scenarios_add": "+ Add a scenario",
 	"manual_scenarios_placeholder": "Scenario name",
 	"manual_scenarios_archive": "Remove scenario",
 	"manual_scenarios_empty": "No manual scenarios yet.",
+	"manual_scenario_no_steps": "Manual check. No automated steps; record the verdict from your testing.",
+	"manual_scenario_name_taken_manual": "A manual check with this name already exists in this feature.",
+	"manual_scenario_name_taken_gherkin": "A Gherkin scenario with this name already exists in this feature.",
+
+	"feature_save_manual_name_collision": "Scenario name {name} conflicts with an existing manual check. Rename one of them before saving.",
+	"feature_no_runnable_scenarios": "Cannot start a run, this feature has no Gherkin scenarios and no manual checks.",
 
 	"dash_stats_label": "Project health",
 	"dash_tile_pass_rate": "Pass rate · 7d",

@@ -68,7 +68,7 @@ describe('commitBatch', () => {
       expectedVersion: 1,
       editor:          'seed',
     });
-    if (updated.conflict) throw new Error('seed conflict');
+    if (!updated.ok) throw new Error('seed conflict');
     const baseVersion = updated.feature.version;
 
     const preview = await parseBatch(p.id, [

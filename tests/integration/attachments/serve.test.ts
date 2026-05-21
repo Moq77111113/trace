@@ -41,7 +41,7 @@ async function seedRunWithScenario() {
     .returning();
   if (!r) throw new Error('seed: run insert failed');
 
-  const [s] = await db.insert(scenarioResults).values({ executionId: r.id, scenarioName: 'A' }).returning();
+  const [s] = await db.insert(scenarioResults).values({ executionId: r.id, scenarioName: 'A', position: 1 }).returning();
   if (!s) throw new Error('seed: scenario insert failed');
 
   return { run: r, scenario: s };

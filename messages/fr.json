@@ -117,12 +117,21 @@
 	"feature_editor_gherkin_subtitle": "Scénarios automatisés.",
 	"feature_editor_gherkin_add": "+ Ajouter du Gherkin",
 
+	"cockpit_section_automated": "Automatisé",
+	"cockpit_section_manual_checks": "Vérifications manuelles",
+
 	"manual_scenarios_title": "Scénarios manuels",
 	"manual_scenarios_subtitle": "Cas à jouer à la main.",
 	"manual_scenarios_add": "+ Ajouter un scénario",
 	"manual_scenarios_placeholder": "Nom du scénario",
 	"manual_scenarios_archive": "Retirer le scénario",
 	"manual_scenarios_empty": "Aucun scénario manuel pour l'instant.",
+	"manual_scenario_no_steps": "Vérification manuelle. Sans étapes automatisées, notez le verdict de votre essai.",
+	"manual_scenario_name_taken_manual": "Une vérification manuelle porte déjà ce nom dans cette feature.",
+	"manual_scenario_name_taken_gherkin": "Un scénario Gherkin porte déjà ce nom dans cette feature.",
+
+	"feature_save_manual_name_collision": "Le nom de scénario {name} entre en conflit avec une vérification manuelle existante. Renommez l'un des deux avant d'enregistrer.",
+	"feature_no_runnable_scenarios": "Impossible de démarrer une exécution, cette feature n'a ni scénario Gherkin ni vérification manuelle.",
 
 	"dash_stats_label": "Santé du projet",
 	"dash_tile_pass_rate": "Taux de réussite · 7j",
