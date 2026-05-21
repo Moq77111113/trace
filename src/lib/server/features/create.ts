@@ -2,7 +2,6 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { features, featureGroups } from '$lib/server/db/schema';
-import { featureTemplate } from '$lib/shared/gherkin/snippets';
 import { allocateCodeSeq } from './code-seq';
 
 export const featureCreateInput = z.object({
@@ -23,10 +22,11 @@ export async function createFeature(input: FeatureCreateInput) {
 
     const [row] = await tx.insert(features)
       .values({
-        projectId: input.projectId,
-        name:      input.name,
-        content:   featureTemplate(input.name),
-        groupId:   input.groupId ?? null,
+        projectId:   input.projectId,
+        name:        input.name,
+        content:     null,
+        description: null,
+        groupId:     input.groupId ?? null,
         codeSeq,
       })
       .returning();

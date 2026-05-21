@@ -4,6 +4,7 @@ import {
 	projects,
 	featureGroups,
 	features,
+	manualScenarios,
 	executions,
 	scenarioResults,
 } from '$lib/server/db/schema';
@@ -11,12 +12,15 @@ import { createProject } from '$lib/server/projects/create';
 import { allocateCodeSeq } from '$lib/server/features/code-seq';
 import projectFileJson from './demo/project.json';
 import groupsFileJson from './demo/groups.json';
+import featuresMetaJson from './demo/features-meta.json';
 import runFileJson from './demo/run.json';
 
 const DEMO_NAME = 'Trace Demo';
 
-type ProjectFile = { name: string; description: string };
-type GroupsFile  = Array<{ name: string; position: number; features: string[] }>;
+type ProjectFile      = { name: string; description: string };
+type GroupsFile       = Array<{ name: string; position: number; features: string[] }>;
+type FeatureMeta      = { description: string; manualScenarios: string[] };
+type FeaturesMetaFile = Record<string, FeatureMeta>;
 type RunFile     = {
 	featureFile: string;
 	source: 'MANUAL' | 'CI';
@@ -48,9 +52,10 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 	const [existing] = await db.select({ id: projects.id }).from(projects).where(eq(projects.name, DEMO_NAME));
 	if (existing) return;
 
-	const projectFile = projectFileJson as ProjectFile;
-	const groupsFile  = groupsFileJson  as GroupsFile;
-	const runFile     = runFileJson     as RunFile;
+	const projectFile = projectFileJson      as ProjectFile;
+	const groupsFile  = groupsFileJson       as GroupsFile;
+	const metaFile    = featuresMetaJson     as FeaturesMetaFile;
+	const runFile     = runFileJson          as RunFile;
 
 	const projectResult = await createProject({ name: projectFile.name, description: projectFile.description });
 	if (!projectResult.ok) throw new Error(`demo seed: createProject failed: ${projectResult.error}`);
@@ -65,15 +70,32 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 		if (!group) throw new Error('demo seed: group insert failed');
 
 		for (const filename of g.features) {
-			const content = readFeature(filename);
+			const content  = readFeature(filename);
 			const featName = filename.replace(/^\d+-/, '').replace(/\.feature$/, '').replace(/-/g, ' ');
+			const meta     = metaFile[filename];
+
 			const feat = await db.transaction(async (tx) => {
 				const codeSeq = await allocateCodeSeq(tx, project.id);
 				const [row] = await tx
 					.insert(features)
-					.values({ projectId: project.id, groupId: group.id, name: featName, content, codeSeq })
+					.values({
+						projectId:   project.id,
+						groupId:     group.id,
+						name:        featName,
+						content,
+						description: meta?.description ?? null,
+						codeSeq,
+					})
 					.returning();
 				if (!row) throw new Error('demo seed: feature insert failed');
+
+				const scenarios = meta?.manualScenarios ?? [];
+				for (const [i, name] of scenarios.entries()) {
+					await tx
+						.insert(manualScenarios)
+						.values({ featureId: row.id, position: i + 1, name });
+				}
+
 				return row;
 			});
 			featureIdByFilename.set(filename, feat.id);

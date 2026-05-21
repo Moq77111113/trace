@@ -8,7 +8,8 @@ type Feature = typeof features.$inferSelect;
 
 type SaveInput = {
   featureId:       string;
-  content:         string;
+  content:         string | null;
+  description:     string | null;
   expectedVersion: number;
   editor:          string;
   groupId?:        string | null;
@@ -41,14 +42,15 @@ export async function saveFeature(input: SaveInput): Promise<SaveResult> {
       if (!g || g.projectId !== current.projectId) throw new Error('saveFeature: invalid-group');
     }
 
-    const parsed  = parse(input.content);
-    const errors  = parsed.errors.length > 0 ? parsed.errors : null;
-    const trimmed = parsed.name?.trim();
+    const parsed  = input.content == null ? null : parse(input.content);
+    const errors  = parsed && parsed.errors.length > 0 ? parsed.errors : null;
+    const trimmed = parsed?.name?.trim();
     const newName = trimmed ? trimmed : current.name;
 
     const [updated] = await tx.update(features)
       .set({
         content:     input.content,
+        description: input.description,
         name:        newName,
         parseErrors: errors,
         version:     current.version + 1,
@@ -60,7 +62,7 @@ export async function saveFeature(input: SaveInput): Promise<SaveResult> {
 
     if (!updated) throw new Error('saveFeature: update returned no row');
 
-    await syncFeatureTags(tx, { projectId: current.projectId, featureId: input.featureId, parsedTags: parsed.tags });
+    await syncFeatureTags(tx, { projectId: current.projectId, featureId: input.featureId, parsedTags: parsed?.tags ?? [] });
 
     return { conflict: false, feature: updated };
   });

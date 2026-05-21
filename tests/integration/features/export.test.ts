@@ -5,12 +5,20 @@ import { features } from '$lib/server/db/schema';
 import { mkProject } from '../../fixtures';
 import { createFeature } from '$lib/server/features/create';
 import { createGroup } from '$lib/server/groups/create';
+import { saveFeature } from '$lib/server/features/save';
 import { exportFeature } from '$lib/server/features/export';
 
 describe('exportFeature', () => {
   it('returns content with safe slugged filename', async () => {
     const p = await mkProject({ name: `Exp ${Date.now()}` });
     const f = await createFeature({ projectId: p.id, name: 'User Login Flow' });
+    await saveFeature({
+      featureId:       f.id,
+      content:         'Feature: User Login Flow\n',
+      description:     null,
+      expectedVersion: f.version,
+      editor:          'test',
+    });
 
     const out = await exportFeature(f.id);
 
@@ -46,6 +54,13 @@ describe('exportFeature', () => {
     const g = await createGroup({ projectId: p.id, name: 'Auth' });
     if (!g.ok) throw new Error('createGroup failed');
     const f = await createFeature({ projectId: p.id, name: 'Login', groupId: g.value.id });
+    await saveFeature({
+      featureId:       f.id,
+      content:         'Feature: Login\n',
+      description:     null,
+      expectedVersion: f.version,
+      editor:          'test',
+    });
 
     const out = await exportFeature(f.id);
 

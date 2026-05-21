@@ -1,6 +1,6 @@
 {
-  "id": "b0ca2eb6-06a9-49aa-82c5-dbe5ea69f5a3",
-  "prevId": "02b7de2a-cb6f-4da5-b8c8-fade1605b4b7",
+  "id": "264c973a-cb1b-4e8e-a5ae-73d9419e5fc9",
+  "prevId": "b0ca2eb6-06a9-49aa-82c5-dbe5ea69f5a3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -516,11 +516,17 @@
           "primaryKey": false,
           "notNull": true
         },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "content": {
           "name": "content",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "parse_errors": {
           "name": "parse_errors",
@@ -762,6 +768,107 @@
       },
       "isRLSEnabled": false
     },
+    "public.manual_scenarios": {
+      "name": "manual_scenarios",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "feature_id": {
+          "name": "feature_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "archived": {
+          "name": "archived",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "manual_scenarios_feature_position_unique": {
+          "name": "manual_scenarios_feature_position_unique",
+          "columns": [
+            {
+              "expression": "feature_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"manual_scenarios\".\"archived\" = FALSE",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "manual_scenarios_feature_id_features_id_fk": {
+          "name": "manual_scenarios_feature_id_features_id_fk",
+          "tableFrom": "manual_scenarios",
+          "tableTo": "features",
+          "columnsFrom": [
+            "feature_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "manual_scenarios_position_positive": {
+          "name": "manual_scenarios_position_positive",
+          "value": "\"manual_scenarios\".\"position\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.projects": {
       "name": "projects",
       "schema": "",
@@ -890,6 +997,14 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "scenario_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'GHERKIN'"
         },
         "status": {
           "name": "status",
@@ -1634,6 +1749,14 @@
         "FAILED",
         "SKIPPED",
         "ABORTED"
+      ]
+    },
+    "public.scenario_source": {
+      "name": "scenario_source",
+      "schema": "public",
+      "values": [
+        "GHERKIN",
+        "MANUAL"
       ]
     },
     "public.scenario_status": {

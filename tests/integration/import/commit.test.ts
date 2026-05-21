@@ -64,6 +64,7 @@ describe('commitBatch', () => {
     const updated = await saveFeature({
       featureId:       old.id,
       content:         'Feature: Tgt\n  Scenario: Original\n    Given x\n',
+      description:     null,
       expectedVersion: 1,
       editor:          'seed',
     });

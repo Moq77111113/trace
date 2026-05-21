@@ -62,6 +62,7 @@ export async function commitBatch(input: CommitInput): Promise<CommitOutcome> {
         const result = await saveFeature({
           featureId:       row.collidesWithId,
           content,
+          description:     null,
           expectedVersion: current.version,
           editor,
           groupId,

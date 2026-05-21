@@ -108,6 +108,22 @@
 	"feature_aside_no_executions_yet": "Aucune exécution",
 	"feature_aside_no_executions_hint": "Lancez-en une avec le bouton ci-dessus.",
 
+	"feature_editor_description_title": "Description",
+	"feature_editor_description_subtitle": "Notes libres sur cette feature.",
+	"feature_editor_description_add": "+ Ajouter une description",
+	"feature_editor_description_placeholder": "Ajoutez notes, contexte ou tout ce qui mérite d'être documenté.",
+
+	"feature_editor_gherkin_title": "Gherkin",
+	"feature_editor_gherkin_subtitle": "Scénarios automatisés.",
+	"feature_editor_gherkin_add": "+ Ajouter du Gherkin",
+
+	"manual_scenarios_title": "Scénarios manuels",
+	"manual_scenarios_subtitle": "Cas à jouer à la main.",
+	"manual_scenarios_add": "+ Ajouter un scénario",
+	"manual_scenarios_placeholder": "Nom du scénario",
+	"manual_scenarios_archive": "Retirer le scénario",
+	"manual_scenarios_empty": "Aucun scénario manuel pour l'instant.",
+
 	"dash_stats_label": "Santé du projet",
 	"dash_tile_pass_rate": "Taux de réussite · 7j",
 	"dash_tile_pass_rate_hint": "Exécutions passées / terminées",
