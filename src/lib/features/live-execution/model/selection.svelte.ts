@@ -1,4 +1,4 @@
-import type { ExecutionPageData } from '$lib/server/executions/queries';
+import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
 type RunData  = NonNullable<ExecutionPageData>;
 type Scenario = RunData['scenarios'][number];

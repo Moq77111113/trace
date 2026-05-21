@@ -1,5 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { loadExecutionPage } from '$lib/server/executions/queries';
+import { loadExecutionPage } from '$lib/server/executions/read/queries';
 import { finishExecution } from '$lib/server/executions/run/finish';
 import { rerunFailed } from '$lib/server/executions/run/rerun-failed';
 import { resolveLiveExecutor } from '$lib/server/executions/executor';

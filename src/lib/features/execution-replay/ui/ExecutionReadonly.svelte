@@ -4,7 +4,7 @@
   import ExecutionReadonlyHeader from './ExecutionReadonlyHeader.svelte';
   import ReplayScenarioPanel     from './scenario/ReplayScenarioPanel.svelte';
   import SnapshotModal           from './SnapshotModal.svelte';
-  import type { ExecutionPageData } from '$lib/server/executions/queries';
+  import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
   type Props = { data: NonNullable<ExecutionPageData> };
   let { data }: Props = $props();

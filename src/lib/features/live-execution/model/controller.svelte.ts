@@ -1,4 +1,4 @@
-import type { ExecutionPageData } from '$lib/server/executions/queries';
+import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 import { createExecutionApi, type ExecutionApi } from '../api/client';
 import { ScenarioSelection }    from './selection.svelte';
 import { ScenarioMarking }      from './marking.svelte';

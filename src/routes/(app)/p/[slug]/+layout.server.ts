@@ -3,7 +3,7 @@ import { projects } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { listFeaturesByGroup } from '$lib/server/features/queries';
-import { listFlakeFeatureIds } from '$lib/server/executions/queries';
+import { listFlakeFeatureIds } from '$lib/server/executions/read/queries';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { LayoutServerLoad } from './$types';

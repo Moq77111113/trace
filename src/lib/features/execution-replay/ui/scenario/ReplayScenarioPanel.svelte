@@ -7,7 +7,7 @@
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
   import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
   import * as m from '$lib/paraglide/messages';
-  import type { ExecutionPageData } from '$lib/server/executions/queries';
+  import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
   type RunData    = NonNullable<ExecutionPageData>;
   type Scenario   = RunData['scenarios'][number];

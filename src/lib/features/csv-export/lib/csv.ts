@@ -1,4 +1,4 @@
-import type { ExecutionExportRow } from '$lib/server/executions/queries';
+import type { ExecutionExportRow } from '$lib/server/executions/read/queries';
 import { toDate } from '$lib/shared/lib/date';
 
 export const EXPORT_ROW_CAP = 10_000;

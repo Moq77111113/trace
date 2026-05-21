@@ -2,8 +2,8 @@ import {
   listExecutionEnvironments,
   listExecutionsForProject,
   listFlakeFeatureIds,
-} from '$lib/server/executions/queries';
-import { parseExecutionFilters } from '$lib/server/executions/filters';
+} from '$lib/server/executions/read/queries';
+import { parseExecutionFilters } from '$lib/server/executions/read/filters';
 import { listFeatures } from '$lib/server/features/queries';
 import { listGroups } from '$lib/server/groups/queries';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';

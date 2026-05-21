@@ -4,7 +4,7 @@ import { executions, featureGroups } from '$lib/server/db/schema';
 import { load } from '../../../src/routes/(app)/p/[slug]/executions/+page.server';
 import { mkFeature, mkProject } from '../../fixtures';
 import { startExecution } from '$lib/server/executions/run/start';
-import { loadExecutionPage } from '$lib/server/executions/queries';
+import { loadExecutionPage } from '$lib/server/executions/read/queries';
 import { addManualScenario } from '$lib/server/features/manual-scenarios';
 
 type LoadEvent = Parameters<typeof load>[0];
