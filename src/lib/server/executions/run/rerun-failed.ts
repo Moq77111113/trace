@@ -2,6 +2,7 @@ import { and, asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { executions, scenarioResults } from '$lib/server/db/schema';
 import { ok, err, type Result } from '$lib/shared/lib/result';
+import { buildScenarioRows } from './scenario-rows';
 
 export type RerunFailedInput = {
   parentExecutionId: string;
@@ -39,13 +40,7 @@ export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedR
 
   if (failed.length === 0) return err('no-failed-scenarios');
 
-  let gherkinPos = 0;
-  let manualPos  = 0;
-  const rows = failed.map((f) => ({
-    scenarioName: f.scenarioName,
-    source:       f.source,
-    position:     f.source === 'GHERKIN' ? ++gherkinPos : ++manualPos,
-  }));
+  const rows = buildScenarioRows(failed);
 
   const created = await db.transaction(async (tx) => {
     const [execution] = await tx
