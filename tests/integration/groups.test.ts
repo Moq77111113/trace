@@ -3,13 +3,13 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { featureGroups, features } from '$lib/server/db/schema';
 import { mkProject } from '../fixtures';
-import { createFeature } from '$lib/server/features/create';
+import { createFeature } from '$lib/server/features/lifecycle/create';
 import { createGroup } from '$lib/server/groups/create';
 import { listGroups } from '$lib/server/groups/queries';
 import { renameGroup } from '$lib/server/groups/rename';
 import { deleteGroup } from '$lib/server/groups/delete';
-import { listFeaturesByGroup } from '$lib/server/features/queries';
-import { saveFeature } from '$lib/server/features/save';
+import { listFeaturesByGroup } from '$lib/server/features/read/queries';
+import { saveFeature } from '$lib/server/features/lifecycle/save';
 import { unwrap } from '$lib/shared/lib/result';
 
 describe('feature_groups schema', () => {

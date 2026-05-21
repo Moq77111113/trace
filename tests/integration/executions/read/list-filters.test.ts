@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
 import { executions, featureGroups } from '$lib/server/db/schema';
-import { listExecutionEnvironments, listExecutionsForProject } from '$lib/server/executions/queries';
-import { mkFeature, mkProject } from '../../fixtures';
+import { listExecutionEnvironments, listExecutionsForProject } from '$lib/server/executions/read/queries';
+import { mkFeature, mkProject } from '../../../fixtures';
 
 async function seedProject() {
   return mkProject({ name: `Hist ${Date.now()}-${Math.random()}` });

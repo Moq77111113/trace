@@ -1,5 +1,5 @@
 import type { StatusKind } from '$lib/shared/ui/Status.svelte';
-import type { ExecutionFilters } from '$lib/server/executions/queries';
+import type { ExecutionFilters } from '$lib/server/executions/read/queries';
 
 export function hasAnyExecutionFilter(
   filters:   ExecutionFilters,

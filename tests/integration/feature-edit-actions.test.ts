@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { mkProject } from '../fixtures';
-import { createFeature } from '$lib/server/features/create';
+import { createFeature } from '$lib/server/features/lifecycle/create';
 import {
   addManualScenarioAction,
   renameManualScenarioAction,
   archiveManualScenarioAction,
   reorderManualScenariosAction,
-} from '$lib/server/features/edit';
+} from '$lib/server/features/lifecycle/edit';
 import { listManualScenarios } from '$lib/server/features/manual-scenarios';
 
 describe('feature edit page — manual scenario form actions', () => {

@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { scenarioResults } from '$lib/server/db/schema';
-import { startExecution } from '$lib/server/executions/start';
-import { finishExecution } from '$lib/server/executions/finish';
-import { mkFeature, mkProject } from '../../fixtures';
+import { startExecution } from '$lib/server/executions/run/start';
+import { finishExecution } from '$lib/server/executions/run/finish';
+import { mkFeature, mkProject } from '../../../fixtures';
 
 async function seedRun(content: string) {
   const p = await mkProject({ name: `Fin ${Date.now()}-${Math.random()}` });

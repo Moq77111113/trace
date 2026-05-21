@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { mkProject } from '../../fixtures';
-import { createFeature } from '$lib/server/features/create';
+import { createFeature } from '$lib/server/features/lifecycle/create';
 import { streamProjectZip } from '$lib/server/projects/export-zip';
 
 async function drain(stream: NodeJS.ReadableStream): Promise<Buffer> {

@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
-import { startExecution } from '$lib/server/executions/start';
-import { resolveLiveExecutor } from '$lib/server/executions/auth';
+import { startExecution } from '$lib/server/executions/run/start';
+import { resolveLiveExecutor } from '$lib/server/executions/executor';
 import { stringFields } from '$lib/server/forms';
 import type { Actions, PageServerLoad } from './$types';
 

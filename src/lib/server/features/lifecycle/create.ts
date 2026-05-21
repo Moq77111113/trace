@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { features, featureGroups } from '$lib/server/db/schema';
-import { allocateCodeSeq } from './code-seq';
+import { allocateCodeSeq } from '../internal/code-seq';
 
 export const featureCreateInput = z.object({
   projectId: z.uuid({version: 'v7'}),

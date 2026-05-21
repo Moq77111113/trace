@@ -3,8 +3,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
 import { mkProject } from '../fixtures';
-import { createFeature } from '$lib/server/features/create';
-import { saveFeature } from '$lib/server/features/save';
+import { createFeature } from '$lib/server/features/lifecycle/create';
+import { saveFeature } from '$lib/server/features/lifecycle/save';
 
 const VALID_GHERKIN = `Feature: X
   Scenario: ok

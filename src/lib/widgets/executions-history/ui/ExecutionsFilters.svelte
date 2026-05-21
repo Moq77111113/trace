@@ -1,7 +1,7 @@
 <script lang="ts">
   import Select from '$lib/shared/ui/Select.svelte';
   import { hasAnyExecutionFilter } from '$lib/entities/execution/lib/format';
-  import type { ExecutionFilters } from '$lib/server/executions/queries';
+  import type { ExecutionFilters } from '$lib/server/executions/read/queries';
   import type { RunsFilterNav } from '$lib/widgets/executions-history/lib/filter-nav';
 
   type Option = { value: string; label: string };

@@ -1,6 +1,6 @@
 import type { ExecutionApi, Verdict } from '../api/client';
 import type { ScenarioSelection } from './selection.svelte';
-import type { ExecutionPageData } from '$lib/server/executions/queries';
+import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
 type Scenario = NonNullable<ExecutionPageData>['scenarios'][number];
 

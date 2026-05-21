@@ -3,10 +3,10 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { featureGroups, features, tags, featureTags } from '$lib/server/db/schema';
 import { mkProject } from '../../fixtures';
-import { createFeature } from '$lib/server/features/create';
-import { archiveFeature } from '$lib/server/features/archive';
+import { createFeature } from '$lib/server/features/lifecycle/create';
+import { archiveFeature } from '$lib/server/features/lifecycle/archive';
 import { createGroup } from '$lib/server/groups/create';
-import { saveFeature } from '$lib/server/features/save';
+import { saveFeature } from '$lib/server/features/lifecycle/save';
 import { parseBatch } from '$lib/server/import/parse-batch';
 import { commitBatch, type Decision, type CommitRowInput } from '$lib/server/import/commit';
 

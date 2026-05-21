@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mkProject } from '../fixtures';
-import { createFeature } from '$lib/server/features/create';
-import { saveFeature } from '$lib/server/features/save';
+import { createFeature } from '$lib/server/features/lifecycle/create';
+import { saveFeature } from '$lib/server/features/lifecycle/save';
 
 const goodGherkin = (name: string) =>
   `@smoke\nFeature: ${name}\n  Scenario: A\n    Given x\n`;

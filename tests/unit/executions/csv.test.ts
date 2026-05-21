@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { csvField, executionsCsvFilename, toExecutionsCsv } from '$lib/features/csv-export/lib/csv';
-import type { ExecutionExportRow } from '$lib/server/executions/queries';
+import type { ExecutionExportRow } from '$lib/server/executions/read/queries';
 
 describe('csvField', () => {
   it('returns empty string for null and undefined', () => {

@@ -1,5 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { createFeature, featureCreateInput } from '$lib/server/features/create';
+import { createFeature, featureCreateInput } from '$lib/server/features/lifecycle/create';
 import { listGroups } from '$lib/server/groups/queries';
 import { getProjectBySlug } from '$lib/server/projects/queries';
 import { stringFields } from '$lib/server/forms';

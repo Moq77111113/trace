@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { scenarioResults } from '$lib/server/db/schema';
-import { ingestExecution } from '$lib/server/executions/ingest';
-import type { IngestedExecution } from '$lib/server/executions/cucumber-json/types';
-import { mkFeature, mkProject } from '../../fixtures';
+import { ingestExecution } from '$lib/server/executions/ingest/pipeline';
+import type { IngestedExecution } from '$lib/server/executions/ingest/cucumber-json/types';
+import { mkFeature, mkProject } from '../../../fixtures';
 
 async function seedProjectWithFeature(featureName = 'Login') {
   const project = await mkProject({ name: `Ingest ${Date.now()}-${Math.random()}` });

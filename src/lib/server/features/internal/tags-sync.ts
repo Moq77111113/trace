@@ -22,10 +22,6 @@ export async function syncFeatureTags(tx: DbTx, { projectId, featureId, parsedTa
   const wanted = [...new Set(parsedTags.map((t) => t.trim()).filter(Boolean))];
 
   if (wanted.length > 0) {
-    // Raw SQL: the unique index targets `(project_id, LOWER(name))`, an expression
-    // index Drizzle's typed `.onConflictDoNothing({ target })` cannot express.
-    // Column refs in INSERT col-list and ON CONFLICT target list must be
-    // unqualified — `sql.identifier(col.name)` emits the bare quoted name.
     const projectIdCol = sql.identifier(tags.projectId.name);
     const nameCol      = sql.identifier(tags.name.name);
     const values       = sql.join(

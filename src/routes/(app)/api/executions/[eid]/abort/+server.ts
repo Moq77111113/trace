@@ -1,5 +1,5 @@
 import { error, json } from '@sveltejs/kit';
-import { abortExecution } from '$lib/server/executions/abort';
+import { abortExecution } from '$lib/server/executions/run/abort';
 import { authedHandler } from '$lib/server/route';
 import type { RequestHandler } from './$types';
 

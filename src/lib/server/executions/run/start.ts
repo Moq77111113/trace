@@ -3,6 +3,7 @@ import { db } from '$lib/server/db/client';
 import { executions, features, scenarioResults } from '$lib/server/db/schema';
 import { parse } from '$lib/shared/gherkin/parse';
 import { listManualScenarios } from '$lib/server/features/manual-scenarios';
+import { buildScenarioRows } from './scenario-rows';
 
 export type StartRunInput = {
   featureId:    string;
@@ -48,22 +49,12 @@ export async function startExecution(input: StartRunInput) {
       .returning();
     if (!run) throw new Error('startExecution: run insert returned no row');
 
-    const rows = [
-      ...parsed.scenarios.map((s, i) => ({
-        executionId:  run.id,
-        scenarioName: s.name,
-        source:       'GHERKIN' as const,
-        position:     i + 1,
-      })),
-      ...manuals.map((m, i) => ({
-        executionId:  run.id,
-        scenarioName: m.name,
-        source:       'MANUAL' as const,
-        position:     i + 1,
-      })),
-    ];
+    const rows = buildScenarioRows([
+      ...parsed.scenarios.map((s) => ({ scenarioName: s.name, source: 'GHERKIN' as const })),
+      ...manuals.map((m)       => ({ scenarioName: m.name, source: 'MANUAL'  as const })),
+    ]);
 
-    await tx.insert(scenarioResults).values(rows);
+    await tx.insert(scenarioResults).values(rows.map((r) => ({ ...r, executionId: run.id })));
     return run;
   });
 }

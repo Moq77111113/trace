@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import { z } from 'zod';
-import { saveScenarioNotes } from '$lib/server/executions/save-scenario-notes';
+import { saveScenarioNotes } from '$lib/server/executions/scenario/save-scenario-notes';
 import { authedHandler } from '$lib/server/route';
 import type { RequestHandler } from './$types';
 

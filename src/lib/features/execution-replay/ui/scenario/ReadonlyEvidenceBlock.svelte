@@ -2,7 +2,7 @@
   import Icon     from '$lib/shared/ui/Icon.svelte';
   import * as m   from '$lib/paraglide/messages';
   import { isImageMime } from '$lib/shared/lib/mime';
-  import type { ExecutionPageData } from '$lib/server/executions/queries';
+  import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
   type Attachment = NonNullable<ExecutionPageData>['attachmentsByScenario'][string][number];
 

@@ -10,7 +10,7 @@
   import AbortConfirmModal     from './modals/AbortConfirmModal.svelte';
   import { createLiveExecutionController } from '../model/controller.svelte';
   import { attachLiveExecutionShortcuts }  from '../model/shortcuts';
-  import type { ExecutionPageData } from '$lib/server/executions/queries';
+  import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
   type Props = { data: NonNullable<ExecutionPageData> };
   let { data }: Props = $props();
