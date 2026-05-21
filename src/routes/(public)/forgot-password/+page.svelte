@@ -1,7 +1,7 @@
 <script lang="ts">
 	import BrandMark          from '$lib/shared/brand/BrandMark.svelte';
 	import PageTitle          from '$lib/shared/ui/PageTitle.svelte';
-	import ForgotPasswordForm from '$lib/features/forgot-password/ui/ForgotPasswordForm.svelte';
+	import ForgotPasswordForm from '$lib/features/password-recovery/ui/ForgotPasswordForm.svelte';
 	import * as m             from '$lib/paraglide/messages';
 	import type { ActionData } from './$types';
 
