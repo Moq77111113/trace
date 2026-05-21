@@ -2,6 +2,7 @@
   import { untrack } from 'svelte';
   import { invalidateAll } from '$app/navigation';
   import { persistedSet } from '$lib/shared/storage/persisted-set.svelte';
+  import { moveFeatureToGroup } from '../api/client';
   import FeatureGroupRow from './FeatureGroupRow.svelte';
   import UngroupedSection from './UngroupedSection.svelte';
   import DeleteGroupModal, { type DeleteGroupTarget } from './DeleteGroupModal.svelte';
@@ -39,10 +40,7 @@
   async function dropOnGroup(e: DragEvent, targetGroupId: string | null): Promise<void> {
     const featureId = e.dataTransfer?.getData('application/x-trace-feature');
     if (!featureId) return;
-    const fd = new FormData();
-    fd.set('featureId', featureId);
-    fd.set('groupId',   targetGroupId ?? '');
-    await fetch('?/moveFeature', { method: 'POST', body: fd });
+    await moveFeatureToGroup(featureId, targetGroupId);
     await invalidateAll();
   }
 </script>
