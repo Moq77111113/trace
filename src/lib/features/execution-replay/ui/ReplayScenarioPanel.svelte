@@ -6,6 +6,7 @@
   import ReadonlyEvidenceBlock from './ReadonlyEvidenceBlock.svelte';
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
   import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
+  import * as m from '$lib/paraglide/messages';
   import type { ExecutionPageData } from '$lib/server/executions/queries';
 
   type RunData    = NonNullable<ExecutionPageData>;
@@ -30,7 +31,11 @@
   <Pill {kind}>{scenario.status.toLowerCase()}</Pill>
 </div>
 
-{#if steps.length > 0}
+{#if scenario.source === 'MANUAL'}
+  <p class="mb-4 text-[12px] text-ink-3 italic">
+    {m.manual_scenario_no_steps()}
+  </p>
+{:else if steps.length > 0}
   <div class="mb-4">
     <ScenarioSteps {steps} scenarioStatus={scenario.status} />
   </div>

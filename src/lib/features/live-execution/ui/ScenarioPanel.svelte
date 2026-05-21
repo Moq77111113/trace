@@ -14,6 +14,7 @@
   import type { ScenarioMarking }      from '../model/marking.svelte';
   import type { ScenarioNotesEditor }  from '../model/notes-editor.svelte';
   import type { AttachmentsUploader }  from '../model/attachments-uploader.svelte';
+  import * as m from '$lib/paraglide/messages';
 
   type Props = {
     selection:             ScenarioSelection;
@@ -63,7 +64,11 @@
   </header>
 
   <section class="overflow-auto px-5 py-4 min-h-0 max-md:px-3.5">
-    {#if selectedSteps.length > 0}
+    {#if selection.selected.source === 'MANUAL'}
+      <p class="mb-3 text-[12px] text-ink-3 italic">
+        {m.manual_scenario_no_steps()}
+      </p>
+    {:else if selectedSteps.length > 0}
       <div class="mb-3">
         <ScenarioSteps steps={selectedSteps} scenarioStatus={selection.selected.status} />
       </div>

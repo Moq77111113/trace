@@ -46,6 +46,7 @@ const fakeData = {
       id:           's1',
       executionId:  'r1',
       scenarioName: 'A',
+      position:     1,
       source:       'GHERKIN' as const,
       status:       'PENDING' as const,
       durationMs:   null,
@@ -58,6 +59,7 @@ const fakeData = {
       id:           's2',
       executionId:  'r1',
       scenarioName: 'B',
+      position:     2,
       source:       'GHERKIN' as const,
       status:       'PENDING' as const,
       durationMs:   null,
@@ -128,5 +130,45 @@ describe('LiveExecution', () => {
     await fireEvent.click(screen.getByRole('button', { name: /finish run/i }));
 
     expect(screen.getByText(/scenario.+still pending/i)).toBeInTheDocument();
+  });
+
+  it('shows the no-steps line on a selected MANUAL scenario', () => {
+    const baseScenario = fakeData.scenarios[0]!;
+    const manualRow = {
+      ...baseScenario,
+      id:           'sm1',
+      scenarioName: 'Manual one',
+      source:       'MANUAL' as const,
+      position:     1,
+    };
+    const dataWithManual = {
+      ...fakeData,
+      scenarios: [baseScenario, manualRow],
+    };
+    render(LiveExecution, { props: { data: dataWithManual } });
+
+    fireEvent.click(screen.getByText('Manual one'));
+
+    expect(screen.getByText(/manual check\. no automated steps/i)).toBeInTheDocument();
+  });
+
+  it('renders Automated and Manual section headers when both kinds are present', () => {
+    const baseScenario = fakeData.scenarios[0]!;
+    const dataWithManual = {
+      ...fakeData,
+      scenarios: [
+        baseScenario,
+        {
+          ...baseScenario,
+          id:           'sm1',
+          scenarioName: 'Manual one',
+          source:       'MANUAL' as const,
+          position:     1,
+        },
+      ],
+    };
+    render(LiveExecution, { props: { data: dataWithManual } });
+    expect(screen.getByText(/automated/i)).toBeInTheDocument();
+    expect(screen.getByText(/manual checks/i)).toBeInTheDocument();
   });
 });

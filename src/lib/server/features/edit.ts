@@ -16,6 +16,7 @@ import {
     addManualScenario,
     archiveManualScenario,
     listManualScenarios,
+    ManualScenarioNameTakenError,
     renameManualScenario,
     reorderManualScenarios,
 } from "./manual-scenarios";
@@ -182,18 +183,32 @@ export const actions = {
 
     addManualScenario: async ({ request }: RequestEvent<Params>) => {
         const data = await request.formData();
-        return addManualScenarioAction({
-            featureId: String(data.get("featureId") ?? ""),
-            name: String(data.get("name") ?? ""),
-        });
+        try {
+            return await addManualScenarioAction({
+                featureId: String(data.get("featureId") ?? ""),
+                name: String(data.get("name") ?? ""),
+            });
+        } catch (e) {
+            if (e instanceof ManualScenarioNameTakenError) {
+                return fail(409, { reason: e.conflictWith === 'gherkin' ? 'name-taken-gherkin' as const : 'name-taken-manual' as const });
+            }
+            throw e;
+        }
     },
 
     renameManualScenario: async ({ request }: RequestEvent<Params>) => {
         const data = await request.formData();
-        return renameManualScenarioAction({
-            scenarioId: String(data.get("scenarioId") ?? ""),
-            name: String(data.get("name") ?? ""),
-        });
+        try {
+            return await renameManualScenarioAction({
+                scenarioId: String(data.get("scenarioId") ?? ""),
+                name: String(data.get("name") ?? ""),
+            });
+        } catch (e) {
+            if (e instanceof ManualScenarioNameTakenError) {
+                return fail(409, { reason: e.conflictWith === 'gherkin' ? 'name-taken-gherkin' as const : 'name-taken-manual' as const });
+            }
+            throw e;
+        }
     },
 
     archiveManualScenario: async ({ request }: RequestEvent<Params>) => {
