@@ -1,16 +1,6 @@
 import * as m from '$lib/paraglide/messages';
 import type { SubmitFunction } from '@sveltejs/kit';
-
-type Feature = {
-  id:          string;
-  name:        string;
-  codeSeq:     number;
-  content:     string;
-  description: string | null;
-  version:     number;
-  parseErrors: { line: number; column?: number; message: string }[] | null;
-  groupId:     string | null;
-};
+import type { Feature } from './types';
 
 export type SaveSuccess = { feature: Feature };
 export type SaveFailure = { error?: string; conflict?: boolean; currentFeature?: Feature; nameCollisions?: string[] };

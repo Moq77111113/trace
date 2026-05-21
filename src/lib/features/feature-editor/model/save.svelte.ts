@@ -1,8 +1,7 @@
 import { invalidateAll } from '$app/navigation';
-import { createSaveHandler, type SaveCallbacks } from './save-handler';
+import { createSaveHandler } from './save-handler';
 import type { FeatureForm } from './feature-form.svelte';
-
-type Feature = Parameters<SaveCallbacks['onSaved']>[0];
+import type { Feature } from './types';
 
 export class SaveFlow {
   saving:       boolean         = $state(false);

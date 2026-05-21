@@ -15,19 +15,7 @@
   import { FeatureForm }   from '../model/feature-form.svelte';
   import { GherkinParser } from '../model/gherkin-parser.svelte';
   import { SaveFlow }      from '../model/save.svelte';
-
-  type ParseErrors = { line: number; column?: number; message: string }[] | null;
-
-  type Feature = {
-    id:          string;
-    name:        string;
-    codeSeq:     number;
-    content:     string;
-    description: string | null;
-    version:     number;
-    parseErrors: ParseErrors;
-    groupId:     string | null;
-  };
+  import type { Feature }  from '../model/types';
 
   type ProjectRef = { codePrefix: string };
   type ProjectTag = { name: string; count: number };
