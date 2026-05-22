@@ -3,11 +3,10 @@
   import DropZone from '$lib/shared/ui/DropZone.svelte';
   import { failureMessage } from '$lib/shared/forms/action-result';
   import { isPreviewResult } from '../model/action-results';
-  import type { ImportState } from '../model/import-state.svelte';
+  import { useImport } from '../model/context';
   import type { DroppedFile } from '$lib/shared/io/dropped-files';
 
-  type Props = { flow: ImportState };
-  let { flow }: Props = $props();
+  const flow = useImport();
 
   let uploading = $state(false);
   let form:      HTMLFormElement;

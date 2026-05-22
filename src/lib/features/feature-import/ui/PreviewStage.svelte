@@ -5,6 +5,7 @@
   import Pill   from '$lib/shared/ui/Pill.svelte';
   import { failureMessage } from '$lib/shared/forms/action-result';
   import { isCommitResult } from '../model/action-results';
+  import { useImport } from '../model/context';
   import {
     decisionOptionsFor,
     statusRowClass,
@@ -12,14 +13,12 @@
     statusTextClass,
     type Decision,
   } from '../lib/format';
-  import type { ImportState } from '../model/import-state.svelte';
   import type { PreviewRowStatus } from '$lib/server/import/types';
 
-  type Props = {
-    flow:           ImportState;
-    existingGroups: string[];
-  };
-  let { flow, existingGroups }: Props = $props();
+  type Props = { existingGroups: string[] };
+  let { existingGroups }: Props = $props();
+
+  const flow = useImport();
 
   let committing = $state(false);
 

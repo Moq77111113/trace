@@ -5,6 +5,7 @@
   import PreviewStage from './PreviewStage.svelte';
   import OutcomeView  from './OutcomeView.svelte';
   import { createImportState } from '../model/import-state.svelte';
+  import { provideImport } from '../model/context';
   import * as m from '$lib/paraglide/messages';
 
   type Project = { id: string; name: string };
@@ -18,6 +19,7 @@
   let { project, groups }: Props = $props();
 
   const flow = untrack(() => createImportState());
+  provideImport(flow);
   const existingGroups = $derived(groups.map((g) => g.group.name));
 </script>
 
@@ -32,11 +34,11 @@
     </p>
 
     {#if flow.outcome}
-      <OutcomeView {flow} />
+      <OutcomeView />
     {:else if flow.preview}
-      <PreviewStage {flow} {existingGroups} />
+      <PreviewStage {existingGroups} />
     {:else}
-      <DropStage {flow} />
+      <DropStage />
     {/if}
   </section>
 </div>

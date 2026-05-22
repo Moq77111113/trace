@@ -2,10 +2,9 @@
   import Button from '$lib/shared/ui/Button.svelte';
   import Pill   from '$lib/shared/ui/Pill.svelte';
   import { invalidateAll } from '$app/navigation';
-  import type { ImportState } from '../model/import-state.svelte';
+  import { useImport } from '../model/context';
 
-  type Props = { flow: ImportState };
-  let { flow }: Props = $props();
+  const flow = useImport();
 
   async function importMore(): Promise<void> {
     flow.reset();
