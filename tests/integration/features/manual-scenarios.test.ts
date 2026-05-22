@@ -5,7 +5,7 @@ import {
   renameManualScenario,
   ManualScenarioNameTakenError,
 } from '$lib/server/features/manual-scenarios';
-import { mkFeature, mkProject } from '../../fixtures';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
 async function freshFeature(content = 'Feature: F\n') {
   const project = await mkProject({ name: `Manual ${Date.now()}-${Math.random()}` });

@@ -4,7 +4,7 @@ import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
 import { saveFeature } from '$lib/server/features/lifecycle/save';
 import { addManualScenario } from '$lib/server/features/manual-scenarios';
-import { mkFeature, mkProject } from '../../fixtures';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
 async function freshFeature(content = 'Feature: F\n') {
   const project = await mkProject({ name: `Save ${Date.now()}-${Math.random()}` });

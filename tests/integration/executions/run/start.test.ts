@@ -5,7 +5,7 @@ import { features, scenarioResults } from '$lib/server/db/schema';
 import type { ParseError } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/run/start';
 import { addManualScenario, archiveManualScenario } from '$lib/server/features/manual-scenarios';
-import { mkFeature, mkProject } from '../../../fixtures';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
 async function freshFeatureBase(content: string) {
   const project = await mkProject({ name: `Run ${Date.now()}-${Math.random()}` });

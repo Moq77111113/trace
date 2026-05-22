@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features, manualScenarios, scenarioResults } from '$lib/server/db/schema';
-import { mkProject } from '../fixtures';
+import { mkProject } from '$testing/fixtures';
 
 describe('manual-features schema', () => {
   it('features.description accepts null and content defaults to empty string', async () => {

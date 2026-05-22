@@ -5,7 +5,7 @@ import { scenarioResults } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/run/start';
 import { finishExecution } from '$lib/server/executions/run/finish';
 import { saveScenarioNotes } from '$lib/server/executions/scenario/save-scenario-notes';
-import { mkFeature, mkProject } from '../../../fixtures';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
 async function seedRun() {
   const p = await mkProject({ name: `ScenarioNotes ${Date.now()}-${Math.random()}` });

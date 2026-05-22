@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mkProject } from '../fixtures';
+import { mkProject } from '$testing/fixtures';
 import { createFeature } from '$lib/server/features/lifecycle/create';
 import {
   addManualScenario,

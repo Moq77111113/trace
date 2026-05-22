@@ -3,8 +3,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { apikey } from '$lib/server/db/schema';
 import { listApiKeys, rotateApiKey } from '$lib/server/api-keys';
-import { createTestApiKey } from '../_helpers/api-key';
-import { mkProject } from '../../fixtures';
+import { createTestApiKey } from '$testing/integration/_helpers/api-key';
+import { mkProject } from '$testing/fixtures';
 
 async function seedProject() {
   return mkProject({ name: `Rotate ${Date.now()}-${Math.random()}` });

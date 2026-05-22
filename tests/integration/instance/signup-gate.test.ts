@@ -4,7 +4,7 @@ import { db } from '$lib/server/db/client';
 import { user } from '$lib/server/db/schema';
 import { signupGateBefore, SignupClosedError } from '$lib/server/instance/signup-gate';
 import { openSignup, getInstanceSettings } from '$lib/server/instance/settings';
-import { resetInstance } from '../_helpers/reset-instance';
+import { resetInstance } from '$testing/integration/_helpers/reset-instance';
 
 function uniqueEmail(prefix = 'u') {
 	return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@trace.test`;

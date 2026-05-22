@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
-import { mkProject } from '../../fixtures';
+import { mkProject } from '$testing/fixtures';
 import { createFeature } from '$lib/server/features/lifecycle/create';
 import { createGroup } from '$lib/server/groups/create';
 import { saveFeature } from '$lib/server/features/lifecycle/save';
