@@ -1,0 +1,28 @@
+[
+  {
+    "id": "auth/login",
+    "name": "Login",
+    "tags": [{ "name": "@trace=tp1-1" }, { "name": "@smoke" }],
+    "elements": [
+      { "id": "s1", "name": "Successful login", "type": "scenario",
+        "steps": [{ "name": "user submits", "result": { "status": "passed", "duration": 200000000 } }] }
+    ]
+  },
+  {
+    "id": "auth/signup",
+    "name": "Signup",
+    "tags": [],
+    "elements": [
+      { "id": "s2", "name": "New account", "type": "scenario",
+        "steps": [{ "name": "user fills form", "result": { "status": "failed", "duration": 150000000, "error_message": "boom" } }] }
+    ]
+  },
+  {
+    "id": "billing/checkout",
+    "name": "Checkout",
+    "elements": [
+      { "id": "s3", "name": "Skipped path", "type": "scenario",
+        "steps": [{ "name": "step", "result": { "status": "skipped" } }] }
+    ]
+  }
+]

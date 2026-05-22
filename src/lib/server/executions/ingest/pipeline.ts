@@ -1,110 +1,121 @@
 import { db } from '$lib/server/db/client';
-import { executions, features, scenarioResults } from '$lib/server/db/schema';
-import { getFeatureByCode } from '$lib/server/features/read/queries';
-import { parseFeatureCode } from '$lib/shared/lib/slug';
-import type { IngestedExecution } from './cucumber-json/types';
+import { executions, scenarioResults, projects } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
+import { ok, err, type Result } from '$lib/shared/lib/result';
+import { resolveFeature } from './matching/resolve-feature';
+import { formatFeatureCode } from '$lib/shared/lib/slug';
+import { formatTraceTag } from '$lib/features/feature-import/lib/trace-tag';
+import type { IngestedFeatureRun, ScenarioStatus } from './cucumber-json/types';
 import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
-import type { InferSelectModel } from 'drizzle-orm';
-import { and, eq, sql } from 'drizzle-orm';
 
-export type IngestExecutionInput = {
+export type IngestRunInput = {
   projectId:    string;
   executedBy:   string;
   environment?: string | null;
   ciMetadata?:  CiMetadata | null;
-  /** Optional feature code (`prefix-seq`). Takes precedence over `parsed.featureName` for matching. */
-  featureCode?: string | null;
-  parsed:       IngestedExecution;
+  parsed:       IngestedFeatureRun[];
 };
 
-export type IngestExecutionResult = {
-  execution:        InferSelectModel<typeof executions>;
+export type IngestedExecutionSummary = {
+  featureCode:      string;
+  executionId:      string;
+  status:           ScenarioStatus;
   scenariosMatched: number;
-  scenariosUnknown: number;
-  warnings:         string[];
+  matchedVia:       'code' | 'gherkin-name' | 'name';
 };
 
-type ScenarioStatus = 'PASSED' | 'FAILED' | 'SKIPPED';
+export type IngestRunResult = {
+  status:          ScenarioStatus;
+  executions:      IngestedExecutionSummary[];
+  unknownFeatures: string[];
+  warnings:        string[];
+};
+
+export type IngestRunErrorCode = 'INGEST_NO_FEATURES_MATCHED';
+export type IngestRunError     = { code: IngestRunErrorCode; detail: string };
 
 function deriveFinalStatus(statuses: ScenarioStatus[]): ScenarioStatus {
   if (statuses.includes('FAILED')) return 'FAILED';
   if (statuses.includes('PASSED')) return 'PASSED';
-
   return 'SKIPPED';
 }
 
-/**
- * Resolve the target feature from explicit `featureCode` (preferred) or fall back to
- * case-insensitive name matching. Returns null if nothing matches.
- */
-async function resolveFeature(input: IngestExecutionInput) {
-  if (input.featureCode) {
-    const parsed = parseFeatureCode(input.featureCode);
-    if (!parsed) return null;
-    return getFeatureByCode(input.projectId, parsed.seq);
-  }
-  const [row] = await db
-    .select()
-    .from(features)
-    .where(and(
-      eq(features.projectId, input.projectId),
-      sql`LOWER(${features.name}) = LOWER(${input.parsed.featureName})`,
-    ));
-  return row ?? null;
-}
+export async function ingestRun(input: IngestRunInput): Promise<Result<IngestRunResult, IngestRunError>> {
+  const [projectRow] = await db.select({ codePrefix: projects.codePrefix }).from(projects).where(eq(projects.id, input.projectId));
+  if (!projectRow) throw new Error(`ingestRun: project ${input.projectId} not found`);
 
-/**
- * CI counterpart to `startExecution`. Matches a feature within the project by
- * case-insensitive name, snapshots `features.content` at request time, and
- * writes one finished `runs` row plus N `scenario_results` in a single
- * transaction. The final status is derived the same way as `finishExecution`.
- */
-export async function ingestExecution(input: IngestExecutionInput): Promise<IngestExecutionResult> {
-  const feature = await resolveFeature(input);
-  if (!feature) {
-    const tried = input.featureCode ?? input.parsed.featureName;
-    throw new Error(`ingest: no feature matching "${tried}" in project ${input.projectId}`);
-  }
-
-  const finalStatus = deriveFinalStatus(input.parsed.scenarios.map((s) => s.status));
-  const now         = new Date();
+  const summaries:       IngestedExecutionSummary[] = [];
+  const unknownFeatures: string[] = [];
+  const warnings:        string[] = [];
 
   return db.transaction(async (tx) => {
-    const [execution] = await tx
-      .insert(executions)
-      .values({
+    for (const parsed of input.parsed) {
+      warnings.push(...parsed.warnings);
+
+      const matched = await resolveFeature(parsed, input.projectId);
+      if (!matched.ok) {
+        unknownFeatures.push(parsed.featureName);
+        if (matched.error.code === 'MATCH_TAG_REFERENCES_MISSING_CODE') {
+          const code = matched.error.tagCode ?? '<unknown>';
+          warnings.push(`Feature tagged '${formatTraceTag(code)}' but no such code exists in project.`);
+        }
+        continue;
+      }
+
+      const { feature, via } = matched.value;
+      const status = deriveFinalStatus(parsed.scenarios.map((s) => s.status));
+      const now    = new Date();
+
+      const [execution] = await tx.insert(executions).values({
         featureId:             feature.id,
         source:                'CI',
         executedBy:            input.executedBy,
         environment:           input.environment ?? null,
         ciMetadata:            input.ciMetadata ?? null,
         featureContentAtStart: feature.content,
-        status:                finalStatus,
+        status,
         startedAt:             now,
         finishedAt:            now,
-      })
-      .returning();
-    if (!execution) throw new Error('ingest: execution insert returned no row');
+      }).returning();
+      if (!execution) throw new Error('ingestRun: execution insert returned no row');
 
-    if (input.parsed.scenarios.length) {
-      await tx.insert(scenarioResults).values(
-        input.parsed.scenarios.map((s, i) => ({
-          executionId:  execution.id,
-          scenarioName: s.name,
-          position:     i + 1,
-          status:       s.status,
-          durationMs:   s.durationMs,
-          logs:         s.logs,
-          errorMessage: s.errorMessage,
-        })),
-      );
+      if (parsed.scenarios.length) {
+        await tx.insert(scenarioResults).values(
+          parsed.scenarios.map((s, i) => ({
+            executionId:  execution.id,
+            scenarioName: s.name,
+            position:     i + 1,
+            status:       s.status,
+            durationMs:   s.durationMs,
+            logs:         s.logs,
+            errorMessage: s.errorMessage,
+          })),
+        );
+      }
+
+      const featureCode = formatFeatureCode(projectRow.codePrefix, feature.codeSeq);
+      summaries.push({
+        featureCode,
+        executionId:      execution.id,
+        status,
+        scenariosMatched: parsed.scenarios.length,
+        matchedVia:       via,
+      });
+
+      if (via !== 'code') {
+        warnings.push(`Feature '${parsed.featureName}' matched by name; add '${formatTraceTag(featureCode)}' to the Gherkin for stable matching.`);
+      }
     }
 
-    return {
-      execution,
-      scenariosMatched: input.parsed.scenarios.length,
-      scenariosUnknown: input.parsed.unknownCount,
-      warnings:         input.parsed.warnings,
-    };
+    if (summaries.length === 0) {
+      return err({ code: 'INGEST_NO_FEATURES_MATCHED', detail: `no feature matched: ${unknownFeatures.join(', ')}` });
+    }
+
+    return ok({
+      status: deriveFinalStatus(summaries.map((s) => s.status)),
+      executions:      summaries,
+      unknownFeatures,
+      warnings,
+    });
   });
 }

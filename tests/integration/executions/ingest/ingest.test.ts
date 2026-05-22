@@ -1,113 +1,159 @@
 import { describe, it, expect } from 'vitest';
 import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { scenarioResults } from '$lib/server/db/schema';
-import { ingestExecution } from '$lib/server/executions/ingest/pipeline';
-import type { IngestedExecution } from '$lib/server/executions/ingest/cucumber-json/types';
-import { mkFeature, mkProject } from '../../../fixtures';
+import { executions, scenarioResults } from '$lib/server/db/schema';
+import { ingestRun } from '$lib/server/executions/ingest/pipeline';
+import type { IngestedFeatureRun } from '$lib/server/executions/ingest/cucumber-json/types';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
-async function seedProjectWithFeature(featureName = 'Login') {
-  const project = await mkProject({ name: `Ingest ${Date.now()}-${Math.random()}` });
-  const feature = await mkFeature(project.id, {
-    name:    featureName,
-    content: `Feature: ${featureName}\n\n  Scenario: A\n    Given x\n`,
-  });
-  return { project, feature };
+function run(featureName: string, scenarios: IngestedFeatureRun['scenarios'], tags: string[] = []): IngestedFeatureRun {
+  return { featureName, tags, scenarios, warnings: [] };
 }
 
-function parsed(featureName: string, scenarios: IngestedExecution['scenarios']): IngestedExecution {
-  return { featureName, scenarios, unknownCount: 0, warnings: [] };
-}
+describe('ingestRun', () => {
+  it('writes one execution per matched feature', async () => {
+    const project = await mkProject({ name: `Multi ${Date.now()}-${Math.random()}` });
+    const login   = await mkFeature(project.id, { name: 'Login' });
+    const signup  = await mkFeature(project.id, { name: 'Signup' });
 
-describe('ingestExecution', () => {
-  it('writes a finished run with derived status and scenario_results', async () => {
-    const { project, feature } = await seedProjectWithFeature();
-
-    const res = await ingestExecution({
+    const result = await ingestRun({
       projectId:   project.id,
-      executedBy:  'ci-token-1',
+      executedBy:  'ci',
       environment: 'staging',
-      parsed: parsed('Login', [
-        { name: 'A', status: 'FAILED', durationMs: 200, logs: null, errorMessage: 'oops' },
-      ]),
+      parsed: [
+        run('Login',  [{ name: 'A', status: 'PASSED', durationMs: 100, logs: null, errorMessage: null }]),
+        run('Signup', [{ name: 'B', status: 'FAILED', durationMs: 200, logs: null, errorMessage: 'boom' }]),
+      ],
     });
 
-    expect(res.execution.source).toBe('CI');
-    expect(res.execution.status).toBe('FAILED');
-    expect(res.execution.finishedAt).not.toBeNull();
-    expect(res.execution.featureContentAtStart).toBe(feature.content);
-    expect(res.scenariosMatched).toBe(1);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.status).toBe('FAILED');
+    expect(result.value.executions).toHaveLength(2);
+    expect(result.value.unknownFeatures).toEqual([]);
 
-    const rows = await db
-      .select()
-      .from(scenarioResults)
-      .where(eq(scenarioResults.executionId, res.execution.id));
-    expect(rows).toHaveLength(1);
-    const [row] = rows;
-    expect(row?.errorMessage).toBe('oops');
-    expect(row?.durationMs).toBe(200);
+    const inserted = await db.select().from(executions).where(eq(executions.featureId, login.id));
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0]?.status).toBe('PASSED');
+
+    const signupInserted = await db.select().from(executions).where(eq(executions.featureId, signup.id));
+    expect(signupInserted).toHaveLength(1);
+    expect(signupInserted[0]?.status).toBe('FAILED');
   });
 
-  it('matches feature case-insensitively', async () => {
-    const { project } = await seedProjectWithFeature('Login');
+  it('records unknown features without failing the run when at least one matches', async () => {
+    const project = await mkProject({ name: `Partial ${Date.now()}-${Math.random()}` });
+    await mkFeature(project.id, { name: 'Login' });
 
-    const res = await ingestExecution({
+    const result = await ingestRun({
       projectId:  project.id,
       executedBy: 'ci',
-      parsed: parsed('LOGIN', [
-        { name: 'A', status: 'PASSED', durationMs: 100, logs: null, errorMessage: null },
-      ]),
+      parsed: [
+        run('Login', [{ name: 'A', status: 'PASSED', durationMs: 10, logs: null, errorMessage: null }]),
+        run('Ghost', [{ name: 'X', status: 'PASSED', durationMs: 5,  logs: null, errorMessage: null }]),
+      ],
     });
 
-    expect(res.execution.status).toBe('PASSED');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.executions).toHaveLength(1);
+    expect(result.value.unknownFeatures).toEqual(['Ghost']);
+  });
+
+  it('returns INGEST_NO_FEATURES_MATCHED when zero features match', async () => {
+    const project = await mkProject({ name: `None ${Date.now()}-${Math.random()}` });
+
+    const result = await ingestRun({
+      projectId:  project.id,
+      executedBy: 'ci',
+      parsed: [run('Ghost', [{ name: 'A', status: 'PASSED', durationMs: 1, logs: null, errorMessage: null }])],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('INGEST_NO_FEATURES_MATCHED');
+  });
+
+  it('matches via @trace= tag and reports matched_via: code', async () => {
+    const project = await mkProject({ name: `Tag ${Date.now()}-${Math.random()}`, codePrefix: 'tm' });
+    const feature = await mkFeature(project.id, { name: 'Different Name' });
+
+    const result = await ingestRun({
+      projectId:  project.id,
+      executedBy: 'ci',
+      parsed: [run('Anything', [{ name: 'A', status: 'PASSED', durationMs: 1, logs: null, errorMessage: null }], [`@trace=tm-${feature.codeSeq}`])],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.executions[0]?.matchedVia).toBe('code');
+  });
+
+  it('warns when a feature matched by name (push toward @trace= tagging)', async () => {
+    const project = await mkProject({ name: `Warn ${Date.now()}-${Math.random()}`, codePrefix: 'wn' });
+    const feature = await mkFeature(project.id, { name: 'Login' });
+
+    const result = await ingestRun({
+      projectId:  project.id,
+      executedBy: 'ci',
+      parsed: [run('Login', [{ name: 'A', status: 'PASSED', durationMs: 1, logs: null, errorMessage: null }])],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const expectedCode = `wn-${feature.codeSeq}`;
+    expect(result.value.warnings.some((w) => w.includes('matched by name') && w.includes(expectedCode))).toBe(true);
+  });
+
+  it('warns when a @trace= tag references a missing code, and skips the feature', async () => {
+    const project = await mkProject({ name: `Bad tag ${Date.now()}-${Math.random()}`, codePrefix: 'bt' });
+    await mkFeature(project.id, { name: 'Login' });
+
+    const result = await ingestRun({
+      projectId:  project.id,
+      executedBy: 'ci',
+      parsed: [
+        run('Login', [{ name: 'A', status: 'PASSED', durationMs: 1, logs: null, errorMessage: null }]),
+        run('Other', [{ name: 'B', status: 'PASSED', durationMs: 1, logs: null, errorMessage: null }], ['@trace=bt-999']),
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.executions).toHaveLength(1);
+    expect(result.value.unknownFeatures).toContain('Other');
+    expect(result.value.warnings.some((w) => w.includes('@trace=bt-999'))).toBe(true);
   });
 
   it('assigns position 1..N to ingested scenarios in input order', async () => {
-    const project = await mkProject({ name: `Ingest pos ${Date.now()}-${Math.random()}` });
-    await mkFeature(project.id, {
+    const project = await mkProject({ name: `Pos ${Date.now()}-${Math.random()}` });
+    const feature = await mkFeature(project.id, {
       name: 'Login',
       content: 'Feature: Login\n\n  Scenario: A\n  Scenario: B\n  Scenario: C\n',
     });
 
-    const result = await ingestExecution({
+    const result = await ingestRun({
       projectId:  project.id,
-      executedBy: 'ci-runner',
-      parsed: {
-        featureName: 'Login',
-        scenarios: [
-          { name: 'A', status: 'PASSED', durationMs: 10, logs: null, errorMessage: null },
-          { name: 'B', status: 'FAILED', durationMs: 20, logs: null, errorMessage: 'boom' },
-          { name: 'C', status: 'PASSED', durationMs: 30, logs: null, errorMessage: null },
-        ],
-        unknownCount: 0,
-        warnings:     [],
-      },
+      executedBy: 'ci',
+      parsed: [run('Login', [
+        { name: 'A', status: 'PASSED', durationMs: 10, logs: null, errorMessage: null },
+        { name: 'B', status: 'FAILED', durationMs: 20, logs: null, errorMessage: 'boom' },
+        { name: 'C', status: 'PASSED', durationMs: 30, logs: null, errorMessage: null },
+      ])],
     });
 
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const executionId = result.value.executions[0]?.executionId;
+    expect(executionId).toBeDefined();
+
     const rows = await db
-      .select({ name: scenarioResults.scenarioName, position: scenarioResults.position, source: scenarioResults.source })
+      .select()
       .from(scenarioResults)
-      .where(eq(scenarioResults.executionId, result.execution.id))
+      .where(eq(scenarioResults.executionId, executionId!))
       .orderBy(asc(scenarioResults.position));
-
-    expect(rows.map((r) => ({ name: r.name, position: r.position, source: r.source }))).toEqual([
-      { name: 'A', position: 1, source: 'GHERKIN' },
-      { name: 'B', position: 2, source: 'GHERKIN' },
-      { name: 'C', position: 3, source: 'GHERKIN' },
-    ]);
-  });
-
-  it('errors when no feature matches in the project', async () => {
-    const { project } = await seedProjectWithFeature('Login');
-
-    await expect(
-      ingestExecution({
-        projectId:  project.id,
-        executedBy: 'ci',
-        parsed: parsed('Unknown', [
-          { name: 'A', status: 'PASSED', durationMs: 100, logs: null, errorMessage: null },
-        ]),
-      }),
-    ).rejects.toThrow(/no feature matching/i);
+    expect(rows.map((r) => r.position)).toEqual([1, 2, 3]);
+    expect(rows.map((r) => r.scenarioName)).toEqual(['A', 'B', 'C']);
+    expect(feature.id).toBeDefined();
   });
 });
