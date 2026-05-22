@@ -4,24 +4,18 @@
   import Icon   from '$lib/shared/ui/Icon.svelte';
 
   type Props = {
-    projectId:   string;
     projectSlug: string;
     baseUrl:     string;
   };
 
-  let { projectId, projectSlug, baseUrl }: Props = $props();
+  let { projectSlug, baseUrl }: Props = $props();
 
   let env = $state('staging');
 
   const curl = $derived(`curl -X POST '${baseUrl}/api/executions/ingest' \\
   -H 'Authorization: Bearer <YOUR_KEY>' \\
   -H 'Content-Type: application/json' \\
-  -H 'X-Project-Id: ${projectId}' \\
   -H 'X-Environment: ${env}' \\
-  -H 'X-CI-Feature-Code: <feature-code>' \\
-  -H 'X-CI-Branch: <branch>' \\
-  -H 'X-CI-Commit: <commit>' \\
-  -H 'X-CI-Source: github-actions' \\
   --data-binary @cucumber.json`);
 
   let copied = $state(false);
