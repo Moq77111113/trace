@@ -1,19 +1,26 @@
 import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
 import { saveFeature } from '$lib/server/features/lifecycle/save';
 import { findAvailableName, findOrCreateGroup, importFeatureFromContent } from '$lib/server/features/import-create';
 import { dropPreview, getPreview } from './buffer';
 
-export type Decision = 'import' | 'skip' | 'overwrite' | 'rename';
+export const decisionSchema = z.enum(['import', 'skip', 'overwrite', 'rename']);
+export type Decision = z.infer<typeof decisionSchema>;
 
-export type CommitRowInput = { decision: Decision; groupName: string | null };
+export const commitRowInput = z.object({
+  decision:  decisionSchema,
+  groupName: z.string().min(1).nullable(),
+});
+export type CommitRowInput = z.infer<typeof commitRowInput>;
 
-export type CommitInput = {
-  previewId: string;
-  rows:      Record<string, CommitRowInput>;
-  editor?:   string;
-};
+export const commitInput = z.object({
+  previewId: z.string().min(1),
+  rows:      z.record(z.string(), commitRowInput),
+  editor:    z.string().optional(),
+});
+export type CommitInput = z.infer<typeof commitInput>;
 
 export type CommitFailure = { rowId: string; filename: string; reason: string };
 
