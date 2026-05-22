@@ -9,7 +9,6 @@
   let { data } = $props();
 
   const projectSlug = $derived(page.params.slug ?? '');
-  const projectId   = $derived(data.project.id);
   const baseUrl     = $derived(typeof window === 'undefined' ? 'https://your-trace-instance' : window.location.origin);
 </script>
 
@@ -34,7 +33,7 @@
     {#if !data.hasUsableKey}
       <CiKeyEmptyState {projectSlug} />
     {:else}
-      <CiCurlSnippet {projectId} {projectSlug} {baseUrl} />
+      <CiCurlSnippet {projectSlug} {baseUrl} />
       <CiReference />
     {/if}
   </section>

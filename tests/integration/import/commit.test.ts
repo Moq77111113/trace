@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { featureGroups, features, tags, featureTags } from '$lib/server/db/schema';
-import { mkProject } from '../../fixtures';
+import { mkProject } from '$testing/fixtures';
 import { createFeature } from '$lib/server/features/lifecycle/create';
 import { archiveFeature } from '$lib/server/features/lifecycle/archive';
 import { createGroup } from '$lib/server/groups/create';
@@ -243,6 +243,27 @@ describe('commitBatch', () => {
     });
     expect(settings).not.toBeUndefined();
     expect(updated?.groupId).toBe(settings?.id);
+  });
+
+  it('strips the leading @trace= line before persisting feature content', async () => {
+    const p = await mkProject({ name: `Tag ${Date.now()}` });
+
+    const preview = await parseBatch(p.id, [
+      file('a.feature', '@trace=login-1\nFeature: Login\n  Scenario: A\n    Given x\n'),
+    ]);
+
+    await commitBatch({
+      previewId: preview.previewId,
+      rows: rowsFor(preview.rows, 'import'),
+    });
+
+    const stored = await db.query.features.findFirst({
+      where: and(eq(features.projectId, p.id), eq(features.name, 'Login')),
+    });
+    expect(stored).toBeDefined();
+    if (!stored) return;
+    expect(stored.content).not.toContain('@trace=');
+    expect(stored.content).toMatch(/^Feature: Login/);
   });
 
   it('drops the preview buffer once committed', async () => {

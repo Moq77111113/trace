@@ -1,14 +1,16 @@
+export type ScenarioStatus = 'PASSED' | 'FAILED' | 'SKIPPED';
+
 export type IngestedScenario = {
-  name:          string;
-  status:        'PASSED' | 'FAILED' | 'SKIPPED';
-  durationMs:    number | null;
-  logs:          string | null;
-  errorMessage:  string | null;
+  name:         string;
+  status:       ScenarioStatus;
+  durationMs:   number | null;
+  logs:         string | null;
+  errorMessage: string | null;
 };
 
-export type IngestedExecution = {
-  featureName:   string;
-  scenarios:     IngestedScenario[];
-  unknownCount:  number;
-  warnings:      string[];
+export type IngestedFeatureRun = {
+  featureName: string;
+  tags:        string[];
+  scenarios:   IngestedScenario[];
+  warnings:    string[];
 };

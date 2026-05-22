@@ -27,11 +27,11 @@ rest of the team. See [`.env.example`](./.env.example) for the full list of vari
 
 ## CI ingest
 
-```sh
-curl -X POST https://your.trace/api/executions/ingest \
-  -H 'X-Project-Id: <pid>' \
-  -H 'X-Environment: ci' \
-  -H 'X-CI-Source: github-actions' \
+```bash
+curl -X POST 'https://your.trace/api/executions/ingest' \
+  -H 'Authorization: Bearer $TRACE_KEY' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Environment: staging' \
   --data-binary @cucumber.json
 ```
 

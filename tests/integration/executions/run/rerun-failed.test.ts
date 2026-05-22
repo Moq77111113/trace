@@ -7,7 +7,7 @@ import { markScenario } from '$lib/server/executions/scenario/mark-scenario';
 import { finishExecution } from '$lib/server/executions/run/finish';
 import { rerunFailed } from '$lib/server/executions/run/rerun-failed';
 import { addManualScenario } from '$lib/server/features/manual-scenarios';
-import { mkFeature, mkProject } from '../../../fixtures';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
 const FEATURE_CONTENT = `Feature: Login
 

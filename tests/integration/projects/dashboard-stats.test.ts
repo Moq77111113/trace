@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
 import { executions } from '$lib/server/db/schema';
 import { getProjectDashboardStats } from '$lib/server/projects/queries';
-import { mkFeature, mkProject } from '../../fixtures';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
 async function seedProject() {
   return mkProject({ name: `Dash ${Date.now()}-${Math.random()}` });

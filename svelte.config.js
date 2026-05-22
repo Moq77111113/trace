@@ -9,7 +9,8 @@ const config = {
 	kit: {
 		adapter: adapter(),
 		alias: {
-			'~': '.'
+			'~': '.',
+			$testing: './tests'
 		},
 
 		typescript: {

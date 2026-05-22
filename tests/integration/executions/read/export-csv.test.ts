@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
 import { executions } from '$lib/server/db/schema';
 import { GET } from '~/src/routes/(app)/p/[slug]/executions/export.csv/+server';
-import { mkFeature, mkProject } from '../../../fixtures';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
 type ExportEvent = Parameters<typeof GET>[0];
 

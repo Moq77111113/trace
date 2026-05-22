@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getInstanceSettings, openSignup, closeSignup } from '$lib/server/instance/settings';
-import { resetInstance } from '../_helpers/reset-instance';
+import { resetInstance } from '$testing/integration/_helpers/reset-instance';
 
 describe('instance settings', () => {
 	beforeEach(async () => {

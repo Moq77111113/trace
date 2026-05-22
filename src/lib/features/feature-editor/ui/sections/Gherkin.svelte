@@ -24,13 +24,14 @@
     markers:            Marker[];
     completionProvider: CompletionProvider;
     snippets:           Snippet[];
+    featureCode:        string;
     onChange:           (next: string) => void;
     onInsert:           (snippet: Snippet) => void;
     api?:               EditorApi | null;
   };
 
   let {
-    featureId, value, empty, parseErrors, markers, completionProvider, snippets,
+    featureId, value, empty, parseErrors, markers, completionProvider, snippets, featureCode,
     onChange, onInsert, api = $bindable<EditorApi | null>(null),
   }: Props = $props();
 
@@ -60,7 +61,7 @@
   </div>
 
   <div class="relative min-h-[400px] border border-border rounded-md overflow-hidden">
-    <MonacoWrapper {value} {onChange} {markers} {completionProvider} bind:api />
+    <MonacoWrapper {value} {onChange} {markers} {completionProvider} {featureCode} bind:api />
     {#if empty}<MonacoEmptyHint />{/if}
   </div>
 </CollapsibleSection>

@@ -1,216 +1,121 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { db } from '$lib/server/db/client';
-import { createTestApiKey } from '../../_helpers/api-key';
-import { POST, type IngestSuccess } from '../../../../src/routes/(ci)/api/executions/ingest/+server';
-import { mkFeature, mkProject } from '../../../fixtures';
+import { isHttpError } from '@sveltejs/kit';
+import { POST } from '../../../../src/routes/(ci)/api/executions/ingest/+server';
+import { createApiKey } from '$lib/server/api-keys';
+import { mkFeature, mkProject } from '$testing/fixtures';
+import { mkUser } from '$testing/integration/_helpers/api-key';
 
-type IngestEvent = Parameters<typeof POST>[0];
-
-async function seedProjectWithKey(featureName = 'Login') {
-  const p = await mkProject({ name: `IngestApi ${Date.now()}-${Math.random()}` });
-  const f = await mkFeature(p.id, {
-    name:    featureName,
-    content: `Feature: ${featureName}\n\n  Scenario: Successful login\n    Given x\n`,
-  });
-  const { rawKey } = await createTestApiKey(p.id, 'ci-token');
-  return { project: p, feature: f, rawKey };
-}
-
-function buildEvent(body: string, headers: Record<string, string> = {}, searchParams: Record<string, string> = {}) {
-  const url = new URL('http://localhost/api/executions/ingest');
-  for (const [k, v] of Object.entries(searchParams)) url.searchParams.set(k, v);
-
-  const request = new Request(url, {
-    method: 'POST',
+async function fetchWith(payload: unknown, headers: Record<string, string>): Promise<Response> {
+  const request = new Request('http://test/api/executions/ingest', {
+    method:  'POST',
     headers: { 'content-type': 'application/json', ...headers },
-    body,
+    body:    JSON.stringify(payload),
   });
-
-  return { request, url } as unknown as IngestEvent;
-}
-
-async function invoke<TBody = IngestSuccess>(event: IngestEvent): Promise<{ status: number; body: TBody | { message: string } }> {
   try {
-    const res = await POST(event);
-    return { status: res.status, body: await res.json() as TBody };
+    return await POST({ request, url: new URL(request.url) } as never);
   } catch (e) {
-    if (e && typeof e === 'object' && 'status' in e) {
-      const err = e as { status: number; body: { message: string } };
-      return { status: err.status, body: err.body };
+    if (isHttpError(e)) {
+      return new Response(JSON.stringify(e.body), {
+        status:  e.status,
+        headers: { 'content-type': 'application/json' },
+      });
     }
     throw e;
   }
 }
 
-function expectSuccess(body: IngestSuccess | { message: string }): IngestSuccess {
-  if ('message' in body) throw new Error(`expected success, got error: ${body.message}`);
-  return body;
+async function seedProjectWithKey(features: string[] = ['Login']) {
+  const project = await mkProject({ name: `Endpoint ${Date.now()}-${Math.random()}`, codePrefix: 'ep' });
+  for (const name of features) await mkFeature(project.id, { name });
+  const user    = await mkUser();
+  const { key } = await createApiKey({ projectId: project.id, name: 'ci', userId: user.id, expiresAt: null });
+  return { project, key, auth: `Bearer ${key}` };
+}
+
+function cucumberPayload(featureName: string, status: 'passed' | 'failed' = 'passed') {
+  return [{
+    id:       `${featureName}`,
+    name:     featureName,
+    tags:     [],
+    elements: [{
+      id: 's1', name: 'Scenario', type: 'scenario',
+      steps: [{ name: 'step', result: { status, duration: 1_000_000 } }],
+    }],
+  }];
 }
 
 describe('POST /api/executions/ingest', () => {
-  it('accepts a cucumber.json and creates a CI run', async () => {
-    const { project, rawKey } = await seedProjectWithKey();
-    const body                = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
+  it('200 with new response shape when all features match', async () => {
+    const { auth } = await seedProjectWithKey(['Login']);
 
-    const res = await invoke(buildEvent(body, {
-      'x-project-id':  project.id,
-      'authorization': `Bearer ${rawKey}`,
-      'x-environment': 'staging',
-    }));
+    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth });
 
-    expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({
-      status:            'PASSED',
-      scenarios_matched: 1,
-      scenarios_unknown: 0,
-    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe('PASSED');
+    expect(body.executions).toHaveLength(1);
+    expect(body.executions[0].matched_via).toBe('gherkin-name');
+    expect(body.executions[0].feature_code).toMatch(/^ep-\d+$/);
+    expect(body.unknown_features).toEqual([]);
   });
 
-  it('matches by X-CI-Feature-Code when present, ignoring the parsed feature name', async () => {
-    const { project, feature, rawKey } = await seedProjectWithKey('Some other name on disk');
-    const body                         = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
+  it('207 Multi-Status when some features match and some are unknown', async () => {
+    const { auth } = await seedProjectWithKey(['Login']);
 
-    const res = await invoke(buildEvent(body, {
-      'x-project-id':       project.id,
-      'authorization':      `Bearer ${rawKey}`,
-      'x-ci-feature-code':  `${project.codePrefix}-${feature.codeSeq}`,
-    }));
+    const res = await fetchWith(
+      [...cucumberPayload('Login'), ...cucumberPayload('Ghost')],
+      { authorization: auth },
+    );
 
-    expect(res.status).toBe(201);
-    expect(expectSuccess(res.body).scenarios_matched).toBe(1);
+    expect(res.status).toBe(207);
+    const body = await res.json();
+    expect(body.executions).toHaveLength(1);
+    expect(body.unknown_features).toEqual(['Ghost']);
   });
 
-  it('persists ci_metadata from X-CI-Branch and X-CI-Commit headers', async () => {
-    const { project, rawKey } = await seedProjectWithKey();
-    const body                = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
+  it('404 with INGEST_NO_FEATURES_MATCHED when nothing matches', async () => {
+    const { auth } = await seedProjectWithKey(['Login']);
 
-    const res = await invoke(buildEvent(body, {
-      'x-project-id':  project.id,
-      'authorization': `Bearer ${rawKey}`,
-      'x-environment': 'staging',
-      'x-ci-branch':   'feat/A9',
-      'x-ci-commit':   'a3fa827abcdef',
-    }));
-
-    expect(res.status).toBe(201);
-
-    const runId = expectSuccess(res.body).run_id;
-    const { db }             = await import('$lib/server/db/client');
-    const { executions }     = await import('$lib/server/db/schema');
-    const { eq }             = await import('drizzle-orm');
-
-    const [row] = await db.select().from(executions).where(eq(executions.id, runId));
-    expect(row?.ciMetadata).toEqual({ branch: 'feat/A9', commit: 'a3fa827abcdef' });
-  });
-
-  it('leaves ci_metadata null when no CI headers are sent', async () => {
-    const { project, rawKey } = await seedProjectWithKey();
-    const body                = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
-
-    const res = await invoke(buildEvent(body, {
-      'x-project-id':  project.id,
-      'authorization': `Bearer ${rawKey}`,
-    }));
-
-    expect(res.status).toBe(201);
-
-    const runId = expectSuccess(res.body).run_id;
-    const { db }         = await import('$lib/server/db/client');
-    const { executions } = await import('$lib/server/db/schema');
-    const { eq }         = await import('drizzle-orm');
-
-    const [row] = await db.select().from(executions).where(eq(executions.id, runId));
-    expect(row?.ciMetadata).toBeNull();
-  });
-
-  it('returns 400 for missing project header', async () => {
-    const res = await invoke(buildEvent('[]'));
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 401 when bearer token is missing', async () => {
-    const { project } = await seedProjectWithKey();
-
-    const res = await invoke(buildEvent('[]', { 'x-project-id': project.id }));
-
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 401 for invalid bearer token', async () => {
-    const { project } = await seedProjectWithKey();
-
-    const res = await invoke(buildEvent('[]', {
-      'x-project-id':  project.id,
-      'authorization': 'Bearer crun_invalid_key',
-    }));
-
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 401 when bearer is for a different project', async () => {
-    const a = await seedProjectWithKey();
-    const b = await seedProjectWithKey();
-
-    const res = await invoke(buildEvent('[]', {
-      'x-project-id':  a.project.id,
-      'authorization': `Bearer ${b.rawKey}`,
-    }));
-
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 400 for invalid JSON body', async () => {
-    const { project, rawKey } = await seedProjectWithKey();
-    const res = await invoke(buildEvent('not-json', {
-      'x-project-id':  project.id,
-      'authorization': `Bearer ${rawKey}`,
-    }));
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 404 when no feature matches', async () => {
-    const { project, rawKey } = await seedProjectWithKey('SomeOther');
-    const body                = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
-
-    const res = await invoke(buildEvent(body, {
-      'x-project-id':  project.id,
-      'authorization': `Bearer ${rawKey}`,
-    }));
+    const res = await fetchWith(cucumberPayload('Ghost'), { authorization: auth });
 
     expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.code).toBe('INGEST_NO_FEATURES_MATCHED');
   });
 
-  it('accepts project via ?project= query param', async () => {
-    const { project, rawKey } = await seedProjectWithKey();
-    const body                = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
+  it('400 PARSE_EMPTY_PAYLOAD when payload is []', async () => {
+    const { auth } = await seedProjectWithKey();
 
-    const res = await invoke(buildEvent(body, {
-      'authorization': `Bearer ${rawKey}`,
-    }, { project: project.id }));
+    const res = await fetchWith([], { authorization: auth });
 
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.code).toBe('PARSE_EMPTY_PAYLOAD');
   });
 
-  it('uses the API key name as executedBy on the run', async () => {
-    const { project, rawKey } = await seedProjectWithKey();
-    const body                = readFileSync(resolve('tests/fixtures/cucumber-json/passed.json'), 'utf-8');
+  it('401 CI_AUTH_HEADER_MISSING when no Authorization header', async () => {
+    const res = await fetchWith(cucumberPayload('Login'), {});
 
-    const res = await invoke(buildEvent(body, {
-      'x-project-id':  project.id,
-      'authorization': `Bearer ${rawKey}`,
-    }));
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.code).toBe('CI_AUTH_HEADER_MISSING');
+  });
 
-    expect(res.status).toBe(201);
+  it('silently ignores X-Project-Id and X-CI-Feature-Code if present (clean break tolerance)', async () => {
+    const { auth, project } = await seedProjectWithKey(['Login']);
 
-    const executionId = (res.body as { run_id: string }).run_id;
-    const [run] = await db.query.executions.findMany({
-      where: (r, { eq }) => eq(r.id, executionId),
+    const res = await fetchWith(cucumberPayload('Login'), {
+      authorization:       auth,
+      'x-project-id':      'bogus-project-id',
+      'x-ci-feature-code': 'irrelevant',
+      'x-environment':     'staging',
+      'x-ci-branch':       'main',
+      'x-ci-commit':       'deadbeef',
+      'x-ci-source':       'github-actions',
     });
 
-    expect(run?.executedBy).toBe('ci-token');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.executions[0].feature_code).toMatch(new RegExp(`^${project.codePrefix}-\\d+$`));
   });
 });

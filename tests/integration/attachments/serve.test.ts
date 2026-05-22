@@ -5,7 +5,7 @@ import { db } from '$lib/server/db/client';
 import { attachments, executions, scenarioResults } from '$lib/server/db/schema';
 import { putObject, deleteObject } from '$lib/server/storage/s3';
 import { GET } from '../../../src/routes/(app)/api/attachments/[aid]/+server';
-import { mkFeature, mkProject } from '../../fixtures';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
 type AttachmentEvent = Parameters<typeof GET>[0];
 

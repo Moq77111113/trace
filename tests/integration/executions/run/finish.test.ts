@@ -4,7 +4,7 @@ import { db } from '$lib/server/db/client';
 import { scenarioResults } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/run/start';
 import { finishExecution } from '$lib/server/executions/run/finish';
-import { mkFeature, mkProject } from '../../../fixtures';
+import { mkFeature, mkProject } from '$testing/fixtures';
 
 async function seedRun(content: string) {
   const p = await mkProject({ name: `Fin ${Date.now()}-${Math.random()}` });
