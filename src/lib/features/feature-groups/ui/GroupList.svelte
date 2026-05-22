@@ -1,8 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { invalidateAll } from '$app/navigation';
+  import { enhance } from '$app/forms';
   import { persistedSet } from '$lib/shared/storage/persisted-set.svelte';
-  import { moveFeatureToGroup } from '../api/client';
   import FeatureGroupRow from './FeatureGroupRow.svelte';
   import UngroupedSection from './UngroupedSection.svelte';
   import DeleteGroupModal, { type DeleteGroupTarget } from './DeleteGroupModal.svelte';
@@ -26,6 +25,10 @@
 
   const collapsed = untrack(() => persistedSet(`trace.groupCollapse.${projectId}`));
 
+  let moveForm:        HTMLFormElement;
+  let pendingFeatureId = $state('');
+  let pendingGroupId   = $state('');
+
   function toggle(id: string): void {
     if (collapsed.has(id)) collapsed.delete(id);
     else                   collapsed.add(id);
@@ -37,13 +40,19 @@
     e.dataTransfer.effectAllowed = 'move';
   }
 
-  async function dropOnGroup(e: DragEvent, targetGroupId: string | null): Promise<void> {
+  function dropOnGroup(e: DragEvent, targetGroupId: string | null): void {
     const featureId = e.dataTransfer?.getData('application/x-trace-feature');
     if (!featureId) return;
-    await moveFeatureToGroup(featureId, targetGroupId);
-    await invalidateAll();
+    pendingFeatureId = featureId;
+    pendingGroupId   = targetGroupId ?? '';
+    moveForm.requestSubmit();
   }
 </script>
+
+<form bind:this={moveForm} action="?/moveFeature" method="POST" use:enhance hidden>
+  <input type="hidden" name="featureId" value={pendingFeatureId}>
+  <input type="hidden" name="groupId"   value={pendingGroupId}>
+</form>
 
 {#each groups as g (g.group.id)}
   <FeatureGroupRow
