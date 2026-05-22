@@ -41,15 +41,29 @@ async function seedExecution(
   return r;
 }
 
-function buildEvent(slug: string, searchParams: Record<string, string> = {}): ExportEvent {
+function buildEvent(slug: string, searchParams: Record<string, string> = {}, opts: { authed?: boolean } = { authed: true }): ExportEvent {
   const url = new URL(`http://localhost/p/${slug}/executions/export.csv`);
   for (const [k, v] of Object.entries(searchParams)) url.searchParams.set(k, v);
-  return { params: { slug }, url } as unknown as ExportEvent;
+  const locals = opts.authed
+    ? {
+        user:    { id: 'u', email: 'u@x', name: null, role: 'user', welcomedAt: null },
+        session: { id: 's' },
+      }
+    : { user: null, session: null };
+  return { params: { slug }, url, locals } as unknown as ExportEvent;
 }
 
 async function invoke(event: ExportEvent) {
-  const res = await GET(event);
-  return { status: res.status, headers: res.headers, body: await res.text() };
+  try {
+    const res = await GET(event);
+    return { status: res.status, headers: res.headers, body: await res.text() };
+  } catch (e) {
+    if (e && typeof e === 'object' && 'status' in e) {
+      const err = e as { status: number; body: { message: string } };
+      return { status: err.status, headers: new Headers(), body: err.body.message };
+    }
+    throw e;
+  }
 }
 
 describe('GET /projects/[pid]/executions/export.csv', () => {
@@ -96,5 +110,11 @@ describe('GET /projects/[pid]/executions/export.csv', () => {
     const res = await invoke(buildEvent(p.slug));
     expect(res.status).toBe(200);
     expect(res.body.trim().split('\r\n')).toHaveLength(1);
+  });
+
+  it('returns 401 when no session is present', async () => {
+    const p = await seedProject();
+    const res = await invoke(buildEvent(p.slug, {}, { authed: false }));
+    expect(res.status).toBe(401);
   });
 });

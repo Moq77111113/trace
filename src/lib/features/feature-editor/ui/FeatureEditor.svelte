@@ -9,7 +9,7 @@
   import Description     from './sections/Description.svelte';
   import Gherkin         from './sections/Gherkin.svelte';
   import ManualScenarios from '$lib/features/manual-scenarios/ui/ManualScenarios.svelte';
-  import type { ManualScenarioRow } from '$lib/features/manual-scenarios/api/client';
+  import type { ManualScenarioRow } from '$lib/server/features/manual-scenarios';
   import SaveError       from './parts/SaveError.svelte';
   import type { Snippet } from '$lib/shared/gherkin/snippets';
   import { FeatureForm }   from '../model/feature-form.svelte';

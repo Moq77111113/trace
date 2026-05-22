@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { db } from '$lib/server/db/client';
 import { createTestApiKey } from '../../_helpers/api-key';
-import { POST, type IngestSuccess } from '../../../../src/routes/(public)/api/executions/ingest/+server';
+import { POST, type IngestSuccess } from '../../../../src/routes/(ci)/api/executions/ingest/+server';
 import { mkFeature, mkProject } from '../../../fixtures';
 
 type IngestEvent = Parameters<typeof POST>[0];

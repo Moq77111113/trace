@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import Button from '$lib/shared/ui/Button.svelte';
 	import Icon   from '$lib/shared/ui/Icon.svelte';
 
@@ -12,17 +13,6 @@
 	let { projectSlug, projectName, featureCode, ondismiss }: Props = $props();
 
 	let dismissing = $state(false);
-
-	async function dismiss() {
-		if (dismissing) return;
-		dismissing = true;
-		const res = await fetch('/api/onboarding/welcomed', { method: 'POST' });
-		if (res.ok) {
-			ondismiss?.();
-		} else {
-			dismissing = false;
-		}
-	}
 </script>
 
 <section
@@ -75,5 +65,21 @@
 			</li>
 		</ol>
 	</div>
-	<Button variant="ghost" size="sm" onclick={dismiss} disabled={dismissing}>Dismiss</Button>
+	<form
+		method="POST"
+		action="/?/dismissWelcome"
+		use:enhance={() => {
+			dismissing = true;
+			return async ({ result, update }) => {
+				if (result.type === 'success' || result.type === 'redirect') {
+					ondismiss?.();
+				} else {
+					dismissing = false;
+				}
+				await update({ reset: false });
+			};
+		}}
+	>
+		<Button type="submit" variant="ghost" size="sm" disabled={dismissing}>Dismiss</Button>
+	</form>
 </section>

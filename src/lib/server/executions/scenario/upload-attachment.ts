@@ -1,18 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { attachments, executions, scenarioResults } from '$lib/server/db/schema';
 import { putObject } from '$lib/server/storage/s3';
 
-export type UploadAttachmentInput = {
-  executionId:            string;
-  scenarioResultId: string;
-  filename:         string;
-  mimeType:         string;
-  body:             Buffer;
-};
-
 export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+
+export const uploadAttachmentMetadata = z.object({
+  executionId:      z.uuid({ version: 'v7' }),
+  scenarioResultId: z.uuid({ version: 'v7' }),
+  filename:         z.string().min(1),
+  mimeType:         z.string().min(1),
+});
+
+export type UploadAttachmentInput = z.infer<typeof uploadAttachmentMetadata> & { body: Buffer };
 
 /**
  * Uploads an attachment blob to S3 inside a RUNNING run and records the row.

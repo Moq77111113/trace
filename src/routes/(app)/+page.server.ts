@@ -1,10 +1,12 @@
 import { asc, eq } from 'drizzle-orm';
+import { fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db/client';
 import { features, projects } from '$lib/server/db/schema';
 import { listProjectsWithStats, listRecentExecutions } from '$lib/server/projects/queries';
+import { dismissWelcome } from '$lib/server/onboarding/welcomed';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 const DEMO_NAME = 'Trace Demo';
 
@@ -37,3 +39,11 @@ export const load = (async ({ locals, parent }) => {
 		breadcrumbs: appendCrumb(breadcrumbs, { label: m.nav_projects() }),
 	};
 }) satisfies PageServerLoad;
+
+export const actions = {
+	dismissWelcome: async ({ locals }) => {
+		if (!locals.user) return fail(401);
+		await dismissWelcome(locals.user.id);
+		return { ok: true };
+	},
+} satisfies Actions;

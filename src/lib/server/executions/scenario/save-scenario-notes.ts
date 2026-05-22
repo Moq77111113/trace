@@ -1,12 +1,15 @@
 import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { executions, scenarioResults } from '$lib/server/db/schema';
 
-export type SaveScenarioNotesInput = {
-  executionId:      string;
-  scenarioResultId: string;
-  notes:            string | null;
-};
+export const saveScenarioNotesInput = z.object({
+  executionId:      z.uuid({ version: 'v7' }),
+  scenarioResultId: z.uuid({ version: 'v7' }),
+  notes:            z.string().nullable(),
+});
+
+export type SaveScenarioNotesInput = z.infer<typeof saveScenarioNotesInput>;
 
 /**
  * Persists free-form notes on one scenario inside a RUNNING run.

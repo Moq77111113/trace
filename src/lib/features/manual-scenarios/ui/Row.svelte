@@ -1,19 +1,23 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import type { ManualScenarioRow } from '../api/client';
+  import { enhance } from '$app/forms';
+  import { failureReason } from '$lib/shared/forms/action-result';
   import * as m from '$lib/paraglide/messages';
+  import type { ManualScenarioRow } from '$lib/server/features/manual-scenarios';
 
   type Props = {
-    row:       ManualScenarioRow;
-    onRename:  (name: string) => void;
-    onArchive: () => void;
+    row:                 ManualScenarioRow;
+    onOptimisticArchive: () => void;
+    onArchiveRestore:    () => void;
+    onError:             (msg: string | null) => void;
   };
 
-  let { row, onRename, onArchive }: Props = $props();
+  let { row, onOptimisticArchive, onArchiveRestore, onError }: Props = $props();
 
   let editing                          = $state(false);
   let draft                            = $state(untrack(() => row.name));
   let inputEl: HTMLInputElement | null = $state(null);
+  let renameForm:  HTMLFormElement;
 
   function startEdit(): void {
     draft   = row.name;
@@ -23,7 +27,7 @@
   function commit(): void {
     editing = false;
     const trimmed = draft.trim();
-    if (trimmed && trimmed !== row.name) onRename(trimmed);
+    if (trimmed && trimmed !== row.name) renameForm.requestSubmit();
     else draft = row.name;
   }
 
@@ -59,10 +63,50 @@
       onclick={startEdit}
     >{row.name}</button>
   {/if}
-  <button
-    type="button"
-    class="text-ink-3 hover:text-fail-ink text-lg leading-none"
-    aria-label={m.manual_scenarios_archive()}
-    onclick={onArchive}
-  >×</button>
+
+  <form
+    bind:this={renameForm}
+    action="?/renameManualScenario"
+    method="POST"
+    use:enhance={({ formData }) => {
+      formData.set('scenarioId', row.id);
+      formData.set('name',       draft.trim());
+      onError(null);
+      return async ({ result, update }) => {
+        if (result.type === 'failure') {
+          const reason = failureReason(result);
+          if (reason === 'name-taken-gherkin')      onError(m.manual_scenario_name_taken_gherkin());
+          else if (reason === 'name-taken-manual')  onError(m.manual_scenario_name_taken_manual());
+          else                                      onError('rename failed');
+          draft = row.name;
+          return;
+        }
+        await update();
+      };
+    }}
+    hidden
+  ></form>
+
+  <form
+    action="?/archiveManualScenario"
+    method="POST"
+    use:enhance={({ formData }) => {
+      formData.set('scenarioId', row.id);
+      onError(null);
+      onOptimisticArchive();
+      return async ({ result, update }) => {
+        if (result.type === 'failure') {
+          onArchiveRestore();
+          onError('archive failed');
+        }
+        await update();
+      };
+    }}
+  >
+    <button
+      type="submit"
+      class="text-ink-3 hover:text-fail-ink text-lg leading-none"
+      aria-label={m.manual_scenarios_archive()}
+    >×</button>
+  </form>
 </li>
