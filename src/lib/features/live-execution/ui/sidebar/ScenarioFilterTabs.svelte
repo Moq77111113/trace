@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { ScenarioSelection, ScenarioFilter } from '../model/selection.svelte';
+  import { useSelection } from '../../model/context';
+  import type { ScenarioFilter } from '../../model/selection.svelte';
 
-  type Props = { selection: ScenarioSelection };
-  let { selection }: Props = $props();
+  const selection = useSelection();
 
   const tabs: { value: ScenarioFilter; label: string }[] = [
     { value: 'all',     label: 'All'     },

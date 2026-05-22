@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import Button from '$lib/shared/ui/Button.svelte';
+  import { failureReason } from '$lib/shared/forms/action-result';
   import * as m from '$lib/paraglide/messages';
 
   type Props = {
@@ -28,7 +29,7 @@
     return async ({ result, update }) => {
       saving = false;
       if (result.type === 'failure') {
-        const reason = (result.data as { reason?: string } | undefined)?.reason;
+        const reason = failureReason(result);
         if (reason === 'name-taken-gherkin')      onError(m.manual_scenario_name_taken_gherkin());
         else if (reason === 'name-taken-manual')  onError(m.manual_scenario_name_taken_manual());
         else                                      onError('add failed');

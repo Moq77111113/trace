@@ -43,17 +43,17 @@
 
     <div class="flex items-center gap-3 text-[12px] text-ink-3 tabular-nums flex-wrap">
       <span class="font-mono text-ink-2">#{executionId.slice(0, 8)}</span>
-      <span class="w-[3px] h-[3px] rounded-full bg-ink-mute"></span>
+      <span class="size-[3px] rounded-full bg-ink-mute"></span>
       <span class="font-mono">{source}</span>
       {#if environment}
-        <span class="w-[3px] h-[3px] rounded-full bg-ink-mute"></span>
+        <span class="size-[3px] rounded-full bg-ink-mute"></span>
         <span class="text-ink-2 font-medium">{environment}</span>
       {/if}
-      <span class="w-[3px] h-[3px] rounded-full bg-ink-mute"></span>
+      <span class="size-[3px] rounded-full bg-ink-mute"></span>
       <span>{new Date(startedAt).toLocaleString()}</span>
-      <span class="w-[3px] h-[3px] rounded-full bg-ink-mute"></span>
+      <span class="size-[3px] rounded-full bg-ink-mute"></span>
       <span>{formatExecutionDuration(startedAt, finishedAt)}</span>
-      <span class="w-[3px] h-[3px] rounded-full bg-ink-mute"></span>
+      <span class="size-[3px] rounded-full bg-ink-mute"></span>
       <span>{executedBy}</span>
     </div>
 

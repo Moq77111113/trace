@@ -1,15 +1,11 @@
 <script lang="ts">
   import Pill   from '$lib/shared/ui/Pill.svelte';
-  import Button from '$lib/shared/ui/Button.svelte';
-  import Kbd    from '$lib/shared/ui/Kbd.svelte';
   import Status from '$lib/shared/ui/Status.svelte';
-  import type { ScenarioSelection } from '../model/selection.svelte';
-  import type { TerminalFlow }      from '../model/terminal-flow.svelte';
-  import * as m from '$lib/paraglide/messages';
+  import AbortFlow  from './AbortFlow.svelte';
+  import FinishFlow from './FinishFlow.svelte';
+  import { useSelection } from '../../model/context';
 
   type Props = {
-    selection:   ScenarioSelection;
-    terminal:    TerminalFlow;
     featureName: string;
     featureCode: string;
     executionId: string;
@@ -17,10 +13,11 @@
     environment: string | null;
     startedAt:   Date | string;
     executedBy:  string;
-    onFinish:    () => void;
   };
 
-  let { selection, terminal, featureName, featureCode, executionId, source, environment, startedAt, executedBy, onFinish }: Props = $props();
+  let { featureName, featureCode, executionId, source, environment, startedAt, executedBy }: Props = $props();
+
+  const selection = useSelection();
 
   const progressPct = $derived(
     selection.counts.total === 0
@@ -49,29 +46,22 @@
 
     <div class="flex items-center gap-3 text-[12px] text-ink-3 tabular-nums flex-wrap">
       <span class="font-mono text-ink-2 max-md:hidden">#{executionId.slice(0, 8)}</span>
-      <span class="w-[3px] h-[3px] rounded-full bg-ink-mute max-md:hidden"></span>
+      <span class="size-[3px] rounded-full bg-ink-mute max-md:hidden"></span>
       <span class="font-mono">{source}</span>
       {#if environment}
-        <span class="w-[3px] h-[3px] rounded-full bg-ink-mute"></span>
+        <span class="size-[3px] rounded-full bg-ink-mute"></span>
         <span class="text-ink-2 font-medium">{environment}</span>
       {/if}
-      <span class="w-[3px] h-[3px] rounded-full bg-ink-mute max-md:hidden"></span>
+      <span class="size-[3px] rounded-full bg-ink-mute max-md:hidden"></span>
       <span>started {formatStarted(startedAt)}</span>
-      <span class="w-[3px] h-[3px] rounded-full bg-ink-mute max-md:hidden"></span>
+      <span class="size-[3px] rounded-full bg-ink-mute max-md:hidden"></span>
       <span>{executedBy}</span>
     </div>
 
     <div class="ml-auto flex items-center gap-2">
-      <Button variant="danger" onclick={terminal.requestAbort} disabled={terminal.aborting}>
-        {terminal.aborting ? m.execution_abort_aborting() : m.execution_abort_cta()}
-      </Button>
-      <Button onclick={onFinish}>
-        Finish run <Kbd>⌘↵</Kbd>
-      </Button>
+      <AbortFlow />
+      <FinishFlow />
     </div>
-    {#if terminal.abortError}
-      <span class="text-[12px] text-fail-ink" role="alert">{terminal.abortError}</span>
-    {/if}
   </div>
 
   <div class="flex items-center gap-3.5">

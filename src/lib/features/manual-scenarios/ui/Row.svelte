@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { enhance } from '$app/forms';
+  import { failureReason } from '$lib/shared/forms/action-result';
   import * as m from '$lib/paraglide/messages';
   import type { ManualScenarioRow } from '$lib/server/features/manual-scenarios';
 
@@ -73,7 +74,7 @@
       onError(null);
       return async ({ result, update }) => {
         if (result.type === 'failure') {
-          const reason = (result.data as { reason?: string } | undefined)?.reason;
+          const reason = failureReason(result);
           if (reason === 'name-taken-gherkin')      onError(m.manual_scenario_name_taken_gherkin());
           else if (reason === 'name-taken-manual')  onError(m.manual_scenario_name_taken_manual());
           else                                      onError('rename failed');

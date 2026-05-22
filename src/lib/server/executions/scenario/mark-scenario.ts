@@ -1,17 +1,21 @@
 import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { executions, scenarioResults } from '$lib/server/db/schema';
 
-export type ScenarioStatus = 'PASSED' | 'FAILED' | 'SKIPPED';
+export const scenarioStatus = z.enum(['PASSED', 'FAILED', 'SKIPPED']);
+export type ScenarioStatus  = z.infer<typeof scenarioStatus>;
 
-export type MarkScenarioInput = {
-  executionId:            string;
-  scenarioResultId: string;
-  status:           ScenarioStatus;
-  durationMs?:      number | undefined;
-  logs?:            string | null | undefined;
-  errorMessage?:    string | null | undefined;
-};
+export const markScenarioInput = z.object({
+  executionId:      z.uuid({ version: 'v7' }),
+  scenarioResultId: z.uuid({ version: 'v7' }),
+  status:           scenarioStatus,
+  durationMs:       z.number().int().nonnegative().optional(),
+  logs:             z.string().nullable().optional(),
+  errorMessage:     z.string().nullable().optional(),
+});
+
+export type MarkScenarioInput = z.infer<typeof markScenarioInput>;
 
 /**
  * Persists a P/F/S verdict for one scenario inside a RUNNING run.

@@ -75,9 +75,11 @@ const fakeData = {
 describe('LiveExecution', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok:     true,
-      status: 200,
-      json:   async () => ({ status: 'PASSED' }),
+      ok:      true,
+      status:  200,
+      headers: new Headers(),
+      text:    async () => '{"type":"success","status":200}',
+      json:    async () => ({ type: 'success', status: 200 }),
     })));
   });
 
@@ -89,27 +91,27 @@ describe('LiveExecution', () => {
     expect(screen.getByRole('heading', { level: 2, name: /A/ })).toBeInTheDocument();
   });
 
-  it('clicking Pass calls PATCH and auto-advances to the next PENDING', async () => {
+  it('clicking Pass submits the setStatus form action and auto-advances', async () => {
     render(LiveExecution, { props: { data: fakeData } });
 
     await fireEvent.click(screen.getByRole('button', { name: /pass/i }));
 
-    expect(fetch).toHaveBeenCalledWith(
-      '/api/executions/r1/scenarios/s1',
-      expect.objectContaining({ method: 'PATCH' }),
-    );
+    const calls = vi.mocked(fetch).mock.calls;
+    expect(calls.length).toBeGreaterThan(0);
+    expect(String(calls[0]?.[0])).toContain('?/setStatus');
+    expect(calls[0]?.[1]?.method).toBe('POST');
     expect(screen.getByRole('heading', { level: 2, name: /B/ })).toBeInTheDocument();
   });
 
-  it('P key marks the focused scenario as PASSED', async () => {
+  it('P key submits the setStatus form action for the focused scenario', async () => {
     render(LiveExecution, { props: { data: fakeData } });
 
     await fireEvent.keyDown(window, { key: 'p' });
 
-    expect(fetch).toHaveBeenCalledWith(
-      '/api/executions/r1/scenarios/s1',
-      expect.objectContaining({ method: 'PATCH' }),
-    );
+    const calls = vi.mocked(fetch).mock.calls;
+    expect(calls.length).toBeGreaterThan(0);
+    expect(String(calls[0]?.[0])).toContain('?/setStatus');
+    expect(calls[0]?.[1]?.method).toBe('POST');
   });
 
   it('ignores P when an input is focused', async () => {

@@ -1,20 +1,57 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
   import DropZone from '$lib/shared/ui/DropZone.svelte';
   import Icon     from '$lib/shared/ui/Icon.svelte';
   import * as m   from '$lib/paraglide/messages';
-  import type { AttachmentsUploader } from '../../model/attachments-uploader.svelte';
-  import type { ScenarioSelection }   from '../../model/selection.svelte';
+  import { useSelection } from '../../model/context';
+  import { failureMessage } from '$lib/shared/forms/action-result';
+  import type { DroppedFile } from '$lib/shared/io/dropped-files';
 
-  type Props = {
-    selection:   ScenarioSelection;
-    attachments: AttachmentsUploader;
+  type Uploaded = {
+    id:        string;
+    filename:  string;
+    mimeType:  string;
+    sizeBytes: number;
   };
 
-  let { selection, attachments }: Props = $props();
+  function isUploaded(v: unknown): v is Uploaded {
+    return typeof v === 'object' && v !== null
+      && 'id'        in v && typeof v.id        === 'string'
+      && 'filename'  in v && typeof v.filename  === 'string'
+      && 'mimeType'  in v && typeof v.mimeType  === 'string'
+      && 'sizeBytes' in v && typeof v.sizeBytes === 'number';
+  }
+
+  function parseUploaded(data: unknown): Uploaded[] {
+    if (typeof data !== 'object' || data === null) return [];
+    if (!('uploaded' in data) || !Array.isArray(data.uploaded)) return [];
+    return data.uploaded.filter(isUploaded);
+  }
+
+  const selection = useSelection();
+
+  const uploadsByScenario = $state<Record<string, Uploaded[]>>({});
+
+  let uploading   = $state(false);
+  let uploadError = $state<string | null>(null);
 
   const uploaded = $derived(
-    selection.selected ? (attachments.uploadsByScenario[selection.selected.id] ?? []) : [],
+    selection.selected ? (uploadsByScenario[selection.selected.id] ?? []) : [],
   );
+
+  let form:      HTMLFormElement;
+  let fileInput: HTMLInputElement;
+  let pendingScenarioId = '';
+
+  function onDrop(items: DroppedFile[]): void {
+    const target = selection.selected;
+    if (!target || items.length === 0) return;
+    const dt = new DataTransfer();
+    for (const item of items) dt.items.add(item.file);
+    fileInput.files     = dt.files;
+    pendingScenarioId   = target.id;
+    form.requestSubmit();
+  }
 </script>
 
 <section class="flex flex-col min-h-0 min-w-0">
@@ -39,17 +76,44 @@
     </ul>
   {/if}
 
+  <form
+    bind:this={form}
+    action="?/uploadAttachment"
+    method="POST"
+    enctype="multipart/form-data"
+    use:enhance={({ formData }) => {
+      const id = pendingScenarioId;
+      formData.set('scenarioResultId', id);
+      uploading   = true;
+      uploadError = null;
+      return async ({ result }) => {
+        uploading = false;
+        if (result.type === 'failure' || result.type === 'error') {
+          uploadError = failureMessage(result, 'Upload failed');
+          return;
+        }
+        if (result.type === 'success') {
+          const fresh = parseUploaded(result.data);
+          uploadsByScenario[id] = [...(uploadsByScenario[id] ?? []), ...fresh];
+        }
+      };
+    }}
+    hidden
+  >
+    <input bind:this={fileInput} type="file" name="files" multiple>
+  </form>
+
   <div class="flex-1 min-h-[88px] grid">
-    <DropZone onDrop={(items) => attachments.upload(items.map((i) => i.file))}>
+    <DropZone {onDrop}>
       <Icon name="Upload" size={14} />
       <span class="ml-1.5">{m.live_execution_evidence_drop()}</span>
-      {#if attachments.uploading}<span class="block mt-1 text-[11px]">Uploading…</span>{/if}
+      {#if uploading}<span class="block mt-1 text-[11px]">Uploading…</span>{/if}
     </DropZone>
   </div>
 
   <div class="mt-1 min-h-[15px] text-[11px]">
-    {#if attachments.uploadError}
-      <span class="text-fail-ink" role="alert">⚠ {attachments.uploadError}</span>
+    {#if uploadError}
+      <span class="text-fail-ink" role="alert">⚠ {uploadError}</span>
     {/if}
   </div>
 </section>
