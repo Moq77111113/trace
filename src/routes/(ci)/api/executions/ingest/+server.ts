@@ -1,45 +1,50 @@
 import { error, json } from '@sveltejs/kit';
 import { parseCucumberJson } from '$lib/server/executions/ingest/cucumber-json/parse';
-import { ingestExecution } from '$lib/server/executions/ingest/pipeline';
+import { ingestRun } from '$lib/server/executions/ingest/pipeline';
 import { readCiMetadata } from '$lib/entities/execution/lib/ci-metadata';
-import { ciHandler } from '$lib/server/route';
+import { ciHandler, CI_HTTP_MAPPING, type CiHttpErrorCode } from '$lib/server/route';
 import type { RequestHandler } from './$types';
 
-export type IngestSuccess = {
-  run_id:            string;
-  status:            string;
-  scenarios_matched: number;
-  scenarios_unknown: string[];
-  warnings:          string[];
-};
+function throwHttp(code: CiHttpErrorCode): never {
+  const http = CI_HTTP_MAPPING[code];
+  throw error(http.status, { code, message: http.message });
+}
 
 export const POST: RequestHandler = ciHandler(async (event, { executor, projectId }) => {
   const environment = event.request.headers.get('x-environment');
-  const featureCode = event.request.headers.get('x-ci-feature-code');
   const ciMetadata  = readCiMetadata((name) => event.request.headers.get(name));
 
-  const payload = await event.request.json().catch(() => null);
-  if (payload === null) throw error(400, 'invalid JSON body');
-
-  let parsed;
+  let payload: unknown;
   try {
-    parsed = parseCucumberJson(payload);
-  } catch (e) {
-    throw error(400, e instanceof Error ? e.message : 'parse failed');
+    payload = await event.request.json();
+  } catch {
+    throwHttp('PARSE_INVALID_JSON');
   }
 
-  try {
-    const result = await ingestExecution({ projectId, executedBy: executor, environment, featureCode, ciMetadata, parsed });
-    return json({
-      run_id:            result.execution.id,
-      status:            result.execution.status,
-      scenarios_matched: result.scenariosMatched,
-      scenarios_unknown: result.scenariosUnknown,
-      warnings:          result.warnings,
-    }, { status: 201 });
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'ingest failed';
-    if (/no feature matching/i.test(message)) throw error(404, message);
-    throw error(500, message);
-  }
+  const parsed = parseCucumberJson(payload);
+  if (!parsed.ok) throwHttp(parsed.error.code);
+
+  const result = await ingestRun({
+    projectId,
+    executedBy:  executor,
+    environment,
+    ciMetadata,
+    parsed:      parsed.value,
+  });
+  if (!result.ok) throwHttp(result.error.code);
+
+  const status = result.value.unknownFeatures.length === 0 ? 200 : 207;
+
+  return json({
+    status:           result.value.status,
+    executions:       result.value.executions.map((e) => ({
+      feature_code:      e.featureCode,
+      execution_id:      e.executionId,
+      status:            e.status,
+      scenarios_matched: e.scenariosMatched,
+      matched_via:       e.matchedVia,
+    })),
+    unknown_features: result.value.unknownFeatures,
+    warnings:         result.value.warnings,
+  }, { status });
 });

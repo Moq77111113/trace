@@ -2,8 +2,16 @@ import { sql } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db/client';
 import { apikey } from '$lib/server/db/schema';
+import { ok, err, type Result } from '$lib/shared/lib/result';
 
-export type CiAuthResult = { tokenName: string; projectId: string };
+export type CiAuthErrorCode =
+	| 'CI_AUTH_HEADER_MISSING'
+	| 'CI_AUTH_SCHEME_INVALID'
+	| 'CI_AUTH_KEY_INVALID'
+	| 'CI_AUTH_KEY_NO_PROJECT';
+
+export type CiAuthError   = { code: CiAuthErrorCode; detail: string };
+export type CiAuthSuccess = { tokenName: string; projectId: string };
 
 const TOKEN_PREFIX = 'crun_';
 
@@ -17,25 +25,20 @@ function parseMetadata(raw: string | null): { projectId?: string } {
 	}
 }
 
-export async function authenticateCi(
-	authorization: string | null,
-	requestedProjectId: string
-): Promise<CiAuthResult> {
-	if (!authorization) throw new Error('Authorization header required');
+export async function authenticateCi(authorization: string | null): Promise<Result<CiAuthSuccess, CiAuthError>> {
+	if (!authorization) return err({ code: 'CI_AUTH_HEADER_MISSING', detail: 'Authorization header required' });
 
 	const [scheme, token] = authorization.split(' ');
-	if (scheme !== 'Bearer' || !token) throw new Error('Bearer token required');
+	if (scheme !== 'Bearer' || !token) return err({ code: 'CI_AUTH_SCHEME_INVALID', detail: 'Bearer token required' });
 
 	const verified = await auth.api.verifyApiKey({ body: { key: token } });
-	if (!verified?.valid || !verified.key) throw new Error('invalid API key');
+	if (!verified?.valid || !verified.key) return err({ code: 'CI_AUTH_KEY_INVALID', detail: 'invalid API key' });
 
 	const meta = (verified.key.metadata ?? {}) as { projectId?: string };
-	if (meta.projectId !== requestedProjectId) {
-		throw new Error('API key not scoped to this project');
-	}
+	if (!meta.projectId) return err({ code: 'CI_AUTH_KEY_NO_PROJECT', detail: 'api key not bound to a project' });
 
 	const name = verified.key.name?.trim() || 'ci';
-	return { tokenName: name, projectId: requestedProjectId };
+	return ok({ tokenName: name, projectId: meta.projectId });
 }
 
 export type ApiKeyRow = {

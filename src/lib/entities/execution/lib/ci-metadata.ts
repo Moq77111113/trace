@@ -12,6 +12,7 @@ export const ciMetadataSchema = z
   .object({
     branch: trimmedShort(255).optional(),
     commit: trimmedShort(64).optional(),
+    source: trimmedShort(64).optional(),
   })
   .strict();
 
@@ -25,6 +26,7 @@ export type CiMetadata = z.infer<typeof ciMetadataSchema>;
 export const CI_HEADER_MAP: Readonly<Record<string, keyof CiMetadata>> = {
   'x-ci-branch': 'branch',
   'x-ci-commit': 'commit',
+  'x-ci-source': 'source',
 };
 
 /**

@@ -2,7 +2,7 @@ import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db/client';
 import { user } from '$lib/server/db/schema';
 
-export async function createTestApiKey(projectId: string, name = 'test-ci') {
+export async function mkUser() {
 	const [u] = await db
 		.insert(user)
 		.values({
@@ -11,7 +11,12 @@ export async function createTestApiKey(projectId: string, name = 'test-ci') {
 		})
 		.returning();
 
-	if (!u) throw new Error('seed: user insert failed');
+	if (!u) throw new Error('mkUser: insert returned no row');
+	return u;
+}
+
+export async function createTestApiKey(projectId: string, name = 'test-ci') {
+	const u = await mkUser();
 
 	const created = await auth.api.createApiKey({
 		body: {

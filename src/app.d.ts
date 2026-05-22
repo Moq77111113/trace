@@ -21,6 +21,7 @@ declare global {
 		interface Error {
 			message: string;
 			errorId?: string;
+			code?:    string;
 		}
 		// interface PageData {}
 		// interface PageState {}
