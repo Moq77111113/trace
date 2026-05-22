@@ -16,6 +16,8 @@
   import { GherkinParser } from '../model/gherkin-parser.svelte';
   import { SaveFlow }      from '../model/save.svelte';
   import type { Feature }  from '../model/types';
+  import { formatFeatureCode } from '$lib/shared/lib/slug';
+  import { formatTraceTag } from '$lib/features/feature-import/lib/trace-tag';
 
   type ProjectRef = { codePrefix: string };
   type ProjectTag = { name: string; count: number };
@@ -40,6 +42,8 @@
 
   let archiveOpen                 = $state(false);
   let editorApi: EditorApi | null = $state(null);
+
+  const traceCode = $derived(formatFeatureCode(data.project.codePrefix, data.feature.codeSeq));
 
   function insertSnippet(snippet: Snippet): void {
     if (!editorApi) return;
@@ -71,6 +75,10 @@
     <SaveError message={save.saveError} />
   {/if}
 
+  <div class="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-surface-2/40 font-mono text-[12px]">
+    <span class="text-accent-soft-ink">{formatTraceTag(traceCode)}</span>
+  </div>
+
   <div class="flex flex-col gap-4 p-4 overflow-y-auto flex-1 min-h-0">
     <Description
       featureId={data.feature.id}
@@ -91,6 +99,7 @@
       markers={gherkin.markers}
       completionProvider={gherkin.completionProvider}
       snippets={gherkin.snippets}
+      featureCode={traceCode}
       onChange={(v) => (form.fields.content = v)}
       onInsert={insertSnippet}
       bind:api={editorApi}

@@ -64,6 +64,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import type * as Monaco from 'monaco-editor';
 	import Skeleton from '$lib/shared/ui/Skeleton.svelte';
+	import { decorateCopy } from '../model/copy-with-trace-tag';
 
 	type Marker = { line: number; column?: number; message: string };
 
@@ -75,6 +76,7 @@
 			model: Monaco.editor.ITextModel,
 			position: Monaco.Position
 		) => Monaco.languages.CompletionList;
+		featureCode?: string;
 		api?: EditorApi | null;
 	};
 
@@ -83,6 +85,7 @@
 		onChange,
 		markers = [],
 		completionProvider,
+		featureCode,
 		api = $bindable<EditorApi | null>(null),
 	}: Props = $props();
 
@@ -179,6 +182,25 @@
 				provideCompletionItems: (model, position) => cp(model, position)
 			});
 		}
+
+		ed.addAction({
+			id:          'copy-with-trace-tag',
+			label:       'Copy',
+			keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KeyC],
+			run: async (target) => {
+				const sel = target.getSelection();
+				if (!sel) return;
+				const model = target.getModel();
+				if (!model) return;
+				const selected = model.getValueInRange(sel);
+				const copied = decorateCopy(
+					selected,
+					{ startLineNumber: sel.startLineNumber, startColumn: sel.startColumn },
+					featureCode ?? '',
+				);
+				await navigator.clipboard.writeText(copied);
+			},
+		});
 
 		themeObserver = new MutationObserver(refreshTheme);
 		themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
