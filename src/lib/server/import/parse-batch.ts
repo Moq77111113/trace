@@ -4,6 +4,7 @@ import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
 import { parse } from '$lib/shared/gherkin/parse';
 import { extractGroupName } from '$lib/features/feature-import/lib/group-meta';
+import { stripTraceTag } from '$lib/features/feature-import/lib/trace-tag';
 import { putPreview } from './buffer';
 import type { BatchPreview, ImportBuffer, PreviewRow, PreviewRowStatus } from './types';
 
@@ -20,9 +21,11 @@ export async function parseBatch(projectId: string, inputs: ImportBuffer[]): Pro
 
   for (const input of inputs) {
     const rowId = randomUUID();
-    buffers.set(rowId, input);
 
-    const content   = input.bytes.toString('utf-8');
+    const content    = stripTraceTag(input.bytes.toString('utf-8'));
+    const sanitized: ImportBuffer = { ...input, bytes: Buffer.from(content, 'utf-8') };
+    buffers.set(rowId, sanitized);
+
     const parsed    = parse(content);
     const groupName = extractGroupName(content) ?? input.presetGroup;
     const lower     = parsed.name?.toLowerCase() ?? null;
