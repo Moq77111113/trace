@@ -78,6 +78,7 @@ describe('guard.execution', () => {
     const [exec] = await db.insert(executions).values({
       featureId: f.id, source: 'MANUAL', executedBy: u.id, featureContentAtStart: f.content, status: 'IN_PROGRESS',
     }).returning();
+    if (!exec) throw new Error('execution insert failed');
     await db.insert(policies).values({
       subjectKind: 'user', subjectId: u.id, action: 'execution.review',
       scopeKind: 'project', scopeId: p.id, effect: 'allow',
@@ -94,6 +95,7 @@ describe('guard.execution', () => {
     const [exec] = await db.insert(executions).values({
       featureId: f.id, source: 'MANUAL', executedBy: u.id, featureContentAtStart: f.content, status: 'IN_PROGRESS',
     }).returning();
+    if (!exec) throw new Error('execution insert failed');
     await expect(makeGuard(asUser(u.id)).execution('execution.review', exec.id)).rejects.toMatchObject({ status: 403 });
   });
 

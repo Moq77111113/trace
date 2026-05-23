@@ -16,10 +16,9 @@ describe('fetchPoliciesForUser', () => {
     ]);
 
     const rows = await fetchPoliciesForUser(me.id);
-    const actions = rows.map((r) => r.action).sort();
-    expect(actions).toContain('feature.view');
-    expect(actions).toContain('project.access');
-    expect(actions).not.toContain('feature.author');
+    expect(rows.some((r) => r.subjectKind === 'user' && r.subjectId === me.id && r.action === 'feature.view')).toBe(true);
+    expect(rows.some((r) => r.subjectKind === 'any-user' && r.action === 'project.access')).toBe(true);
+    expect(rows.some((r) => r.subjectId === other.id)).toBe(false);
   });
 
   it('returns [] for an anonymous request', async () => {
