@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { policies } from '$lib/server/db/schema';
 import {
@@ -26,16 +26,20 @@ describe('fetchPoliciesForUser', () => {
     const me    = await mkUser();
     const other = await mkUser();
 
-    await db.insert(policies).values([
+    const inserted = await db.insert(policies).values([
       { subjectKind: 'user', subjectId: me.id,    action: 'feature.view', scopeKind: 'instance', scopeId: null, effect: 'allow' },
       { subjectKind: 'any-user', subjectId: null, action: 'project.access', scopeKind: 'instance', scopeId: null, effect: 'allow' },
       { subjectKind: 'user', subjectId: other.id, action: 'feature.author', scopeKind: 'instance', scopeId: null, effect: 'allow' },
-    ]);
+    ]).returning({ id: policies.id });
 
-    const rows = await fetchPoliciesForUser(me.id);
-    expect(rows.some((r) => r.subjectKind === 'user' && r.subjectId === me.id && r.action === 'feature.view')).toBe(true);
-    expect(rows.some((r) => r.subjectKind === 'any-user' && r.action === 'project.access')).toBe(true);
-    expect(rows.some((r) => r.subjectId === other.id)).toBe(false);
+    try {
+      const rows = await fetchPoliciesForUser(me.id);
+      expect(rows.some((r) => r.subjectKind === 'user' && r.subjectId === me.id && r.action === 'feature.view')).toBe(true);
+      expect(rows.some((r) => r.subjectKind === 'any-user' && r.action === 'project.access')).toBe(true);
+      expect(rows.some((r) => r.subjectId === other.id)).toBe(false);
+    } finally {
+      await db.delete(policies).where(inArray(policies.id, inserted.map((r) => r.id)));
+    }
   });
 
   it('returns [] for an anonymous request', async () => {
