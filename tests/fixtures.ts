@@ -1,6 +1,6 @@
 import { allocateCodeSeq } from '$lib/server/features/internal/code-seq';
 import { db } from '$lib/server/db/client';
-import { features, projects } from '$lib/server/db/schema';
+import { features, projects, user } from '$lib/server/db/schema';
 
 let counter = 0;
 const next = () => ++counter;
@@ -42,4 +42,16 @@ export async function mkFeature(projectId: string, overrides: Partial<FeatureIns
     if (!row) throw new Error('mkFeature: insert returned no row');
     return row;
   });
+}
+
+type UserInsert = typeof user.$inferInsert;
+
+/** Create a user with sensible defaults. Role defaults to 'user' via the schema. */
+export async function mkUser(overrides: Partial<UserInsert> = {}) {
+  const s = stamp();
+  const [row] = await db.insert(user)
+    .values({ name: overrides.name ?? `User ${s}`, email: overrides.email ?? `u-${s}@test.local`, ...overrides })
+    .returning();
+  if (!row) throw new Error('mkUser: insert returned no row');
+  return row;
 }

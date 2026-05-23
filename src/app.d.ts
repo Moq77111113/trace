@@ -1,4 +1,5 @@
 import type { Session } from '$lib/server/auth';
+import type { Guard } from '$lib/server/authz/guard';
 import type { Accent, Theme } from '$lib/shared/lib/theme';
 
 // See https://svelte.dev/docs/kit/types#app.d.ts
@@ -16,6 +17,7 @@ declare global {
 			} | null;
 			theme: Theme;
 			accent: Accent;
+			guard: Guard;
 		}
 
 		interface Error {

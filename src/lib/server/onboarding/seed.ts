@@ -48,7 +48,7 @@ function readFeature(filename: string): string {
 	return content;
 }
 
-export async function seedDemoProject(_adminUserId: string): Promise<void> {
+export async function seedDemoProject(adminUserId: string): Promise<void> {
 	const [existing] = await db.select({ id: projects.id }).from(projects).where(eq(projects.name, DEMO_NAME));
 	if (existing) return;
 
@@ -57,7 +57,7 @@ export async function seedDemoProject(_adminUserId: string): Promise<void> {
 	const metaFile    = featuresMetaJson     as FeaturesMetaFile;
 	const runFile     = runFileJson          as RunFile;
 
-	const projectResult = await createProject({ name: projectFile.name, description: projectFile.description });
+	const projectResult = await createProject({ name: projectFile.name, description: projectFile.description }, adminUserId);
 	if (!projectResult.ok) throw new Error(`demo seed: createProject failed: ${projectResult.error}`);
 	const project = projectResult.value;
 

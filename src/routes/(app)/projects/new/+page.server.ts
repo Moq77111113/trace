@@ -1,4 +1,4 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { stringFields } from '$lib/server/forms';
 import { createProject, projectInput } from '$lib/server/projects/create';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
@@ -17,14 +17,16 @@ export const load: PageServerLoad = async ({ parent }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request }) => {
+  default: async ({ request, locals }) => {
+    if (!locals.user) throw error(401, 'unauthorized');
+
     const data   = stringFields(await request.formData());
     const parsed = projectInput.safeParse(data);
     if (!parsed.success) {
       return fail(400, { error: m.new_project_error_invalid(), values: data, field: null });
     }
 
-    const result = await createProject(parsed.data);
+    const result = await createProject(parsed.data, locals.user.id);
     if (!result.ok) {
       return fail(409, { error: m.new_project_error_slug_taken(), values: data, field: 'slug' as const });
     }
