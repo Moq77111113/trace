@@ -1,10 +1,12 @@
 import { fail, type RequestEvent } from '@sveltejs/kit';
 import { uploadAttachment } from '$lib/server/executions/scenario/upload-attachment';
+import { requireExecution } from '$lib/server/executions/authz';
 import { failureFor } from './failure';
 
 type Params = { slug: string; eid: string };
 
-export async function uploadAttachmentAction({ request, params }: RequestEvent<Params>) {
+export async function uploadAttachmentAction({ request, params, locals }: RequestEvent<Params>) {
+  await requireExecution(locals.authz, params.eid, 'execution.run');
   const form             = await request.formData();
   const scenarioResultId = form.get('scenarioResultId');
   const files            = form.getAll('files').filter((v): v is File => v instanceof File && v.size > 0);
