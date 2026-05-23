@@ -1,6 +1,18 @@
 import { db } from '$lib/server/db/client';
 import { projects, features, executions } from '$lib/server/db/schema';
-import { and, count, desc, eq, ne, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, ne, sql } from 'drizzle-orm';
+import type { Authorizer } from '$lib/server/authz/authorizer';
+import { accessibleProjectIds } from './authz';
+
+/** Non-archived projects the caller may `project.access`, minimal nav shape, sorted by name. Backs the sidebar. */
+export async function listAccessibleProjects(authz: Authorizer) {
+  const ids = await accessibleProjectIds(authz);
+  if (ids.size === 0) return [];
+  return db.query.projects.findMany({
+    where:   and(eq(projects.archived, false), inArray(projects.id, [...ids])),
+    orderBy: (p, { asc }) => [asc(p.name)],
+  });
+}
 
 export async function getProjectBySlug(slug: string) {
   return db.query.projects.findFirst({ where: eq(projects.slug, slug) });
@@ -11,7 +23,9 @@ export async function getProjectIdBySlug(slug: string): Promise<string | null> {
   return row?.id ?? null;
 }
 
-export async function listProjectsWithStats() {
+export async function listProjectsWithStats(authz: Authorizer) {
+  const ids = await accessibleProjectIds(authz);
+  if (ids.size === 0) return [];
   const featureAgg = db.$with('feature_agg').as(
     db
       .select({
@@ -52,7 +66,7 @@ export async function listProjectsWithStats() {
     .from(projects)
     .leftJoin(featureAgg, eq(featureAgg.projectId, projects.id))
     .leftJoin(ranked,     and(eq(ranked.projectId, projects.id), eq(ranked.rn, 1)))
-    .where(eq(projects.archived, false))
+    .where(and(eq(projects.archived, false), inArray(projects.id, [...ids])))
     .orderBy(desc(projects.updatedAt));
 }
 
@@ -99,7 +113,9 @@ export async function getProjectDashboardStats(projectId: string): Promise<Proje
   };
 }
 
-export async function listRecentExecutions(limit = 20) {
+export async function listRecentExecutions(authz: Authorizer, limit = 20) {
+  const ids = await accessibleProjectIds(authz);
+  if (ids.size === 0) return [];
   return db
     .select({
       id:          executions.id,
@@ -115,6 +131,7 @@ export async function listRecentExecutions(limit = 20) {
     .from(executions)
     .innerJoin(features, eq(executions.featureId, features.id))
     .innerJoin(projects, eq(projects.id, features.projectId))
+    .where(inArray(features.projectId, [...ids]))
     .orderBy(desc(executions.startedAt))
     .limit(limit);
 }

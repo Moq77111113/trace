@@ -1,12 +1,13 @@
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { createApiKey, listApiKeys, revokeApiKey, rotateApiKey } from '$lib/server/api-keys';
-import { getProjectIdBySlug } from '$lib/server/projects/queries';
+import { requireProject } from '$lib/server/projects/authz';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load = (async ({ parent }) => {
+export const load = (async ({ params, locals, parent }) => {
+  await requireProject(locals.authz, params.slug, 'project.manage');
   const { project, breadcrumbs } = await parent();
   return {
     projectId:   project.id,
@@ -32,16 +33,11 @@ const RotateForm = z.object({
   id: z.uuid({ version: 'v7' }),
 });
 
-async function requireProjectId(slug: string): Promise<string> {
-  const id = await getProjectIdBySlug(slug);
-  if (!id) throw error(404, 'Project not found');
-  return id;
-}
-
 export const actions = {
   create: async ({ request, params, locals }) => {
     if (!locals.user) throw error(401, 'unauthorized');
-    const projectId = await requireProjectId(params.slug);
+    const project = await requireProject(locals.authz, params.slug, 'project.manage');
+    const projectId = project.id;
 
     const parsed = CreateForm.safeParse(Object.fromEntries(await request.formData()));
     if (!parsed.success) {
@@ -63,8 +59,9 @@ export const actions = {
     return { createdKey: created };
   },
 
-  revoke: async ({ request, params }) => {
-    const projectId = await requireProjectId(params.slug);
+  revoke: async ({ request, params, locals }) => {
+    const project = await requireProject(locals.authz, params.slug, 'project.manage');
+    const projectId = project.id;
 
     const parsed = RevokeForm.safeParse(Object.fromEntries(await request.formData()));
     if (!parsed.success) {
@@ -82,7 +79,8 @@ export const actions = {
 
   rotate: async ({ request, params, locals }) => {
     if (!locals.user) throw error(401, 'unauthorized');
-    const projectId = await requireProjectId(params.slug);
+    const project = await requireProject(locals.authz, params.slug, 'project.manage');
+    const projectId = project.id;
 
     const parsed = RotateForm.safeParse(Object.fromEntries(await request.formData()));
     if (!parsed.success) {

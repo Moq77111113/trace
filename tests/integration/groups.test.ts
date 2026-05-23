@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { featureGroups, features } from '$lib/server/db/schema';
-import { mkProject } from '$testing/fixtures';
+import { mkProject, mkUser, grantProjectAccess } from '$testing/fixtures';
 import { createFeature } from '$lib/server/features/lifecycle/create';
 import { createGroup } from '$lib/server/groups/create';
 import { listGroups } from '$lib/server/groups/queries';
@@ -11,6 +11,9 @@ import { deleteGroup } from '$lib/server/groups/delete';
 import { listFeaturesByGroup } from '$lib/server/features/read/queries';
 import { saveFeature } from '$lib/server/features/lifecycle/save';
 import { unwrap } from '$lib/shared/lib/result';
+import { makeAuthorizer } from '$lib/server/authz/authorizer';
+
+const asUser = (id: string) => ({ id, email: 'u@x', name: null, role: 'user' as const, welcomedAt: null });
 
 describe('feature_groups schema', () => {
   it('cascades on project delete and sets null on group delete', async () => {
@@ -125,6 +128,9 @@ describe('deleteGroup', () => {
 describe('listFeaturesByGroup', () => {
   it('groups features by position, sorts features by name, splits ungrouped', async () => {
     const p = await mkProject({ name: `LFG ${Date.now()}` });
+    const u = await mkUser();
+    await grantProjectAccess(u.id, p.id, 'feature.view');
+
     const auth     = unwrap(await createGroup({ projectId: p.id, name: 'Auth' }));
     const checkout = unwrap(await createGroup({ projectId: p.id, name: 'Checkout' }));
 
@@ -138,7 +144,7 @@ describe('listFeaturesByGroup', () => {
     await db.update(features).set({ groupId: checkout.id }).where(eq(features.id, fCart.id));
     // fLegacy stays ungrouped
 
-    const result = await listFeaturesByGroup(p.id);
+    const result = await listFeaturesByGroup(makeAuthorizer(asUser(u.id)), p.id);
 
     const [authSection, checkoutSection] = result.groups;
     if (!authSection || !checkoutSection) throw new Error('expected two group sections');
@@ -151,10 +157,12 @@ describe('listFeaturesByGroup', () => {
 
   it('excludes archived features', async () => {
     const p = await mkProject({ name: `LFGArch ${Date.now()}` });
+    const u = await mkUser();
+    await grantProjectAccess(u.id, p.id, 'feature.view');
     const f = await createFeature({ projectId: p.id, name: 'Hidden' });
     await db.update(features).set({ archived: true }).where(eq(features.id, f.id));
 
-    const result = await listFeaturesByGroup(p.id);
+    const result = await listFeaturesByGroup(makeAuthorizer(asUser(u.id)), p.id);
     expect(result.ungrouped).toEqual([]);
   });
 });

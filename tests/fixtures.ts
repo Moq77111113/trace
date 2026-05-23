@@ -1,6 +1,7 @@
 import { allocateCodeSeq } from '$lib/server/features/internal/code-seq';
 import { db } from '$lib/server/db/client';
-import { features, projects, user } from '$lib/server/db/schema';
+import { features, policies, projects, user } from '$lib/server/db/schema';
+import type { Action } from '$lib/server/authz/actions';
 
 let counter = 0;
 const next = () => ++counter;
@@ -54,4 +55,20 @@ export async function mkUser(overrides: Partial<UserInsert> = {}) {
     .returning();
   if (!row) throw new Error('mkUser: insert returned no row');
   return row;
+}
+
+/** Grant `userId` an allow on `projectId` for `action` (default full authority). The copy-paste path for "this user can use this test project." */
+export async function grantProjectAccess(userId: string, projectId: string, action: Action | '*' = '*') {
+  await db.insert(policies).values({
+    subjectKind: 'user', subjectId: userId, action,
+    scopeKind: 'project', scopeId: projectId, effect: 'allow',
+  });
+}
+
+/** Grant `userId` the instance superuser policy `(user, *, instance)` — for instance-route tests (boot seeding does not run mid-test). */
+export async function grantInstanceAdmin(userId: string) {
+  await db.insert(policies).values({
+    subjectKind: 'user', subjectId: userId, action: '*',
+    scopeKind: 'instance', scopeId: null, effect: 'allow',
+  });
 }

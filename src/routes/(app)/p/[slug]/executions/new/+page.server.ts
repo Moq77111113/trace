@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { startExecution } from '$lib/server/executions/run/start';
 import { resolveLiveExecutor } from '$lib/server/executions/executor';
 import { stringFields } from '$lib/server/forms';
+import { requireFeatureById } from '$lib/server/features/authz';
 import type { Actions, PageServerLoad } from './$types';
 
 const startBody = z.object({
@@ -22,6 +23,8 @@ export const actions = {
     if (!parsed.success) {
       return fail(400, { error: parsed.error.issues.map((i) => i.message).join('; ') });
     }
+
+    await requireFeatureById(event.locals.authz, parsed.data.featureId, 'execution.run');
 
     const executedBy = resolveLiveExecutor(event);
 

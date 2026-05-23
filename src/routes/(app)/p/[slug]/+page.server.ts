@@ -1,10 +1,11 @@
-import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
+import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { listGroups } from '$lib/server/groups/queries';
 import { createGroup, groupCreateInput } from '$lib/server/groups/create';
 import { deleteGroup, groupDeleteInput } from '$lib/server/groups/delete';
 import { renameGroup, groupRenameInput } from '$lib/server/groups/rename';
 import { moveFeature, featureMoveInput } from '$lib/server/features/lifecycle/move';
-import { getProjectDashboardStats, getProjectIdBySlug } from '$lib/server/projects/queries';
+import { getProjectDashboardStats } from '$lib/server/projects/queries';
+import { requireProject } from '$lib/server/projects/authz';
 import { stringFields } from '$lib/server/forms';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
@@ -25,17 +26,11 @@ export const load = (async ({ parent }) => {
   };
 }) satisfies PageServerLoad;
 
-async function requireProjectId(slug: string): Promise<string> {
-  const id = await getProjectIdBySlug(slug);
-  if (!id) throw error(404, 'Project not found');
-  return id;
-}
-
 export const actions = {
-  createGroup: async ({ request, params }: RequestEvent<Params>) => {
-    const projectId = await requireProjectId(params.slug);
-    const data      = stringFields(await request.formData());
-    const parsed    = groupCreateInput.safeParse({ ...data, projectId });
+  createGroup: async ({ request, params, locals }: RequestEvent<Params>) => {
+    const project = await requireProject(locals.authz, params.slug, 'feature.author');
+    const data    = stringFields(await request.formData());
+    const parsed  = groupCreateInput.safeParse({ ...data, projectId: project.id });
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'createGroup' });
 
     const result = await createGroup(parsed.data);
@@ -44,7 +39,8 @@ export const actions = {
     throw redirect(303, `/p/${params.slug}`);
   },
 
-  renameGroup: async ({ request, params }: RequestEvent<Params>) => {
+  renameGroup: async ({ request, params, locals }: RequestEvent<Params>) => {
+    await requireProject(locals.authz, params.slug, 'feature.author');
     const data   = stringFields(await request.formData());
     const parsed = groupRenameInput.safeParse(data);
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'renameGroup' });
@@ -55,7 +51,8 @@ export const actions = {
     throw redirect(303, `/p/${params.slug}`);
   },
 
-  deleteGroup: async ({ request, params }: RequestEvent<Params>) => {
+  deleteGroup: async ({ request, params, locals }: RequestEvent<Params>) => {
+    await requireProject(locals.authz, params.slug, 'feature.author');
     const data   = stringFields(await request.formData());
     const parsed = groupDeleteInput.safeParse(data);
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'deleteGroup' });
@@ -66,7 +63,8 @@ export const actions = {
     throw redirect(303, `/p/${params.slug}`);
   },
 
-  moveFeature: async ({ request, params }: RequestEvent<Params>) => {
+  moveFeature: async ({ request, params, locals }: RequestEvent<Params>) => {
+    await requireProject(locals.authz, params.slug, 'feature.author');
     const data    = stringFields(await request.formData());
     const groupId = data.groupId === '' || data.groupId === undefined ? null : data.groupId;
     const parsed  = featureMoveInput.safeParse({ featureId: data.featureId, groupId });

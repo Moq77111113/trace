@@ -1,15 +1,10 @@
-import { error, fail, redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { stringFields } from '$lib/server/forms';
 import { resolveLiveExecutor } from '$lib/server/executions/executor';
 import { listRecentExecutionsForFeature } from '$lib/server/executions/read/queries';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
-import { parseFeatureCode } from '$lib/shared/lib/slug';
 import { archiveFeature } from '$lib/server/features/lifecycle/archive';
-import {
-  getFeatureByCode,
-  listProjectTags,
-  resolveFeatureIdByCode,
-} from '$lib/server/features/read/queries';
+import { listProjectTags } from '$lib/server/features/read/queries';
 import { featureSaveBody, saveFeature } from '$lib/server/features/lifecycle/save';
 import { listGroups } from '$lib/server/groups/queries';
 import {
@@ -24,21 +19,17 @@ import {
   reorderInput,
   reorderManualScenarios,
 } from '$lib/server/features/manual-scenarios';
+import { requireFeature } from '$lib/server/features/authz';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load = (async ({ params, parent }) => {
-  const { project, breadcrumbs } = await parent();
-
-  const parsed = parseFeatureCode(params.code);
-  if (!parsed || parsed.prefix !== project.codePrefix) throw error(404, 'Feature not found');
-
-  const feature = await getFeatureByCode(project.id, parsed.seq);
-  if (!feature) throw error(404, 'Feature not found');
+export const load = (async ({ params, parent, locals }) => {
+  const { breadcrumbs } = await parent();
+  const feature = await requireFeature(locals.authz, params.slug, params.code, 'feature.view');
 
   return {
     feature,
-    projectTags:     await listProjectTags(project.id),
-    groups:          await listGroups(project.id),
+    projectTags:     await listProjectTags(feature.projectId),
+    groups:          await listGroups(feature.projectId),
     recentRuns:      await listRecentExecutionsForFeature(feature.id, 5),
     manualScenarios: await listManualScenarios({ featureId: feature.id }),
     breadcrumbs:     appendCrumb(breadcrumbs, { label: feature.name }),
@@ -58,17 +49,16 @@ function mapManualNameTakenToFail(e: unknown) {
 
 export const actions = {
   save: async (event) => {
+    const feature = await requireFeature(event.locals.authz, event.params.slug, event.params.code, 'feature.author');
+
     const data    = stringFields(await event.request.formData());
     const groupId = data.groupId === '' || data.groupId === undefined ? null : data.groupId;
     const parsed  = featureSaveBody.safeParse({ ...data, groupId });
     if (!parsed.success) return fail(400, { error: parsed.error.message });
 
-    const featureId = await resolveFeatureIdByCode(event.params.slug, event.params.code);
-    if (!featureId) throw error(404, 'Feature not found');
-
     const trimmedDescription = parsed.data.description.trim();
     const result = await saveFeature({
-      featureId,
+      featureId:       feature.id,
       content:         parsed.data.content,
       description:     trimmedDescription === '' ? null : trimmedDescription,
       expectedVersion: parsed.data.version,
@@ -85,17 +75,18 @@ export const actions = {
     return { feature: result.feature };
   },
 
-  archive: async ({ params }) => {
-    const featureId = await resolveFeatureIdByCode(params.slug, params.code);
-    if (!featureId) throw error(404, 'Feature not found');
+  archive: async ({ params, locals }) => {
+    const feature = await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
 
-    const archived = await archiveFeature(featureId);
-    if (!archived.ok) throw error(404, 'Feature not found');
+    const archived = await archiveFeature(feature.id);
+    if (!archived.ok) throw { status: 404 };
 
     throw redirect(303, `/p/${params.slug}`);
   },
 
-  addManualScenario: async ({ request }) => {
+  addManualScenario: async ({ request, params, locals }) => {
+    await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
+
     const data   = stringFields(await request.formData());
     const parsed = addInput.safeParse(data);
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'addManualScenario' });
@@ -109,7 +100,9 @@ export const actions = {
     }
   },
 
-  renameManualScenario: async ({ request }) => {
+  renameManualScenario: async ({ request, params, locals }) => {
+    await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
+
     const data   = stringFields(await request.formData());
     const parsed = renameInput.safeParse(data);
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'renameManualScenario' });
@@ -123,7 +116,9 @@ export const actions = {
     }
   },
 
-  archiveManualScenario: async ({ request }) => {
+  archiveManualScenario: async ({ request, params, locals }) => {
+    await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
+
     const data   = stringFields(await request.formData());
     const parsed = archiveInput.safeParse(data);
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'archiveManualScenario' });
@@ -131,7 +126,9 @@ export const actions = {
     return { ok: true as const };
   },
 
-  reorderManualScenarios: async ({ request }) => {
+  reorderManualScenarios: async ({ request, params, locals }) => {
+    await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
+
     const data   = stringFields(await request.formData());
     const order  = (data.order ?? '').split(',').filter(Boolean);
     const parsed = reorderInput.safeParse({ featureId: data.featureId, order });

@@ -1,11 +1,13 @@
 import { fail, type RequestEvent } from '@sveltejs/kit';
 import { commitBatch, commitInput } from '$lib/server/import/commit';
+import { requireProject } from '$lib/server/projects/authz';
 import { resolveLiveExecutor } from '$lib/server/executions/executor';
 import { failureFor } from './failure';
 
 type Params = { slug: string };
 
 export async function commit(event: RequestEvent<Params>) {
+  await requireProject(event.locals.authz, event.params.slug, 'feature.author');
   const form     = await event.request.formData();
   const rowsRaw  = form.get('rows');
   const previewId = form.get('previewId');

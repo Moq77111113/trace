@@ -1,12 +1,14 @@
 import { and, count, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { features } from '$lib/server/db/schema';
+import { requireProject } from '$lib/server/projects/authz';
 import { projectArchiveFilename } from '$lib/features/feature-import/lib/format';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { PageServerLoad } from './$types';
 
-export const load = (async ({ parent }) => {
+export const load = (async ({ params, locals, parent }) => {
+  await requireProject(locals.authz, params.slug, 'feature.view');
   const { project, breadcrumbs } = await parent();
 
   const [row] = await db.select({ n: count() }).from(features)

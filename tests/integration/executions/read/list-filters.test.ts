@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
-import { executions, featureGroups } from '$lib/server/db/schema';
+import { executions, featureGroups, policies } from '$lib/server/db/schema';
 import { listExecutionEnvironments, listExecutionsForProject } from '$lib/server/executions/read/queries';
-import { mkFeature, mkProject } from '$testing/fixtures';
+import { mkFeature, mkProject, mkUser, grantProjectAccess } from '$testing/fixtures';
+import { makeAuthorizer } from '$lib/server/authz/authorizer';
+
+const asUser = (id: string) => ({ id, email: 'u@x', name: null, role: 'user' as const, welcomedAt: null });
 
 async function seedProject() {
   return mkProject({ name: `Hist ${Date.now()}-${Math.random()}` });
@@ -45,56 +48,64 @@ async function seedRun(
 
 describe('listExecutionsForProject — filters', () => {
   it('filters by status, source, environment', async () => {
+    const u = await mkUser();
     const p = await seedProject();
     const f = await seedFeature(p.id, 'Login');
+    await grantProjectAccess(u.id, p.id, 'execution.review');
 
     await seedRun(f.id, f.content, { status: 'PASSED', source: 'MANUAL', environment: 'staging' });
     await seedRun(f.id, f.content, { status: 'FAILED', source: 'CI',     environment: 'prod' });
     await seedRun(f.id, f.content, { status: 'PASSED', source: 'CI',     environment: 'staging' });
 
-    const byStatus = await listExecutionsForProject(p.id, { status: 'FAILED' });
+    const authz = makeAuthorizer(asUser(u.id));
+    const byStatus = await listExecutionsForProject(authz, p.id, { status: 'FAILED' });
     expect(byStatus.total).toBe(1);
     expect(byStatus.rows[0]?.source).toBe('CI');
 
-    const bySource = await listExecutionsForProject(p.id, { source: 'CI' });
+    const bySource = await listExecutionsForProject(authz, p.id, { source: 'CI' });
     expect(bySource.total).toBe(2);
 
-    const byEnv = await listExecutionsForProject(p.id, { environment: 'staging' });
+    const byEnv = await listExecutionsForProject(authz, p.id, { environment: 'staging' });
     expect(byEnv.total).toBe(2);
 
-    const combined = await listExecutionsForProject(p.id, { source: 'CI', environment: 'staging' });
+    const combined = await listExecutionsForProject(authz, p.id, { source: 'CI', environment: 'staging' });
     expect(combined.total).toBe(1);
     expect(combined.rows[0]?.status).toBe('PASSED');
   });
 
   it('filters by feature and group', async () => {
+    const u     = await mkUser();
     const p     = await seedProject();
     const gA    = await seedGroup(p.id, 'A');
     const gB    = await seedGroup(p.id, 'B');
     const fA    = await seedFeature(p.id, 'In A', gA.id);
     const fB    = await seedFeature(p.id, 'In B', gB.id);
     const fNone = await seedFeature(p.id, 'Loose', null);
+    await grantProjectAccess(u.id, p.id, 'execution.review');
 
     await seedRun(fA.id,    fA.content,    { status: 'PASSED', source: 'MANUAL', environment: null });
     await seedRun(fB.id,    fB.content,    { status: 'PASSED', source: 'MANUAL', environment: null });
     await seedRun(fNone.id, fNone.content, { status: 'PASSED', source: 'MANUAL', environment: null });
 
-    const byFeature = await listExecutionsForProject(p.id, { featureId: fA.id });
+    const authz = makeAuthorizer(asUser(u.id));
+    const byFeature = await listExecutionsForProject(authz, p.id, { featureId: fA.id });
     expect(byFeature.total).toBe(1);
     expect(byFeature.rows[0]?.featureName).toBe('In A');
 
-    const byGroup = await listExecutionsForProject(p.id, { groupId: gB.id });
+    const byGroup = await listExecutionsForProject(authz, p.id, { groupId: gB.id });
     expect(byGroup.total).toBe(1);
     expect(byGroup.rows[0]?.featureName).toBe('In B');
 
-    const ungrouped = await listExecutionsForProject(p.id, { groupId: 'ungrouped' });
+    const ungrouped = await listExecutionsForProject(authz, p.id, { groupId: 'ungrouped' });
     expect(ungrouped.total).toBe(1);
     expect(ungrouped.rows[0]?.featureName).toBe('Loose');
   });
 
   it('orders by startedAt desc and paginates', async () => {
+    const u = await mkUser();
     const p = await seedProject();
     const f = await seedFeature(p.id, 'Login');
+    await grantProjectAccess(u.id, p.id, 'execution.review');
 
     const baseTime = Date.now();
     for (let i = 0; i < 5; i++) {
@@ -107,14 +118,15 @@ describe('listExecutionsForProject — filters', () => {
       });
     }
 
-    const firstPage = await listExecutionsForProject(p.id, { pageSize: 2, page: 1 });
+    const authz = makeAuthorizer(asUser(u.id));
+    const firstPage = await listExecutionsForProject(authz, p.id, { pageSize: 2, page: 1 });
     expect(firstPage.total).toBe(5);
     expect(firstPage.rows.map((r) => r.executedBy)).toEqual(['Run 4', 'Run 3']);
 
-    const secondPage = await listExecutionsForProject(p.id, { pageSize: 2, page: 2 });
+    const secondPage = await listExecutionsForProject(authz, p.id, { pageSize: 2, page: 2 });
     expect(secondPage.rows.map((r) => r.executedBy)).toEqual(['Run 2', 'Run 1']);
 
-    const thirdPage = await listExecutionsForProject(p.id, { pageSize: 2, page: 3 });
+    const thirdPage = await listExecutionsForProject(authz, p.id, { pageSize: 2, page: 3 });
     expect(thirdPage.rows.map((r) => r.executedBy)).toEqual(['Run 0']);
   });
 
@@ -129,5 +141,22 @@ describe('listExecutionsForProject — filters', () => {
 
     const envs = await listExecutionEnvironments(p.id);
     expect(envs).toEqual(['prod', 'staging']);
+  });
+
+  it('excludes executions whose feature the caller cannot review', async () => {
+    const u = await mkUser();
+    const p = await mkProject();
+    const fSeen   = await mkFeature(p.id);
+    const fHidden = await mkFeature(p.id);
+    await db.insert(executions).values([
+      { featureId: fSeen.id,   source: 'MANUAL', executedBy: 'x', featureContentAtStart: fSeen.content,   status: 'PASSED', startedAt: new Date(), finishedAt: new Date() },
+      { featureId: fHidden.id, source: 'MANUAL', executedBy: 'x', featureContentAtStart: fHidden.content, status: 'PASSED', startedAt: new Date(), finishedAt: new Date() },
+    ]);
+    await grantProjectAccess(u.id, p.id, 'execution.review');
+    await db.insert(policies).values({ subjectKind: 'user', subjectId: u.id, action: 'execution.review', scopeKind: 'feature', scopeId: fHidden.id, effect: 'deny' });
+    const res = await listExecutionsForProject(makeAuthorizer(asUser(u.id)), p.id, {});
+    const featureIds = new Set(res.rows.map((r) => r.featureId));
+    expect(featureIds.has(fSeen.id)).toBe(true);
+    expect(featureIds.has(fHidden.id)).toBe(false);
   });
 });

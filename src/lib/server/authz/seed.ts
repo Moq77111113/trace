@@ -46,6 +46,21 @@ export async function ensureAdminInstancePolicies(): Promise<void> {
 
 const BLANKET_ACTIONS = ['project.access', 'feature.view', 'feature.author', 'execution.run', 'execution.review'] as const;
 
+type PolicyInsert = typeof policies.$inferInsert;
+
+/** The any-user blanket rows for one project: every usage verb except `project.manage`. */
+function blanketRows(projectId: string): PolicyInsert[] {
+  return BLANKET_ACTIONS.map((action) => ({
+    subjectKind: 'any-user', subjectId: null,
+    action, scopeKind: 'project', scopeId: projectId, effect: 'allow',
+  }));
+}
+
+/** Grants the any-user blanket on a single project — used for the demo sandbox and any explicitly-public project. */
+export async function grantAnyUserBlanket(projectId: string): Promise<void> {
+  await db.insert(policies).values(blanketRows(projectId));
+}
+
 /**
  * One-time migration of pre-PBAC data: grants the `any-user` blanket (every
  * usage verb except `project.manage`) on each existing project, so current users
@@ -59,12 +74,7 @@ export async function backfillExistingProjectsBlanket(): Promise<void> {
     if (!settings || settings.at) return;
 
     const existing = await tx.select({ id: projects.id }).from(projects);
-    const rows = existing.flatMap((p) =>
-      BLANKET_ACTIONS.map((action) => ({
-        subjectKind: 'any-user' as const, subjectId: null,
-        action, scopeKind: 'project' as const, scopeId: p.id, effect: 'allow' as const,
-      })),
-    );
+    const rows = existing.flatMap((p) => blanketRows(p.id));
     if (rows.length > 0) await tx.insert(policies).values(rows);
 
     await tx.update(instanceSettings).set({ policiesBackfilledAt: new Date() }).where(eq(instanceSettings.id, 1));

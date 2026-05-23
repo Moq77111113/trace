@@ -6,8 +6,12 @@ import { mkFeature, mkProject } from '$testing/fixtures';
 import { startExecution } from '$lib/server/executions/run/start';
 import { loadExecutionPage } from '$lib/server/executions/read/queries';
 import { addManualScenario } from '$lib/server/features/manual-scenarios';
+import { makeAuthorizer } from '$lib/server/authz/authorizer';
+import { grantAnyUserBlanket } from '$lib/server/authz/seed';
 
 type LoadEvent = Parameters<typeof load>[0];
+
+const FAKE_USER = { id: '00000000-0000-7000-8000-000000000099', email: 'u@x', name: null, role: 'user' as const, welcomedAt: null };
 
 function buildEvent(project: { id: string; slug: string }, search: Record<string, string> = {}): LoadEvent {
   const url = new URL(`http://localhost/p/${project.slug}/executions`);
@@ -16,11 +20,13 @@ function buildEvent(project: { id: string; slug: string }, search: Record<string
     params: { slug: project.slug },
     url,
     parent: async () => ({ breadcrumbs: [], project }),
+    locals: { user: FAKE_USER, authz: makeAuthorizer(FAKE_USER) },
   } as unknown as LoadEvent;
 }
 
 async function seedFixture() {
   const p = await mkProject({ name: `RunsLoad ${Date.now()}-${Math.random()}` });
+  await grantAnyUserBlanket(p.id);
 
   const [g] = await db
     .insert(featureGroups)

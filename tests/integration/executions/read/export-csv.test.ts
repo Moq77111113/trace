@@ -3,11 +3,15 @@ import { db } from '$lib/server/db/client';
 import { executions } from '$lib/server/db/schema';
 import { GET } from '~/src/routes/(app)/p/[slug]/executions/export.csv/+server';
 import { mkFeature, mkProject } from '$testing/fixtures';
+import { makeAuthorizer } from '$lib/server/authz/authorizer';
+import { grantAnyUserBlanket } from '$lib/server/authz/seed';
 
 type ExportEvent = Parameters<typeof GET>[0];
 
 async function seedProject() {
-  return mkProject({ name: `Export ${Date.now()}-${Math.random()}` });
+  const p = await mkProject({ name: `Export ${Date.now()}-${Math.random()}` });
+  await grantAnyUserBlanket(p.id);
+  return p;
 }
 
 async function seedFeature(projectId: string, name: string) {
@@ -45,11 +49,11 @@ function buildEvent(slug: string, searchParams: Record<string, string> = {}, opt
   const url = new URL(`http://localhost/p/${slug}/executions/export.csv`);
   for (const [k, v] of Object.entries(searchParams)) url.searchParams.set(k, v);
   const locals = opts.authed
-    ? {
-        user:    { id: 'u', email: 'u@x', name: null, role: 'user', welcomedAt: null },
-        session: { id: 's' },
-      }
-    : { user: null, session: null };
+    ? (() => {
+        const user = { id: '00000000-0000-7000-8000-000000000099', email: 'u@x', name: null, role: 'user' as const, welcomedAt: null };
+        return { user, session: { id: 's' }, authz: makeAuthorizer(user) };
+      })()
+    : { user: null, session: null, authz: makeAuthorizer(null) };
   return { params: { slug }, url, locals } as unknown as ExportEvent;
 }
 

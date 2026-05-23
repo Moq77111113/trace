@@ -3,6 +3,8 @@ import { db } from '$lib/server/db/client';
 import { attachments, executions, features, projects, scenarioResults } from '$lib/server/db/schema';
 import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 import { EXPORT_ROW_CAP } from '$lib/features/csv-export/lib/csv';
+import type { Authorizer } from '$lib/server/authz/authorizer';
+import { visibleFeatureIds } from '$lib/server/features/authz';
 
 export type ExecutionStatusFilter = 'PASSED' | 'FAILED' | 'SKIPPED' | 'ABORTED' | 'IN_PROGRESS';
 export type ExecutionSourceFilter = 'MANUAL' | 'CI';
@@ -25,8 +27,8 @@ const DEFAULT_PAGE_SIZE = 50;
 
 export const FLAKE_WINDOW = 10;
 
-function buildConditions(projectId: string, f: ExecutionFilters): SQL[] {
-  const conds: SQL[] = [eq(features.projectId, projectId)];
+function buildConditions(projectId: string, featureIds: Set<string>, f: ExecutionFilters): SQL[] {
+  const conds: SQL[] = [eq(features.projectId, projectId), inArray(features.id, [...featureIds])];
 
   if (f.status)      conds.push(eq(executions.status, f.status));
   if (f.source)      conds.push(eq(executions.source, f.source));
@@ -42,12 +44,16 @@ function buildConditions(projectId: string, f: ExecutionFilters): SQL[] {
 
 const featureCodeSql = sql<string>`${projects.codePrefix} || '-' || ${features.codeSeq}`;
 
-export async function listExecutionsForProject(projectId: string, f: ExecutionFilters = {}) {
+export async function listExecutionsForProject(authz: Authorizer, projectId: string, f: ExecutionFilters = {}) {
   const page     = Math.max(1, f.page ?? 1);
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, f.pageSize ?? DEFAULT_PAGE_SIZE));
+
+  const visible = await visibleFeatureIds(authz, projectId, 'execution.review');
+  if (visible.size === 0) return { rows: [], total: 0, page, pageSize };
+
   const offset   = (page - 1) * pageSize;
 
-  const conds = buildConditions(projectId, f);
+  const conds = buildConditions(projectId, visible, f);
 
   const rows = await db
     .select({
@@ -107,8 +113,10 @@ export type ExecutionExportRow = {
  * Flat (un-paged) export of executions matching `f`. Capped at EXPORT_ROW_CAP + 1
  * rows so callers can detect overflow without a separate COUNT query.
  */
-export async function listExecutionsForExport(projectId: string, f: ExecutionFilters = {}): Promise<ExecutionExportRow[]> {
-  const conds = buildConditions(projectId, f);
+export async function listExecutionsForExport(authz: Authorizer, projectId: string, f: ExecutionFilters = {}): Promise<ExecutionExportRow[]> {
+  const visible = await visibleFeatureIds(authz, projectId, 'execution.review');
+  if (visible.size === 0) return [];
+  const conds = buildConditions(projectId, visible, f);
 
   return db
     .select({

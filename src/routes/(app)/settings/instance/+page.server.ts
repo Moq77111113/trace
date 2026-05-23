@@ -3,7 +3,7 @@ import { fail } from '@sveltejs/kit';
 import { eq, asc } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { user, projects } from '$lib/server/db/schema';
-import { requireAdmin } from '$lib/server/instance/require-admin';
+import { requireInstanceAdmin } from '$lib/server/instance/authz';
 import { getInstanceSettings, openSignup, closeSignup, getSmtp, updateSmtp, markSmtpTested } from '$lib/server/instance/settings';
 import { sendTestMail } from '$lib/server/email/transport';
 import { mintAdminResetLink, listRecentAdminResets } from '$lib/server/auth/admin-reset';
@@ -15,7 +15,7 @@ import * as m from '$lib/paraglide/messages';
 const DEMO_NAME = 'Trace Demo';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
-	const admin    = requireAdmin(locals.user);
+	const admin    = await requireInstanceAdmin(locals.authz);
 	const settings = await getInstanceSettings();
 	const users    = await db
 		.select({
@@ -60,7 +60,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
 export const actions: Actions = {
 	open: async ({ locals, request }) => {
-		const admin = requireAdmin(locals.user);
+		const admin = await requireInstanceAdmin(locals.authz);
 		const data  = await request.formData();
 		const budgetRaw = data.get('budget');
 		const budget    = budgetRaw === null ? NaN : Number(budgetRaw);
@@ -79,19 +79,19 @@ export const actions: Actions = {
 	},
 
 	close: async ({ locals }) => {
-		const admin = requireAdmin(locals.user);
+		const admin = await requireInstanceAdmin(locals.authz);
 		await closeSignup({ updatedBy: admin.id });
 		return { closed: true };
 	},
 
 	reseed: async ({ locals }) => {
-		const admin = requireAdmin(locals.user);
+		const admin = await requireInstanceAdmin(locals.authz);
 		await seedDemoProject(admin.id);
 		return { reseeded: true };
 	},
 
 	saveSmtp: async ({ locals, request }) => {
-		const admin = requireAdmin(locals.user);
+		const admin = await requireInstanceAdmin(locals.authz);
 		const data  = await request.formData();
 		const host           = String(data.get('host') ?? '').trim();
 		const port           = Number(data.get('port') ?? 0);
@@ -109,7 +109,7 @@ export const actions: Actions = {
 	},
 
 	sendTestEmail: async ({ locals, request }) => {
-		const admin = requireAdmin(locals.user);
+		const admin = await requireInstanceAdmin(locals.authz);
 		const data  = await request.formData();
 		const host     = String(data.get('host') ?? '').trim();
 		const port     = Number(data.get('port') ?? 0);
@@ -130,7 +130,7 @@ export const actions: Actions = {
 	},
 
 	mintResetLink: async ({ locals, request, url }) => {
-		const admin = requireAdmin(locals.user);
+		const admin = await requireInstanceAdmin(locals.authz);
 		const data  = await request.formData();
 		const targetUserId = String(data.get('targetUserId') ?? '');
 		if (!targetUserId) return fail(400, { error: m.error_admin_reset_user_not_found() });

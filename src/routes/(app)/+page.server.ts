@@ -33,8 +33,8 @@ async function loadWelcome(locals: App.Locals) {
 export const load = (async ({ locals, parent }) => {
 	const { breadcrumbs } = await parent();
 	return {
-		projects:    await listProjectsWithStats(),
-		recentRuns:  await listRecentExecutions(20),
+		projects:    await listProjectsWithStats(locals.authz),
+		recentRuns:  await listRecentExecutions(locals.authz, 20),
 		welcome:     await loadWelcome(locals),
 		breadcrumbs: appendCrumb(breadcrumbs, { label: m.nav_projects() }),
 	};

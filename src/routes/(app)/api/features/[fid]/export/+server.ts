@@ -1,9 +1,11 @@
 import { error } from '@sveltejs/kit';
 import { exportFeature } from '$lib/server/features/read/export';
+import { requireFeatureById } from '$lib/server/features/authz';
 import { authedHandler } from '$lib/server/route';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = authedHandler(async ({ params }) => {
+export const GET: RequestHandler = authedHandler(async ({ params, locals }) => {
+  await requireFeatureById(locals.authz, params.fid, 'feature.view');
   const out = await exportFeature(params.fid);
 
   if (!out) throw error(404, 'feature not found');

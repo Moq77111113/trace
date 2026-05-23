@@ -1,6 +1,6 @@
 import { fail, type RequestEvent } from '@sveltejs/kit';
 import { parseBatch } from '$lib/server/import/parse-batch';
-import { getProjectIdBySlug } from '$lib/server/projects/queries';
+import { requireProject } from '$lib/server/projects/authz';
 import type { ImportBuffer } from '$lib/server/import/types';
 import { failureFor } from './failure';
 
@@ -9,9 +9,8 @@ type Params = { slug: string };
 const MAX_FILES      = 100;
 const MAX_BYTES_FILE = 1 * 1024 * 1024;
 
-export async function preview({ request, params }: RequestEvent<Params>) {
-  const projectId = await getProjectIdBySlug(params.slug);
-  if (!projectId) return fail(404, { error: 'project not found' });
+export async function preview({ request, params, locals }: RequestEvent<Params>) {
+  const project = await requireProject(locals.authz, params.slug, 'feature.author');
 
   const form    = await request.formData();
   const entries = form.getAll('files').filter((e): e is File => e instanceof File);
@@ -34,7 +33,7 @@ export async function preview({ request, params }: RequestEvent<Params>) {
   }
 
   try {
-    const preview = await parseBatch(projectId, inputs);
+    const preview = await parseBatch(project.id, inputs);
     return { preview };
   } catch (e) {
     return failureFor(e);
