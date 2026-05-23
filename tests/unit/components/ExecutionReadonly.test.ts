@@ -37,6 +37,7 @@ const fakeData = {
     slug:        'p1',
     codePrefix:  'p1',
     description: null,
+    createdBy:   null,
     archived:    false,
     createdAt:   new Date(),
     updatedAt:   new Date(),
