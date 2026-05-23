@@ -4,6 +4,16 @@ import { and, count, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import type { Authorizer } from '$lib/server/authz/authorizer';
 import { accessibleProjectIds } from './authz';
 
+/** Non-archived projects the caller may `project.access`, minimal nav shape, sorted by name. Backs the sidebar. */
+export async function listAccessibleProjects(authz: Authorizer) {
+  const ids = await accessibleProjectIds(authz);
+  if (ids.size === 0) return [];
+  return db.query.projects.findMany({
+    where:   and(eq(projects.archived, false), inArray(projects.id, [...ids])),
+    orderBy: (p, { asc }) => [asc(p.name)],
+  });
+}
+
 export async function getProjectBySlug(slug: string) {
   return db.query.projects.findFirst({ where: eq(projects.slug, slug) });
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createProject, projectInput } from '$lib/server/projects/create';
-import { listProjectsWithStats, listRecentExecutions } from '$lib/server/projects/queries';
+import { listProjectsWithStats, listRecentExecutions, listAccessibleProjects } from '$lib/server/projects/queries';
 import { executions } from '$lib/server/db/schema';
 import { db } from '$lib/server/db/client';
 import { mkUser, mkFeature, grantProjectAccess } from '$testing/fixtures';
@@ -50,6 +50,19 @@ describe('projects domain', () => {
     const viewer = await mkUser();
     await grantProjectAccess(viewer.id, a.value.id, 'project.access');
     const rows = await listProjectsWithStats(makeAuthorizer(asUser(viewer.id)));
+    const ids = rows.map((r) => r.id);
+    expect(ids).toContain(a.value.id);
+    expect(ids).not.toContain(b.value.id);
+  });
+
+  it('listAccessibleProjects returns only the projects the caller can access (sidebar nav)', async () => {
+    const creator = await mkUser();
+    const a = await createProject({ name: `Nav ${Date.now()}-a` }, creator.id);
+    const b = await createProject({ name: `Nav ${Date.now()}-b` }, creator.id);
+    if (!a.ok || !b.ok) throw new Error('createProject failed');
+    const viewer = await mkUser();
+    await grantProjectAccess(viewer.id, a.value.id, 'project.access');
+    const rows = await listAccessibleProjects(makeAuthorizer(asUser(viewer.id)));
     const ids = rows.map((r) => r.id);
     expect(ids).toContain(a.value.id);
     expect(ids).not.toContain(b.value.id);
