@@ -2,6 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { createFeature, featureCreateInput } from '$lib/server/features/lifecycle/create';
 import { listGroups } from '$lib/server/groups/queries';
 import { getProjectBySlug } from '$lib/server/projects/queries';
+import { requireProject } from '$lib/server/projects/authz';
 import { stringFields } from '$lib/server/forms';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import { formatFeatureCode } from '$lib/shared/lib/slug';
@@ -17,9 +18,11 @@ export const load: PageServerLoad = async ({ parent }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, params }) => {
-    const project = await getProjectBySlug(params.slug);
+  default: async (event) => {
+    await requireProject(event.locals.authz, event.params.slug, 'feature.author');
+    const project = await getProjectBySlug(event.params.slug);
     if (!project) throw error(404, 'Project not found');
+    const { request, params } = event;
 
     const data    = stringFields(await request.formData());
     const groupId = data.groupId === '' || data.groupId === undefined ? null : data.groupId;
