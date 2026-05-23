@@ -80,6 +80,27 @@
 		</header>
 
 		<div class="flex flex-col gap-10">
+			{#if data.featured.length > 0}
+				<section class="relative flex flex-col gap-4 rounded-xl pl-4 py-3 -ml-4">
+					<span class="absolute left-0 top-3 bottom-3 w-[2px] rounded-full bg-accent/50" aria-hidden="true"></span>
+					<h2 class="flex items-center gap-2.5 text-[13px] font-semibold tracking-[0.04em] uppercase text-ink">
+						<span class="size-2 rounded-full bg-accent animate-[runpulse_2s_ease-in-out_infinite]" aria-hidden="true"></span>
+						{m.roadmap_new_label()}
+					</h2>
+					<ul class="flex flex-col gap-2.5">
+						{#each data.featured as item (item.id)}
+							<li
+								class="group rounded-lg border border-accent/40 bg-accent-soft/30 px-4 py-3
+								       hover:border-accent/60 hover:shadow-[var(--shadow-1)]
+								       transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px"
+							>
+								<h3 class="text-[14.5px] font-medium text-ink tracking-tight">{item.title}</h3>
+								<p class="mt-1 text-[13px] text-ink-2 leading-relaxed">{item.summary}</p>
+							</li>
+						{/each}
+					</ul>
+				</section>
+			{/if}
 			{#each data.groups as group, gi (group.status)}
 				{@const status      = group.status as Status}
 				{@const tone        = STATUS_TONE[status]}

@@ -82,6 +82,7 @@
 	"roadmap_status_in_progress": "Being built",
 	"roadmap_status_next": "Coming up",
 	"roadmap_status_later": "Coming later",
+	"roadmap_new_label": "New",
 	"roadmap_stamp": "Last updated: {date}",
 	"roadmap_back": "Back to trace",
 	"roadmap_disclaimer": "The order can change, and we don't promise dates here. This page is updated as we make progress.",

@@ -108,12 +108,14 @@
       "id": "self-host-one-liner",
       "title": "Install on your own server in one command",
       "status": "shipped",
+      "new": true,
       "summary": "Run a single command and trace is up. No subscription, no account, your data stays on your machine."
     },
     {
       "id": "manual-features",
       "title": "Write tests you run by hand too",
       "status": "shipped",
+      "new": true,
       "summary": "Some tests are not automated, you run them by hand. trace lets you write those tests in the same place as the rest, alongside the Gherkin ones."
     },
     {
@@ -132,6 +134,7 @@
       "id": "pbac",
       "title": "Decide who can do what",
       "status": "shipped",
+      "new": true,
       "summary": "Choose, project by project, who can read, run, or change tests. Lets you safely show your work to a client without giving them edit rights."
     },
     {
