@@ -52,17 +52,18 @@ describe('listExecutionsForProject — filters', () => {
     await seedRun(f.id, f.content, { status: 'FAILED', source: 'CI',     environment: 'prod' });
     await seedRun(f.id, f.content, { status: 'PASSED', source: 'CI',     environment: 'staging' });
 
-    const byStatus = await listExecutionsForProject(p.id, { status: 'FAILED' });
+    const allIds = new Set([f.id]);
+    const byStatus = await listExecutionsForProject(p.id, allIds, { status: 'FAILED' });
     expect(byStatus.total).toBe(1);
     expect(byStatus.rows[0]?.source).toBe('CI');
 
-    const bySource = await listExecutionsForProject(p.id, { source: 'CI' });
+    const bySource = await listExecutionsForProject(p.id, allIds, { source: 'CI' });
     expect(bySource.total).toBe(2);
 
-    const byEnv = await listExecutionsForProject(p.id, { environment: 'staging' });
+    const byEnv = await listExecutionsForProject(p.id, allIds, { environment: 'staging' });
     expect(byEnv.total).toBe(2);
 
-    const combined = await listExecutionsForProject(p.id, { source: 'CI', environment: 'staging' });
+    const combined = await listExecutionsForProject(p.id, allIds, { source: 'CI', environment: 'staging' });
     expect(combined.total).toBe(1);
     expect(combined.rows[0]?.status).toBe('PASSED');
   });
@@ -79,15 +80,16 @@ describe('listExecutionsForProject — filters', () => {
     await seedRun(fB.id,    fB.content,    { status: 'PASSED', source: 'MANUAL', environment: null });
     await seedRun(fNone.id, fNone.content, { status: 'PASSED', source: 'MANUAL', environment: null });
 
-    const byFeature = await listExecutionsForProject(p.id, { featureId: fA.id });
+    const allIds = new Set([fA.id, fB.id, fNone.id]);
+    const byFeature = await listExecutionsForProject(p.id, allIds, { featureId: fA.id });
     expect(byFeature.total).toBe(1);
     expect(byFeature.rows[0]?.featureName).toBe('In A');
 
-    const byGroup = await listExecutionsForProject(p.id, { groupId: gB.id });
+    const byGroup = await listExecutionsForProject(p.id, allIds, { groupId: gB.id });
     expect(byGroup.total).toBe(1);
     expect(byGroup.rows[0]?.featureName).toBe('In B');
 
-    const ungrouped = await listExecutionsForProject(p.id, { groupId: 'ungrouped' });
+    const ungrouped = await listExecutionsForProject(p.id, allIds, { groupId: 'ungrouped' });
     expect(ungrouped.total).toBe(1);
     expect(ungrouped.rows[0]?.featureName).toBe('Loose');
   });
@@ -107,14 +109,15 @@ describe('listExecutionsForProject — filters', () => {
       });
     }
 
-    const firstPage = await listExecutionsForProject(p.id, { pageSize: 2, page: 1 });
+    const allIds = new Set([f.id]);
+    const firstPage = await listExecutionsForProject(p.id, allIds, { pageSize: 2, page: 1 });
     expect(firstPage.total).toBe(5);
     expect(firstPage.rows.map((r) => r.executedBy)).toEqual(['Run 4', 'Run 3']);
 
-    const secondPage = await listExecutionsForProject(p.id, { pageSize: 2, page: 2 });
+    const secondPage = await listExecutionsForProject(p.id, allIds, { pageSize: 2, page: 2 });
     expect(secondPage.rows.map((r) => r.executedBy)).toEqual(['Run 2', 'Run 1']);
 
-    const thirdPage = await listExecutionsForProject(p.id, { pageSize: 2, page: 3 });
+    const thirdPage = await listExecutionsForProject(p.id, allIds, { pageSize: 2, page: 3 });
     expect(thirdPage.rows.map((r) => r.executedBy)).toEqual(['Run 0']);
   });
 
@@ -129,5 +132,19 @@ describe('listExecutionsForProject — filters', () => {
 
     const envs = await listExecutionEnvironments(p.id);
     expect(envs).toEqual(['prod', 'staging']);
+  });
+
+  it('excludes executions whose feature is not in the visible set', async () => {
+    const p = await mkProject();
+    const fSeen   = await mkFeature(p.id);
+    const fHidden = await mkFeature(p.id);
+    await db.insert(executions).values([
+      { featureId: fSeen.id,   source: 'MANUAL', executedBy: 'x', featureContentAtStart: fSeen.content,   status: 'PASSED', startedAt: new Date(), finishedAt: new Date() },
+      { featureId: fHidden.id, source: 'MANUAL', executedBy: 'x', featureContentAtStart: fHidden.content, status: 'PASSED', startedAt: new Date(), finishedAt: new Date() },
+    ]);
+    const res = await listExecutionsForProject(p.id, new Set([fSeen.id]), {});
+    const featureIds = new Set(res.rows.map((r) => r.featureId));
+    expect(featureIds.has(fSeen.id)).toBe(true);
+    expect(featureIds.has(fHidden.id)).toBe(false);
   });
 });
