@@ -1,7 +1,8 @@
 import { error } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { projects } from '$lib/server/db/schema';
+import { projects, features } from '$lib/server/db/schema';
+import { parseFeatureCode } from '$lib/shared/lib/slug';
 import type { Action } from './actions';
 import { can, type PolicyRow, type ScopeRef, type SubjectRef } from './evaluate';
 import { fetchPoliciesForUser } from './policy-store';
@@ -12,6 +13,8 @@ type GuardUser = App.Locals['user'];
 export type Guard = {
   /** Resolves a project by slug; throws 404 if absent, 403 if `action` is not allowed on it. */
   project(action: Action, slug: string): Promise<typeof projects.$inferSelect>;
+  /** Resolves a feature by project slug + code (e.g. `TRC-7`); throws 404 if absent, 403 if `action` is not allowed. */
+  feature(action: Action, slug: string, code: string): Promise<typeof features.$inferSelect>;
 };
 
 /**
@@ -33,6 +36,30 @@ export function makeGuard(user: GuardUser): Guard {
       if (!project) throw error(404, 'Project not found');
       await authorize(action, [{ kind: 'project', id: project.id }, { kind: 'instance' }]);
       return project;
+    },
+
+    async feature(action, slug, code) {
+      const parsed = parseFeatureCode(code);
+      if (!parsed) throw error(404, 'Feature not found');
+
+      const [hit] = await db
+        .select({ feature: features })
+        .from(features)
+        .innerJoin(projects, eq(projects.id, features.projectId))
+        .where(and(
+          eq(projects.slug, slug),
+          eq(projects.codePrefix, parsed.prefix),
+          eq(features.codeSeq, parsed.seq),
+        ));
+      if (!hit) throw error(404, 'Feature not found');
+
+      const feature = hit.feature;
+      await authorize(action, [
+        { kind: 'feature', id: feature.id },
+        { kind: 'project', id: feature.projectId },
+        { kind: 'instance' },
+      ]);
+      return feature;
     },
   };
 }
