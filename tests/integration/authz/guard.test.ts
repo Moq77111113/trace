@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
-import { policies } from '$lib/server/db/schema';
+import { policies, executions } from '$lib/server/db/schema';
 import { makeGuard } from '$lib/server/authz/guard';
 import { mkFeature, mkProject, mkUser } from '$testing/fixtures';
 
@@ -67,5 +67,40 @@ describe('guard.feature', () => {
     const u = await mkUser();
     const p = await mkProject();
     await expect(makeGuard(asUser(u.id)).feature('feature.view', p.slug, `${p.codePrefix}-9999`)).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe('guard.execution', () => {
+  it('cascades a project grant to an execution action and returns the execution', async () => {
+    const u = await mkUser();
+    const p = await mkProject();
+    const f = await mkFeature(p.id);
+    const [exec] = await db.insert(executions).values({
+      featureId: f.id, source: 'MANUAL', executedBy: u.id, featureContentAtStart: f.content, status: 'IN_PROGRESS',
+    }).returning();
+    await db.insert(policies).values({
+      subjectKind: 'user', subjectId: u.id, action: 'execution.review',
+      scopeKind: 'project', scopeId: p.id, effect: 'allow',
+    });
+
+    const got = await makeGuard(asUser(u.id)).execution('execution.review', exec.id);
+    expect(got.id).toBe(exec.id);
+  });
+
+  it('throws 403 without a matching grant', async () => {
+    const u = await mkUser();
+    const p = await mkProject();
+    const f = await mkFeature(p.id);
+    const [exec] = await db.insert(executions).values({
+      featureId: f.id, source: 'MANUAL', executedBy: u.id, featureContentAtStart: f.content, status: 'IN_PROGRESS',
+    }).returning();
+    await expect(makeGuard(asUser(u.id)).execution('execution.review', exec.id)).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('throws 404 for an unknown execution id', async () => {
+    const u = await mkUser();
+    await expect(
+      makeGuard(asUser(u.id)).execution('execution.review', '00000000-0000-7000-8000-000000000000'),
+    ).rejects.toMatchObject({ status: 404 });
   });
 });

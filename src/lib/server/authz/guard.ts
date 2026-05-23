@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { projects, features } from '$lib/server/db/schema';
+import { projects, features, executions } from '$lib/server/db/schema';
 import { parseFeatureCode } from '$lib/shared/lib/slug';
 import type { Action } from './actions';
 import { can, type PolicyRow, type ScopeRef, type SubjectRef } from './evaluate';
@@ -15,6 +15,8 @@ export type Guard = {
   project(action: Action, slug: string): Promise<typeof projects.$inferSelect>;
   /** Resolves a feature by project slug + code (e.g. `TRC-7`); throws 404 if absent, 403 if `action` is not allowed. */
   feature(action: Action, slug: string, code: string): Promise<typeof features.$inferSelect>;
+  /** Resolves an execution by id; throws 404 if absent, 403 if `action` is not allowed on its project. */
+  execution(action: Action, id: string): Promise<typeof executions.$inferSelect>;
 };
 
 /**
@@ -60,6 +62,24 @@ export function makeGuard(user: GuardUser): Guard {
         { kind: 'instance' },
       ]);
       return feature;
+    },
+
+    async execution(action, id) {
+      const [hit] = await db
+        .select({ execution: executions, projectId: features.projectId })
+        .from(executions)
+        .innerJoin(features, eq(features.id, executions.featureId))
+        .where(eq(executions.id, id));
+      if (!hit) throw error(404, 'Execution not found');
+
+      const execution = hit.execution;
+      await authorize(action, [
+        { kind: 'execution', id: execution.id },
+        { kind: 'feature', id: execution.featureId },
+        { kind: 'project', id: hit.projectId },
+        { kind: 'instance' },
+      ]);
+      return execution;
     },
   };
 }
