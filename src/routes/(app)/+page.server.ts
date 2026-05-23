@@ -36,7 +36,7 @@ export const load = (async ({ locals, parent }) => {
 	const accessibleIds = await accessibleProjectIds(locals.authz);
 	return {
 		projects:    await listProjectsWithStats(accessibleIds),
-		recentRuns:  await listRecentExecutions(20),
+		recentRuns:  await listRecentExecutions(accessibleIds, 20),
 		welcome:     await loadWelcome(locals),
 		breadcrumbs: appendCrumb(breadcrumbs, { label: m.nav_projects() }),
 	};

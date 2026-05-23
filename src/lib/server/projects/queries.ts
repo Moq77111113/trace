@@ -100,7 +100,8 @@ export async function getProjectDashboardStats(projectId: string): Promise<Proje
   };
 }
 
-export async function listRecentExecutions(limit = 20) {
+export async function listRecentExecutions(accessibleProjectIds: Set<string>, limit = 20) {
+  if (accessibleProjectIds.size === 0) return [];
   return db
     .select({
       id:          executions.id,
@@ -116,6 +117,7 @@ export async function listRecentExecutions(limit = 20) {
     .from(executions)
     .innerJoin(features, eq(executions.featureId, features.id))
     .innerJoin(projects, eq(projects.id, features.projectId))
+    .where(inArray(features.projectId, [...accessibleProjectIds]))
     .orderBy(desc(executions.startedAt))
     .limit(limit);
 }

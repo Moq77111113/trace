@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { createProject, projectInput } from '$lib/server/projects/create';
-import { listProjectsWithStats } from '$lib/server/projects/queries';
-import { mkUser } from '$testing/fixtures';
+import { listProjectsWithStats, listRecentExecutions } from '$lib/server/projects/queries';
+import { executions } from '$lib/server/db/schema';
+import { db } from '$lib/server/db/client';
+import { mkUser, mkFeature } from '$testing/fixtures';
 
 describe('projects domain', () => {
   it('rejects empty name', () => {
@@ -45,5 +47,22 @@ describe('projects domain', () => {
     const ids = rows.map((r) => r.id);
     expect(ids).toContain(a.value.id);
     expect(ids).not.toContain(b.value.id);
+  });
+
+  it('listRecentExecutions returns runs only from accessible projects', async () => {
+    const creator = await mkUser();
+    const seen   = await createProject({ name: `Rec ${Date.now()}-seen` }, creator.id);
+    const hidden = await createProject({ name: `Rec ${Date.now()}-hidden` }, creator.id);
+    if (!seen.ok || !hidden.ok) throw new Error('createProject failed');
+    const fSeen   = await mkFeature(seen.value.id);
+    const fHidden = await mkFeature(hidden.value.id);
+    await db.insert(executions).values([
+      { featureId: fSeen.id,   source: 'MANUAL', executedBy: creator.id, featureContentAtStart: fSeen.content,   status: 'PASSED', startedAt: new Date() },
+      { featureId: fHidden.id, source: 'MANUAL', executedBy: creator.id, featureContentAtStart: fHidden.content, status: 'PASSED', startedAt: new Date() },
+    ]);
+    const rows = await listRecentExecutions(new Set([seen.value.id]), 20);
+    const projectIds = rows.map((r) => r.projectId);
+    expect(projectIds).toContain(seen.value.id);
+    expect(projectIds).not.toContain(hidden.value.id);
   });
 });
