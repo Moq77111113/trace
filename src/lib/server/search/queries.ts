@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, ne, or, sql } from 'drizzle-orm';
+import { and, asc, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { featureGroups, features, projects, executions } from '$lib/server/db/schema';
 
@@ -15,10 +15,10 @@ export type SearchResult = {
 
 const LIMIT = 20;
 
-/** Search non-archived features across all non-archived projects by name or feature code (case-insensitive). */
-export async function searchFeatures(query: string): Promise<SearchResult[]> {
+/** Search non-archived features within `accessibleProjectIds` by name or feature code (case-insensitive). */
+export async function searchFeatures(query: string, accessibleProjectIds: Set<string>): Promise<SearchResult[]> {
 	const trimmed = query.trim();
-	if (!trimmed) return [];
+	if (!trimmed || accessibleProjectIds.size === 0) return [];
 
 	const featureCodeSql = sql<string>`${projects.codePrefix} || '-' || ${features.codeSeq}`;
 	const needle = `%${trimmed}%`;
@@ -58,6 +58,7 @@ export async function searchFeatures(query: string): Promise<SearchResult[]> {
 			and(
 				eq(features.archived, false),
 				eq(projects.archived, false),
+				inArray(projects.id, [...accessibleProjectIds]),
 				or(ilike(features.name, needle), ilike(featureCodeSql, needle))
 			)
 		)
