@@ -39,6 +39,7 @@
   import Tag           from 'lucide-svelte/icons/tag';
   import Trash         from 'lucide-svelte/icons/trash';
   import Upload        from 'lucide-svelte/icons/upload';
+  import Users         from 'lucide-svelte/icons/users';
   import X             from 'lucide-svelte/icons/x';
   import Zap           from 'lucide-svelte/icons/zap';
 
@@ -83,6 +84,7 @@
     Tag,
     Trash,
     Upload,
+    Users,
     X,
     Zap
   };
