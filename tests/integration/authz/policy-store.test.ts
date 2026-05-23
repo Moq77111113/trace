@@ -1,8 +1,25 @@
 import { describe, it, expect } from 'vitest';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { policies } from '$lib/server/db/schema';
-import { fetchPoliciesForUser } from '$lib/server/authz/policy-store';
-import { mkUser } from '$testing/fixtures';
+import {
+  fetchPoliciesForUser,
+  replaceSubjectProjectRole,
+  deleteSubjectPoliciesAtScope,
+  LastInstanceAdminError,
+} from '$lib/server/authz/policy-store';
+import { grantInstanceAdmin, mkProject, mkUser } from '$testing/fixtures';
+
+const projectAllows = async (subjectId: string, projectId: string) =>
+  db.select({ action: policies.action }).from(policies).where(
+    and(
+      eq(policies.subjectKind, 'user'),
+      eq(policies.subjectId, subjectId),
+      eq(policies.scopeKind, 'project'),
+      eq(policies.scopeId, projectId),
+      eq(policies.effect, 'allow'),
+    ),
+  );
 
 describe('fetchPoliciesForUser', () => {
   it('returns the user-specific and any-user rows, not other users', async () => {
@@ -23,5 +40,51 @@ describe('fetchPoliciesForUser', () => {
 
   it('returns [] for an anonymous request', async () => {
     expect(await fetchPoliciesForUser(null)).toEqual([]);
+  });
+});
+
+describe('authz/policy-store mutations', () => {
+  it('replaceSubjectProjectRole replaces the subject project-scoped rows wholesale', async () => {
+    const u = await mkUser();
+    const p = await mkProject();
+
+    await replaceSubjectProjectRole({ kind: 'user', id: u.id }, p.id, ['project.access', 'feature.view', 'feature.author']);
+    expect((await projectAllows(u.id, p.id)).map((r) => r.action).sort())
+      .toEqual(['feature.author', 'feature.view', 'project.access']);
+
+    await replaceSubjectProjectRole({ kind: 'user', id: u.id }, p.id, ['project.access']);
+    expect((await projectAllows(u.id, p.id)).map((r) => r.action)).toEqual(['project.access']);
+  });
+
+  it('deleteSubjectPoliciesAtScope removes all of a subject rows at one scope', async () => {
+    const u = await mkUser();
+    const p = await mkProject();
+    await replaceSubjectProjectRole({ kind: 'user', id: u.id }, p.id, ['project.access', 'feature.view']);
+
+    await deleteSubjectPoliciesAtScope({ kind: 'user', id: u.id }, 'project', p.id);
+    expect(await projectAllows(u.id, p.id)).toHaveLength(0);
+  });
+
+  it('refuses to delete the LAST (*, instance) allow, but allows a non-last one', async () => {
+    const a = await mkUser();
+    const b = await mkUser();
+
+    // Sibling suites share this DB with no truncation; pin the instance-admin baseline to 0
+    // so that removing `b` provably leaves `a` as the genuine last admin.
+    await db.delete(policies).where(
+      and(eq(policies.action, '*'), eq(policies.scopeKind, 'instance'), isNull(policies.scopeId), eq(policies.effect, 'allow')),
+    );
+
+    await grantInstanceAdmin(a.id);
+    await grantInstanceAdmin(b.id);
+
+    await deleteSubjectPoliciesAtScope({ kind: 'user', id: b.id }, 'instance', null);
+    await expect(deleteSubjectPoliciesAtScope({ kind: 'user', id: a.id }, 'instance', null))
+      .rejects.toBeInstanceOf(LastInstanceAdminError);
+
+    const remaining = await db.select({ id: policies.id }).from(policies).where(
+      and(eq(policies.action, '*'), eq(policies.scopeKind, 'instance'), isNull(policies.scopeId), eq(policies.effect, 'allow')),
+    );
+    expect(remaining.length).toBeGreaterThanOrEqual(1);
   });
 });
