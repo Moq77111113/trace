@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { policies, projects } from '$lib/server/db/schema';
+import { policies, projects, instanceSettings } from '$lib/server/db/schema';
 import { createProject } from '$lib/server/projects/create';
-import { ensureAdminInstancePolicies } from '$lib/server/authz/seed';
-import { mkUser } from '$testing/fixtures';
+import { ensureAdminInstancePolicies, backfillExistingProjectsBlanket } from '$lib/server/authz/seed';
+import { mkProject, mkUser } from '$testing/fixtures';
 
 describe('grantCreator (via createProject)', () => {
   it('seeds a (user, *, project) allow row and stamps createdBy', async () => {
@@ -46,5 +46,25 @@ describe('ensureAdminInstancePolicies', () => {
       and(eq(policies.subjectId, plain.id), eq(policies.scopeKind, 'instance')),
     );
     expect(rows).toHaveLength(0);
+  });
+});
+
+describe('backfillExistingProjectsBlanket', () => {
+  it('grants the any-user blanket to existing projects exactly once', async () => {
+    // ensure the singleton settings row exists and is not yet backfilled
+    await db.insert(instanceSettings).values({ id: 1 }).onConflictDoNothing();
+    await db.update(instanceSettings).set({ policiesBackfilledAt: null }).where(eq(instanceSettings.id, 1));
+
+    const p = await mkProject();
+
+    await backfillExistingProjectsBlanket();
+    await backfillExistingProjectsBlanket(); // second run is a no-op (marker set)
+
+    const rows = await db.select().from(policies).where(
+      and(eq(policies.subjectKind, 'any-user'), eq(policies.scopeKind, 'project'), eq(policies.scopeId, p.id)),
+    );
+    const actions = rows.map((r) => r.action).sort();
+    expect(actions).toEqual(['execution.review', 'execution.run', 'feature.author', 'feature.view', 'project.access'].sort());
+    expect(rows.every((r) => r.effect === 'allow')).toBe(true);
   });
 });
