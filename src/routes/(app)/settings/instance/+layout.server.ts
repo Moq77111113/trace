@@ -1,7 +1,7 @@
 import type { LayoutServerLoad } from './$types';
-import { requireAdmin } from '$lib/server/instance/require-admin';
+import { requireInstanceAdmin } from '$lib/server/instance/authz';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
-	requireAdmin(locals.user);
+	await requireInstanceAdmin(locals.authz);
 	return {};
 };
