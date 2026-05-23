@@ -3,6 +3,8 @@ import { db } from '$lib/server/db/client';
 import { features, featureGroups, projects, executions, scenarioResults, tags, featureTags } from '$lib/server/db/schema';
 import { parseFeatureCode } from '$lib/shared/lib/slug';
 import type { ScenarioCounts } from '$lib/entities/execution/lib/format';
+import type { Authorizer } from '$lib/server/authz/authorizer';
+import { visibleFeatureIds } from '$lib/server/features/authz';
 
 export type ProjectTag = { name: string; count: number };
 
@@ -125,8 +127,8 @@ export type FeaturesByGroup = {
   ungrouped: FeatureRow[];
 };
 
-/** Returns all non-archived features for a project, partitioned by group. */
-export async function listFeaturesByGroup(projectId: string): Promise<FeaturesByGroup> {
+/** Returns all non-archived features for a project that `authz` may view, partitioned by group. */
+export async function listFeaturesByGroup(authz: Authorizer, projectId: string): Promise<FeaturesByGroup> {
   const ranked = db.$with('ranked_runs').as(
     db
       .select({
@@ -227,8 +229,13 @@ export async function listFeaturesByGroup(projectId: string): Promise<FeaturesBy
     }
   }
 
+  const visible = await visibleFeatureIds(authz, projectId, 'feature.view');
+
   return {
-    groups: groups.map((g) => ({ group: g, features: byGroup.get(g.id) ?? [] })),
-    ungrouped,
+    groups: groups.map((g) => ({
+      group: g,
+      features: (byGroup.get(g.id) ?? []).filter((f) => visible.has(f.id)),
+    })),
+    ungrouped: ungrouped.filter((f) => visible.has(f.id)),
   };
 }
