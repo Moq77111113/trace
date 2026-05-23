@@ -1,28 +1,29 @@
-import { db } from '$lib/server/db/client';
-import { projects } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
-import { error } from '@sveltejs/kit';
+import { requireProject } from '$lib/server/projects/authz';
+import { visibleFeatureIds } from '$lib/server/features/authz';
 import { listFeaturesByGroup } from '$lib/server/features/read/queries';
 import { listFlakeFeatureIds } from '$lib/server/executions/read/queries';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
 import type { LayoutServerLoad } from './$types';
 
-export const load = (async ({ params, parent }) => {
-  const project = await db.query.projects.findFirst({
-    where: eq(projects.slug, params.slug),
-  });
-  if (!project) throw error(404, 'Project not found');
+export const load = (async ({ params, parent, locals }) => {
+  const project = await requireProject(locals.authz, params.slug, 'project.access');
 
-  const [tree, flakeFeatureIds, parentData] = await Promise.all([
+  const [tree, flakeFeatureIds, parentData, visible] = await Promise.all([
     listFeaturesByGroup(project.id),
     listFlakeFeatureIds(project.id),
     parent(),
+    visibleFeatureIds(locals.authz, project.id, 'feature.view'),
   ]);
+
+  const filteredTree = {
+    groups:    tree.groups.map((g) => ({ ...g, features: g.features.filter((f) => visible.has(f.id)) })),
+    ungrouped: tree.ungrouped.filter((f) => visible.has(f.id)),
+  };
 
   return {
     project,
-    tree,
+    tree: filteredTree,
     flakeFeatureIds,
     breadcrumbs: appendCrumb(
       parentData.breadcrumbs,
