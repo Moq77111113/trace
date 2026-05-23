@@ -4,7 +4,7 @@ import { building } from '$app/environment';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { auth } from '$lib/server/auth';
-import { makeGuard } from '$lib/server/authz/guard';
+import { makeAuthorizer } from '$lib/server/authz/authorizer';
 import { ensureAdminInstancePolicies, backfillExistingProjectsBlanket } from '$lib/server/authz/seed';
 import { readEnv } from '$lib/server/config/env';
 import { bootstrapAdminFromEnv } from '$lib/server/instance/bootstrap-admin';
@@ -43,7 +43,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
 		event.locals.user = null;
 	}
 
-	event.locals.guard = makeGuard(event.locals.user);
+	event.locals.authz = makeAuthorizer(event.locals.user);
 
 	return resolve(event);
 };
