@@ -41,8 +41,6 @@ export async function listProjectAccess(projectId: string): Promise<SubjectAcces
       effect:      policies.effect,
     })
     .from(policies)
-    // Fetch this project's rows AND every instance-scoped row: the instance rows feed
-    // can()'s cascade/deny-override evaluation below, so they are required, not incidental.
     .where(or(and(eq(policies.scopeKind, 'project'), eq(policies.scopeId, projectId)), eq(policies.scopeKind, 'instance')));
 
   const all: PolicyRow[] = rows.map((r) => ({ ...r, action: r.action as PolicyRow['action'] }));

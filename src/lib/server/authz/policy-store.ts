@@ -90,8 +90,6 @@ export async function deleteSubjectPoliciesAtScope(subject: SubjectRef, scopeKin
 
   await db.transaction(async (tx) => {
     if (scopeKind === 'instance') {
-      // Lock every instance-admin allow row for the transaction so a concurrent revoke
-      // cannot also observe "one survivor remains" and delete in parallel, orphaning the instance.
       const admins   = await tx.select({ id: policies.id }).from(policies).where(instanceAdminWhere).for('update');
       const removing = await tx.select({ id: policies.id }).from(policies).where(and(target, instanceAdminWhere));
       if (removing.length > 0 && admins.length - removing.length < 1) {

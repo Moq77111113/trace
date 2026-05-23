@@ -22,7 +22,7 @@ describe('projects/access reads', () => {
   it('lists the creator wildcard (*, project) as the Custom bucket', async () => {
     const u = await mkUser();
     const p = await mkProject();
-    await grantProjectAccess(u.id, p.id, '*'); // (user, *, project) — the creator grant shape
+    await grantProjectAccess(u.id, p.id, '*');
 
     const list = await listProjectAccess(p.id);
     const row = list.find((s) => s.subject.kind === 'user' && s.subject.id === u.id);

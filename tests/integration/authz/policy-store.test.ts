@@ -69,8 +69,6 @@ describe('authz/policy-store mutations', () => {
     const a = await mkUser();
     const b = await mkUser();
 
-    // Sibling suites share this DB with no truncation; pin the instance-admin baseline to 0
-    // so that removing `b` provably leaves `a` as the genuine last admin.
     await db.delete(policies).where(
       and(eq(policies.action, '*'), eq(policies.scopeKind, 'instance'), isNull(policies.scopeId), eq(policies.effect, 'allow')),
     );
