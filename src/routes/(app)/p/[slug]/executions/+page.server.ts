@@ -8,7 +8,6 @@ import { listFeatures } from '$lib/server/features/read/queries';
 import { listGroups } from '$lib/server/groups/queries';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import { requireProject } from '$lib/server/projects/authz';
-import { visibleFeatureIds } from '$lib/server/features/authz';
 import * as m from '$lib/paraglide/messages';
 import type { PageServerLoad } from './$types';
 
@@ -16,10 +15,9 @@ export const load = (async ({ url, params, parent, locals }) => {
   const { filters, dateRange } = parseExecutionFilters(url);
   const { project, breadcrumbs } = await parent();
   await requireProject(locals.authz, params.slug, 'execution.review');
-  const visible = await visibleFeatureIds(locals.authz, project.id, 'execution.review');
 
   const [runsResult, environments, allFeatures, allGroups, flakeFeatureIds] = await Promise.all([
-    listExecutionsForProject(project.id, visible, filters),
+    listExecutionsForProject(locals.authz, project.id, filters),
     listExecutionEnvironments(project.id),
     listFeatures(project.id),
     listGroups(project.id),
