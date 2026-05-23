@@ -14,6 +14,10 @@ export const executionStatus = pgEnum('execution_status', ['IN_PROGRESS', 'PASSE
 export const scenarioStatus  = pgEnum('scenario_status',  ['PENDING', 'PASSED', 'FAILED', 'SKIPPED']);
 export const scenarioSource  = pgEnum('scenario_source',  ['GHERKIN', 'MANUAL']);
 
+export const policySubjectKind = pgEnum('policy_subject_kind', ['user', 'any-user']);
+export const policyScopeKind   = pgEnum('policy_scope_kind',   ['instance', 'project', 'feature', 'execution']);
+export const policyEffect      = pgEnum('policy_effect',       ['allow', 'deny']);
+
 export type ParseError = { line: number; column?: number; message: string };
 
 export const projects = pgTable(
@@ -24,6 +28,7 @@ export const projects = pgTable(
     slug:        text('slug').notNull(),
     codePrefix:  text('code_prefix').notNull(),
     description: text('description'),
+    createdBy:   uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     archived:    boolean('archived').notNull().default(false),
     createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -189,6 +194,7 @@ export const instanceSettings = pgTable('instance_settings', {
   smtpFrom:           text('smtp_from').notNull().default(''),
   smtpSecure:         boolean('smtp_secure').notNull().default(false),
   smtpTestedAt:       timestamp('smtp_tested_at', { withTimezone: true }),
+  policiesBackfilledAt: timestamp('policies_backfilled_at', { withTimezone: true }),
   updatedAt:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   updatedBy:          uuid('updated_by').references(() => user.id, { onDelete: 'set null' }),
 }, (t) => [
@@ -207,5 +213,25 @@ export const adminResetLinks = pgTable('admin_reset_links', {
   index('admin_reset_links_target_idx').on(t.targetUserId),
   index('admin_reset_links_minted_at_desc').on(sql`${t.mintedAt} DESC`),
 ]);
+
+export const policies = pgTable(
+  'policies',
+  {
+    id:          pk(),
+    subjectKind: policySubjectKind('subject_kind').notNull(),
+    subjectId:   uuid('subject_id').references(() => user.id, { onDelete: 'cascade' }),
+    action:      text('action').notNull(),
+    scopeKind:   policyScopeKind('scope_kind').notNull(),
+    scopeId:     uuid('scope_id'),
+    effect:      policyEffect('effect').notNull(),
+    condition:   jsonb('condition').$type<Record<string, unknown> | null>(),
+    createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('policies_subject_idx').on(t.subjectKind, t.subjectId),
+    index('policies_scope_idx').on(t.scopeKind, t.scopeId),
+  ],
+);
 
 export * from './auth.schema';
