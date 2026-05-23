@@ -3,7 +3,10 @@ import { createProject, projectInput } from '$lib/server/projects/create';
 import { listProjectsWithStats, listRecentExecutions } from '$lib/server/projects/queries';
 import { executions } from '$lib/server/db/schema';
 import { db } from '$lib/server/db/client';
-import { mkUser, mkFeature } from '$testing/fixtures';
+import { mkUser, mkFeature, grantProjectAccess } from '$testing/fixtures';
+import { makeAuthorizer } from '$lib/server/authz/authorizer';
+
+const asUser = (id: string) => ({ id, email: 'u@x', name: null, role: 'user' as const, welcomedAt: null });
 
 describe('projects domain', () => {
   it('rejects empty name', () => {
@@ -34,16 +37,19 @@ describe('projects domain', () => {
     const creator = await mkUser();
     const created = await createProject({ name }, creator.id);
     if (!created.ok) throw new Error('createProject failed');
-    const list = await listProjectsWithStats(new Set([created.value.id]));
+    await grantProjectAccess(creator.id, created.value.id, 'project.access');
+    const list = await listProjectsWithStats(makeAuthorizer(asUser(creator.id)));
     expect(list.some((p) => p.name === name)).toBe(true);
   });
 
-  it('listProjectsWithStats returns only the projects in the accessible set', async () => {
+  it('listProjectsWithStats returns only the projects the caller can access', async () => {
     const creator = await mkUser();
     const a = await createProject({ name: `Acc ${Date.now()}-1` }, creator.id);
     const b = await createProject({ name: `Acc ${Date.now()}-2` }, creator.id);
     if (!a.ok || !b.ok) throw new Error('createProject failed');
-    const rows = await listProjectsWithStats(new Set([a.value.id]));
+    const viewer = await mkUser();
+    await grantProjectAccess(viewer.id, a.value.id, 'project.access');
+    const rows = await listProjectsWithStats(makeAuthorizer(asUser(viewer.id)));
     const ids = rows.map((r) => r.id);
     expect(ids).toContain(a.value.id);
     expect(ids).not.toContain(b.value.id);
@@ -60,7 +66,9 @@ describe('projects domain', () => {
       { featureId: fSeen.id,   source: 'MANUAL', executedBy: creator.id, featureContentAtStart: fSeen.content,   status: 'PASSED', startedAt: new Date() },
       { featureId: fHidden.id, source: 'MANUAL', executedBy: creator.id, featureContentAtStart: fHidden.content, status: 'PASSED', startedAt: new Date() },
     ]);
-    const rows = await listRecentExecutions(new Set([seen.value.id]), 20);
+    const viewer = await mkUser();
+    await grantProjectAccess(viewer.id, seen.value.id, 'project.access');
+    const rows = await listRecentExecutions(makeAuthorizer(asUser(viewer.id)), 20);
     const projectIds = rows.map((r) => r.projectId);
     expect(projectIds).toContain(seen.value.id);
     expect(projectIds).not.toContain(hidden.value.id);

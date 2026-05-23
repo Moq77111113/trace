@@ -3,7 +3,6 @@ import { fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db/client';
 import { features, projects } from '$lib/server/db/schema';
 import { listProjectsWithStats, listRecentExecutions } from '$lib/server/projects/queries';
-import { accessibleProjectIds } from '$lib/server/projects/authz';
 import { dismissWelcome } from '$lib/server/onboarding/welcomed';
 import { appendCrumb } from '$lib/shared/lib/breadcrumbs';
 import * as m from '$lib/paraglide/messages';
@@ -33,10 +32,9 @@ async function loadWelcome(locals: App.Locals) {
 
 export const load = (async ({ locals, parent }) => {
 	const { breadcrumbs } = await parent();
-	const accessibleIds = await accessibleProjectIds(locals.authz);
 	return {
-		projects:    await listProjectsWithStats(accessibleIds),
-		recentRuns:  await listRecentExecutions(accessibleIds, 20),
+		projects:    await listProjectsWithStats(locals.authz),
+		recentRuns:  await listRecentExecutions(locals.authz, 20),
 		welcome:     await loadWelcome(locals),
 		breadcrumbs: appendCrumb(breadcrumbs, { label: m.nav_projects() }),
 	};
