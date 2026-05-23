@@ -30,8 +30,20 @@ describe('projects domain', () => {
   it('listProjectsWithStats includes new project', async () => {
     const name = `Listed ${Date.now()}`;
     const creator = await mkUser();
-    await createProject({ name }, creator.id);
-    const list = await listProjectsWithStats();
+    const created = await createProject({ name }, creator.id);
+    if (!created.ok) throw new Error('createProject failed');
+    const list = await listProjectsWithStats(new Set([created.value.id]));
     expect(list.some((p) => p.name === name)).toBe(true);
+  });
+
+  it('listProjectsWithStats returns only the projects in the accessible set', async () => {
+    const creator = await mkUser();
+    const a = await createProject({ name: `Acc ${Date.now()}-1` }, creator.id);
+    const b = await createProject({ name: `Acc ${Date.now()}-2` }, creator.id);
+    if (!a.ok || !b.ok) throw new Error('createProject failed');
+    const rows = await listProjectsWithStats(new Set([a.value.id]));
+    const ids = rows.map((r) => r.id);
+    expect(ids).toContain(a.value.id);
+    expect(ids).not.toContain(b.value.id);
   });
 });

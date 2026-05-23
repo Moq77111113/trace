@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db/client';
 import { projects, features, executions } from '$lib/server/db/schema';
-import { and, count, desc, eq, ne, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 
 export async function getProjectBySlug(slug: string) {
   return db.query.projects.findFirst({ where: eq(projects.slug, slug) });
@@ -11,7 +11,8 @@ export async function getProjectIdBySlug(slug: string): Promise<string | null> {
   return row?.id ?? null;
 }
 
-export async function listProjectsWithStats() {
+export async function listProjectsWithStats(accessibleProjectIds: Set<string>) {
+  if (accessibleProjectIds.size === 0) return [];
   const featureAgg = db.$with('feature_agg').as(
     db
       .select({
@@ -52,7 +53,7 @@ export async function listProjectsWithStats() {
     .from(projects)
     .leftJoin(featureAgg, eq(featureAgg.projectId, projects.id))
     .leftJoin(ranked,     and(eq(ranked.projectId, projects.id), eq(ranked.rn, 1)))
-    .where(eq(projects.archived, false))
+    .where(and(eq(projects.archived, false), inArray(projects.id, [...accessibleProjectIds])))
     .orderBy(desc(projects.updatedAt));
 }
 
