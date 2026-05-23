@@ -9,6 +9,7 @@ import {
 	scenarioResults,
 } from '$lib/server/db/schema';
 import { createProject } from '$lib/server/projects/create';
+import { grantAnyUserBlanket } from '$lib/server/authz/seed';
 import { allocateCodeSeq } from '$lib/server/features/internal/code-seq';
 import projectFileJson from './demo/project.json';
 import groupsFileJson from './demo/groups.json';
@@ -60,6 +61,7 @@ export async function seedDemoProject(adminUserId: string): Promise<void> {
 	const projectResult = await createProject({ name: projectFile.name, description: projectFile.description }, adminUserId);
 	if (!projectResult.ok) throw new Error(`demo seed: createProject failed: ${projectResult.error}`);
 	const project = projectResult.value;
+	await grantAnyUserBlanket(project.id);
 
 	const featureIdByFilename = new Map<string, string>();
 	for (const g of groupsFile) {
