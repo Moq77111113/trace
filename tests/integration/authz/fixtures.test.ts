@@ -11,7 +11,7 @@ describe('authz fixtures', () => {
     await grantProjectAccess(u.id, p.id);
     const rows = await db.select().from(policies).where(eq(policies.scopeId, p.id));
     expect(rows).toHaveLength(1);
-    expect(rows[0].action).toBe('*');
+    expect(rows[0]?.action).toBe('*');
   });
 
   it('grantInstanceAdmin inserts a user→instance wildcard allow', async () => {

@@ -13,6 +13,7 @@ async function seedExec(uId: string) {
   const [exec] = await db.insert(executions).values({
     featureId: f.id, source: 'MANUAL', executedBy: uId, featureContentAtStart: f.content, status: 'IN_PROGRESS',
   }).returning();
+  if (!exec) throw new Error('seedExec: insert returned no execution');
   return { p, f, exec };
 }
 
@@ -34,6 +35,7 @@ describe('executions/authz', () => {
     const [att] = await db.insert(attachments).values({
       executionId: exec.id, filename: 'a.txt', mimeType: 'text/plain', sizeBytes: 3, storageKey: 'k', uploadedBy: u.id,
     }).returning();
+    if (!att) throw new Error('seed: attachment insert returned nothing');
     await grantProjectAccess(u.id, p.id, 'execution.review');
     expect((await requireAttachment(makeAuthorizer(asUser(u.id)), att.id, 'execution.review')).id).toBe(att.id);
     await expect(requireAttachment(makeAuthorizer(asUser(u.id)), '00000000-0000-7000-8000-000000000000', 'execution.review')).rejects.toMatchObject({ status: 404 });
