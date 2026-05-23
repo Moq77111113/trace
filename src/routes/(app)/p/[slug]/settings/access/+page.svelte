@@ -11,21 +11,27 @@
 
 <PageTitle title={m.page_title_access()} />
 
-<h1 class="text-[16px] font-semibold tracking-tight mb-1">{m.page_title_access()}</h1>
-<p class="text-[13px] text-ink-3 max-w-[56ch] mb-4">{m.access_intro()}</p>
+<div class="flex flex-col gap-4">
+  <header class="flex flex-col gap-1">
+    <h1 class="text-[16px] font-semibold tracking-tight">{m.page_title_access()}</h1>
+    <p class="text-[13px] text-ink-3 max-w-[56ch]">{m.access_intro()}</p>
+  </header>
 
-{#if form?.error}
-  <p class="text-[12px] text-fail-ink mb-3">{form.error}</p>
-{/if}
+  {#if form?.error}
+    <p class="text-[12px] text-fail-ink">{form.error}</p>
+  {/if}
 
-<InviteSubjectForm users={data.grantableUsers} {anyUserGranted} />
+  {#if data.grantableUsers.length > 0 || !anyUserGranted}
+    <InviteSubjectForm users={data.grantableUsers} {anyUserGranted} />
+  {/if}
 
-{#if data.subjects.length === 0}
-  <p class="text-[13px] text-ink-3">{m.access_empty()}</p>
-{:else}
-  <div class="bg-surface border border-border rounded-xl overflow-hidden">
-    {#each data.subjects as subject (subject.subject.kind === 'user' ? subject.subject.id : 'any-user')}
-      <AccessSubjectRow {subject} />
-    {/each}
-  </div>
-{/if}
+  {#if data.subjects.length === 0}
+    <p class="text-[13px] text-ink-3">{m.access_empty()}</p>
+  {:else}
+    <div class="bg-surface border border-border rounded-xl overflow-hidden">
+      {#each data.subjects as subject (subject.subject.kind === 'user' ? subject.subject.id : 'any-user')}
+        <AccessSubjectRow {subject} />
+      {/each}
+    </div>
+  {/if}
+</div>

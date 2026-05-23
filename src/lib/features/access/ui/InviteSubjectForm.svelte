@@ -13,7 +13,7 @@
   const isAnyUser = $derived(selected === 'any-user');
 </script>
 
-<form method="POST" action="?/setRole" use:enhance class="flex flex-wrap items-end gap-2 mb-7">
+<form method="POST" action="?/setRole" use:enhance class="flex flex-wrap items-end gap-2">
   <label class="flex flex-col gap-1 text-[11px] uppercase tracking-[0.07em] text-ink-3 font-medium flex-1 min-w-[200px]">
     {m.access_subject_label()}
     <select bind:value={selected} class="h-[34px] px-2.5 text-[13px] rounded-md bg-surface text-ink border border-border">
