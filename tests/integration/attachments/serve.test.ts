@@ -6,17 +6,16 @@ import { attachments, executions, scenarioResults } from '$lib/server/db/schema'
 import { putObject, deleteObject } from '$lib/server/storage/s3';
 import { GET } from '../../../src/routes/(app)/api/attachments/[aid]/+server';
 import { mkFeature, mkProject } from '$testing/fixtures';
+import { makeAuthorizer } from '$lib/server/authz/authorizer';
+import { grantAnyUserBlanket } from '$lib/server/authz/seed';
 
 type AttachmentEvent = Parameters<typeof GET>[0];
 
+const FAKE_USER = { id: '00000000-0000-7000-8000-0000000000aa', email: 'u@x', name: null, role: 'user' as const, welcomedAt: null };
+
 function buildEvent(aid: string, opts: { authed?: boolean } = { authed: true }) {
-  const locals = opts.authed
-    ? {
-        user:    { id: 'u', email: 'u@x', name: null, role: 'user', welcomedAt: null },
-        session: { id: 's' },
-      }
-    : { user: null, session: null };
-  return { params: { aid }, locals } as unknown as AttachmentEvent;
+  const user = opts.authed ? FAKE_USER : null;
+  return { params: { aid }, locals: { user, session: opts.authed ? { id: 's' } : null, authz: makeAuthorizer(user) } } as unknown as AttachmentEvent;
 }
 
 async function invoke(event: AttachmentEvent) {
@@ -34,6 +33,7 @@ async function invoke(event: AttachmentEvent) {
 
 async function seedRunWithScenario() {
   const p = await mkProject({ name: `Att ${Date.now()}-${Math.random()}` });
+  await grantAnyUserBlanket(p.id);
   const f = await mkFeature(p.id, { name: 'Att', content: 'Feature: Att\n\n  Scenario: A\n    Given x\n' });
 
   const [r] = await db
@@ -41,7 +41,7 @@ async function seedRunWithScenario() {
     .values({
       featureId:           f.id,
       source:              'MANUAL',
-      executedBy:          'Alice',
+      executedBy:          FAKE_USER.id,
       featureContentAtStart: f.content,
     })
     .returning();
@@ -127,5 +127,16 @@ describe('GET /api/attachments/[aid]', () => {
     } finally {
       await deleteObject(storageKey);
     }
+  });
+
+  it('403s when the caller has no access to the attachment project', async () => {
+    const p = await mkProject();
+    const f = await mkFeature(p.id, { name: 'NoAcc', content: 'Feature: x\n' });
+    const [r] = await db.insert(executions).values({ featureId: f.id, source: 'MANUAL', executedBy: FAKE_USER.id, featureContentAtStart: f.content }).returning();
+    if (!r) throw new Error('seed: run insert failed');
+    const [att] = await db.insert(attachments).values({ executionId: r.id, filename: 'a.txt', mimeType: 'text/plain', sizeBytes: 1, storageKey: 'k', uploadedBy: FAKE_USER.id }).returning();
+    if (!att) throw new Error('seed: attachment insert failed');
+    const res = await invoke(buildEvent(att.id));
+    expect(res.status).toBe(403);
   });
 });
