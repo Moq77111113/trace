@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "stamp": "2026-05-21",
+  "stamp": "2026-05-23",
   "items": [
     {
       "id": "gherkin-editor",
@@ -131,7 +131,7 @@
     {
       "id": "pbac",
       "title": "Decide who can do what",
-      "status": "next",
+      "status": "shipped",
       "summary": "Choose, project by project, who can read, run, or change tests. Lets you safely show your work to a client without giving them edit rights."
     },
     {
