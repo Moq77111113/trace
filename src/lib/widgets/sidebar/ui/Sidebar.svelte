@@ -32,7 +32,7 @@
           { key: 'executions', label: m.nav_executions(), icon: 'History',  href: `/p/${project.slug}/executions` },
           { key: 'import',     label: m.nav_import(),     icon: 'Upload',   href: `/p/${project.slug}/import` },
           { key: 'export',     label: m.nav_export(),     icon: 'Download', href: `/p/${project.slug}/export` },
-          { key: 'keys',       label: m.nav_api_keys(),   icon: 'Key',      href: `/p/${project.slug}/settings/api-keys` },
+          { key: 'keys',       label: m.nav_settings(),   icon: 'Settings', href: `/p/${project.slug}/settings/access` },
         ] as const)
       : ([{ key: 'home', label: m.nav_projects(), icon: 'Home', href: '/' }] as const)
   );

@@ -8,6 +8,7 @@ type RoadmapItem = {
 	title:   string;
 	status:  Status;
 	summary: string;
+	new?:    boolean;
 };
 
 type RoadmapFile = {
@@ -18,12 +19,17 @@ type RoadmapFile = {
 
 const PUBLIC_ORDER: Status[] = ['in-progress', 'next', 'later', 'shipped'];
 
+const NEW_BAND_LIMIT = 3;
+
 export const load = (async () => {
 	const data = roadmap as RoadmapFile;
 
+	const featured    = data.items.filter((i) => i.new === true).slice(0, NEW_BAND_LIMIT);
+	const featuredIds = new Set(featured.map((i) => i.id));
+
 	const groups = PUBLIC_ORDER
-		.map((status) => ({ status, items: data.items.filter((i) => i.status === status) }))
+		.map((status) => ({ status, items: data.items.filter((i) => i.status === status && !featuredIds.has(i.id)) }))
 		.filter((g) => g.items.length > 0);
 
-	return { groups, stamp: data.stamp };
+	return { featured, groups, stamp: data.stamp };
 }) satisfies PageServerLoad;
