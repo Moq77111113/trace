@@ -40,6 +40,7 @@
 	"access_empty": "No one has access to this project yet.",
 	"access_error_last_manager": "A project must keep at least one manager.",
 	"access_error_any_user_manager": "Anyone with an account cannot be a manager.",
+	"gate_no_permission": "You don't have permission to do this.",
 
 	"nav_new_project": "New project",
 	"nav_new_feature": "New feature",

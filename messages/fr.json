@@ -40,6 +40,7 @@
 	"access_empty": "Personne n'a encore accès à ce projet.",
 	"access_error_last_manager": "Un projet doit conserver au moins un gestionnaire.",
 	"access_error_any_user_manager": "Le rôle gestionnaire ne peut pas être public.",
+	"gate_no_permission": "Vous n'avez pas la permission d'effectuer cette action.",
 
 	"nav_new_project": "Nouveau projet",
 	"nav_new_feature": "Nouvelle fonctionnalité",
