@@ -11,9 +11,10 @@
   type Props = {
     featureId: string;
     initial:   ManualScenarioRow[];
+    readonly?: boolean;
   };
 
-  let { featureId, initial }: Props = $props();
+  let { featureId, initial, readonly = false }: Props = $props();
 
   let error           = $state<string | null>(null);
   const archiving     = new SvelteSet<string>();
@@ -31,7 +32,10 @@
   bind:open={open.value}
   empty={empty && !open.value}
   addLabel={m.manual_scenarios_add()}
-  onAdd={() => (open.value = true)}
+  onAdd={() => {
+    if (readonly) return;
+    open.value = true;
+  }}
 >
   {#if empty}
     <p class="text-sm text-ink-3">{m.manual_scenarios_empty()}</p>
@@ -40,6 +44,7 @@
       {#each visible as row (row.id)}
         <Row
           {row}
+          {readonly}
           onOptimisticArchive={() => archiving.add(row.id)}
           onArchiveRestore={() => archiving.delete(row.id)}
           onError={(msg) => (error = msg)}
@@ -48,7 +53,9 @@
     </ul>
   {/if}
 
-  <AddInput {featureId} onError={(msg) => (error = msg)} />
+  {#if !readonly}
+    <AddInput {featureId} onError={(msg) => (error = msg)} />
+  {/if}
 
   {#if error}
     <p class="text-sm text-fail-ink" role="alert">{error}</p>

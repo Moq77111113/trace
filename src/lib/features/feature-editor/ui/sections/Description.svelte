@@ -8,9 +8,10 @@
     featureId: string;
     value:     string;
     onChange:  (next: string) => void;
+    readonly?: boolean;
   };
 
-  let { featureId, value, onChange }: Props = $props();
+  let { featureId, value, onChange, readonly = false }: Props = $props();
 
   const open = untrack(() =>
     persistedToggle(`feature-editor-description:${featureId}`, value.length > 0, 'session'),
@@ -24,6 +25,7 @@
   empty={value.length === 0 && !open.value}
   addLabel={m.feature_editor_description_add()}
   onAdd={() => {
+    if (readonly) return;
     open.value = true;
     onChange('');
   }}
@@ -31,6 +33,7 @@
   <textarea
     class="min-h-32 w-full rounded-md border border-border bg-surface p-3 text-sm leading-relaxed"
     placeholder={m.feature_editor_description_placeholder()}
+    {readonly}
     {value}
     oninput={(e) => onChange((e.currentTarget as HTMLTextAreaElement).value)}
   ></textarea>

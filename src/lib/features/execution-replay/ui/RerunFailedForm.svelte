@@ -3,6 +3,7 @@
   import type { SubmitFunction } from '@sveltejs/kit';
   import Button from '$lib/shared/ui/Button.svelte';
   import Icon   from '$lib/shared/ui/Icon.svelte';
+  import Gate   from '$lib/shared/authz/Gate.svelte';
   import * as m from '$lib/paraglide/messages';
 
   type Props = { failedCount: number };
@@ -30,10 +31,12 @@
 </script>
 
 <form method="POST" action="?/rerunFailed" use:enhance={onSubmit} class="inline-flex">
-  <Button type="submit" variant="primary" disabled={rerunning}>
-    <Icon name="RefreshCw" size={13} />
-    {m.execution_rerun_failed({ count: failedCount })}
-  </Button>
+  <Gate can="execution.run" disable>
+    <Button type="submit" variant="primary" disabled={rerunning}>
+      <Icon name="RefreshCw" size={13} />
+      {m.execution_rerun_failed({ count: failedCount })}
+    </Button>
+  </Gate>
 </form>
 
 {#if error}

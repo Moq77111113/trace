@@ -78,6 +78,7 @@
 		) => Monaco.languages.CompletionList;
 		featureCode?: string;
 		api?: EditorApi | null;
+		readOnly?: boolean;
 	};
 
 	let {
@@ -87,6 +88,7 @@
 		completionProvider,
 		featureCode,
 		api = $bindable<EditorApi | null>(null),
+		readOnly = false,
 	}: Props = $props();
 
 	let containerEl: HTMLDivElement;
@@ -133,6 +135,7 @@
 			value,
 			language: 'gherkin',
 			theme:    currentTheme(),
+			readOnly,
 			minimap:  { enabled: false },
 			fontSize: 13,
 			fontFamily: '"Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace',
@@ -225,6 +228,10 @@
 		if (!editor) return;
 		const ed = editor;
 		if (ed.getValue() !== value) ed.setValue(value);
+	});
+
+	$effect(() => {
+		editor?.updateOptions({ readOnly });
 	});
 </script>
 

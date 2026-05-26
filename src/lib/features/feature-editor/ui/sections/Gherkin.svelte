@@ -28,11 +28,12 @@
     onChange:           (next: string) => void;
     onInsert:           (snippet: Snippet) => void;
     api?:               EditorApi | null;
+    readOnly?:          boolean;
   };
 
   let {
     featureId, value, empty, parseErrors, markers, completionProvider, snippets, featureCode,
-    onChange, onInsert, api = $bindable<EditorApi | null>(null),
+    onChange, onInsert, api = $bindable<EditorApi | null>(null), readOnly = false,
   }: Props = $props();
 
   const open = untrack(() =>
@@ -47,12 +48,15 @@
   {empty}
   addLabel={m.feature_editor_gherkin_add()}
   onAdd={() => {
+    if (readOnly) return;
     open.value = true;
     onChange('');
   }}
 >
   <div class="flex items-center gap-2">
-    <InsertMenu {snippets} {onInsert} />
+    {#if !readOnly}
+      <InsertMenu {snippets} {onInsert} />
+    {/if}
     {#if parseErrors > 0}
       <Pill kind="fail" outline>{parseErrors} parse error{parseErrors === 1 ? '' : 's'}</Pill>
     {:else}
@@ -61,7 +65,7 @@
   </div>
 
   <div class="relative min-h-[400px] border border-border rounded-md overflow-hidden">
-    <MonacoWrapper {value} {onChange} {markers} {completionProvider} {featureCode} bind:api />
+    <MonacoWrapper {value} {onChange} {markers} {completionProvider} {featureCode} {readOnly} bind:api />
     {#if empty}<MonacoEmptyHint />{/if}
   </div>
 </CollapsibleSection>

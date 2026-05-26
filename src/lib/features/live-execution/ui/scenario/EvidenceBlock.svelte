@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import DropZone from '$lib/shared/ui/DropZone.svelte';
   import Icon     from '$lib/shared/ui/Icon.svelte';
+  import Gate     from '$lib/shared/authz/Gate.svelte';
   import * as m   from '$lib/paraglide/messages';
   import { useSelection } from '../../model/context';
   import { failureMessage } from '$lib/shared/forms/action-result';
@@ -76,40 +77,42 @@
     </ul>
   {/if}
 
-  <form
-    bind:this={form}
-    action="?/uploadAttachment"
-    method="POST"
-    enctype="multipart/form-data"
-    use:enhance={({ formData }) => {
-      const id = pendingScenarioId;
-      formData.set('scenarioResultId', id);
-      uploading   = true;
-      uploadError = null;
-      return async ({ result }) => {
-        uploading = false;
-        if (result.type === 'failure' || result.type === 'error') {
-          uploadError = failureMessage(result, 'Upload failed');
-          return;
-        }
-        if (result.type === 'success') {
-          const fresh = parseUploaded(result.data);
-          uploadsByScenario[id] = [...(uploadsByScenario[id] ?? []), ...fresh];
-        }
-      };
-    }}
-    hidden
-  >
-    <input bind:this={fileInput} type="file" name="files" multiple>
-  </form>
+  <Gate can="execution.run">
+    <form
+      bind:this={form}
+      action="?/uploadAttachment"
+      method="POST"
+      enctype="multipart/form-data"
+      use:enhance={({ formData }) => {
+        const id = pendingScenarioId;
+        formData.set('scenarioResultId', id);
+        uploading   = true;
+        uploadError = null;
+        return async ({ result }) => {
+          uploading = false;
+          if (result.type === 'failure' || result.type === 'error') {
+            uploadError = failureMessage(result, 'Upload failed');
+            return;
+          }
+          if (result.type === 'success') {
+            const fresh = parseUploaded(result.data);
+            uploadsByScenario[id] = [...(uploadsByScenario[id] ?? []), ...fresh];
+          }
+        };
+      }}
+      hidden
+    >
+      <input bind:this={fileInput} type="file" name="files" multiple>
+    </form>
 
-  <div class="flex-1 min-h-[88px] grid">
-    <DropZone {onDrop}>
-      <Icon name="Upload" size={14} />
-      <span class="ml-1.5">{m.live_execution_evidence_drop()}</span>
-      {#if uploading}<span class="block mt-1 text-[11px]">Uploading…</span>{/if}
-    </DropZone>
-  </div>
+    <div class="flex-1 min-h-[88px] grid">
+      <DropZone {onDrop}>
+        <Icon name="Upload" size={14} />
+        <span class="ml-1.5">{m.live_execution_evidence_drop()}</span>
+        {#if uploading}<span class="block mt-1 text-[11px]">Uploading…</span>{/if}
+      </DropZone>
+    </div>
+  </Gate>
 
   <div class="mt-1 min-h-[15px] text-[11px]">
     {#if uploadError}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { SvelteMap } from 'svelte/reactivity';
+  import Gate   from '$lib/shared/authz/Gate.svelte';
   import Icon   from '$lib/shared/ui/Icon.svelte';
   import Pill   from '$lib/shared/ui/Pill.svelte';
   import Status from '$lib/shared/ui/Status.svelte';
@@ -37,13 +38,15 @@
 
 <div class="px-2.5 pt-3.5 pb-1.5 text-[10.5px] font-medium uppercase tracking-[0.07em] text-ink-3 flex items-center justify-between">
   <span>{m.nav_features()}</span>
-  <a
-    href="/p/{projectSlug}/new"
-    aria-label={m.nav_new_feature()}
-    class="w-4 h-4 grid place-items-center rounded-sm text-ink-3 hover:bg-surface-2 hover:text-ink"
-  >
-    <Icon name="Plus" size={12} />
-  </a>
+  <Gate can="feature.author">
+    <a
+      href="/p/{projectSlug}/new"
+      aria-label={m.nav_new_feature()}
+      class="w-4 h-4 grid place-items-center rounded-sm text-ink-3 hover:bg-surface-2 hover:text-ink"
+    >
+      <Icon name="Plus" size={12} />
+    </a>
+  </Gate>
 </div>
 
 <div class="px-2 flex flex-col gap-px overflow-y-auto">

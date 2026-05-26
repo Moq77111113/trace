@@ -25,7 +25,9 @@ declare global {
 			errorId?: string;
 			code?:    string;
 		}
-		// interface PageData {}
+		interface PageData {
+			capabilities?: import('$lib/server/authz/actions').Action[];
+		}
 		// interface PageState {}
 		// interface Platform {}
 	}

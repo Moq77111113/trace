@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Gate         from '$lib/shared/authz/Gate.svelte';
   import Button       from '$lib/shared/ui/Button.svelte';
   import Icon         from '$lib/shared/ui/Icon.svelte';
   import EmptyState   from '$lib/shared/ui/EmptyState.svelte';
@@ -23,7 +24,9 @@
       {/if}
     </div>
     <div class="flex items-center gap-2 max-md:flex-wrap">
-      <NewGroupButton />
+      <Gate can="feature.author">
+        <NewGroupButton />
+      </Gate>
       <Button variant="primary" href="/p/{data.project.slug}/new">
         <Icon name="Plus" size={13} /> New feature
       </Button>
