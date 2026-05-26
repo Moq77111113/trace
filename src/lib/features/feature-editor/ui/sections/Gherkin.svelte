@@ -45,7 +45,7 @@
   title={m.feature_editor_gherkin_title()}
   subtitle={m.feature_editor_gherkin_subtitle()}
   bind:open={open.value}
-  {empty}
+  empty={empty && !open.value}
   addLabel={m.feature_editor_gherkin_add()}
   onAdd={() => {
     if (readOnly) return;
