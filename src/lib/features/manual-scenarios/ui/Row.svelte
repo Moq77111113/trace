@@ -10,9 +10,10 @@
     onOptimisticArchive: () => void;
     onArchiveRestore:    () => void;
     onError:             (msg: string | null) => void;
+    readonly?:           boolean;
   };
 
-  let { row, onOptimisticArchive, onArchiveRestore, onError }: Props = $props();
+  let { row, onOptimisticArchive, onArchiveRestore, onError, readonly = false }: Props = $props();
 
   let editing                          = $state(false);
   let draft                            = $state(untrack(() => row.name));
@@ -20,6 +21,7 @@
   let renameForm:  HTMLFormElement;
 
   function startEdit(): void {
+    if (readonly) return;
     draft   = row.name;
     editing = true;
   }
@@ -56,6 +58,8 @@
         if (e.key === 'Escape') cancel();
       }}
     />
+  {:else if readonly}
+    <span class="flex-1 text-left text-sm text-ink">{row.name}</span>
   {:else}
     <button
       type="button"
@@ -87,26 +91,28 @@
     hidden
   ></form>
 
-  <form
-    action="?/archiveManualScenario"
-    method="POST"
-    use:enhance={({ formData }) => {
-      formData.set('scenarioId', row.id);
-      onError(null);
-      onOptimisticArchive();
-      return async ({ result, update }) => {
-        if (result.type === 'failure') {
-          onArchiveRestore();
-          onError('archive failed');
-        }
-        await update();
-      };
-    }}
-  >
-    <button
-      type="submit"
-      class="text-ink-3 hover:text-fail-ink text-lg leading-none"
-      aria-label={m.manual_scenarios_archive()}
-    >×</button>
-  </form>
+  {#if !readonly}
+    <form
+      action="?/archiveManualScenario"
+      method="POST"
+      use:enhance={({ formData }) => {
+        formData.set('scenarioId', row.id);
+        onError(null);
+        onOptimisticArchive();
+        return async ({ result, update }) => {
+          if (result.type === 'failure') {
+            onArchiveRestore();
+            onError('archive failed');
+          }
+          await update();
+        };
+      }}
+    >
+      <button
+        type="submit"
+        class="text-ink-3 hover:text-fail-ink text-lg leading-none"
+        aria-label={m.manual_scenarios_archive()}
+      >×</button>
+    </form>
+  {/if}
 </li>

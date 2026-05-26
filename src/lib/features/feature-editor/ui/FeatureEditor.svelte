@@ -18,6 +18,7 @@
   import type { Feature }  from '../model/types';
   import { formatFeatureCode } from '$lib/shared/lib/slug';
   import { formatTraceTag } from '$lib/features/feature-import/lib/trace-tag';
+  import { can } from '$lib/shared/authz/can';
 
   type ProjectRef = { codePrefix: string };
   type ProjectTag = { name: string; count: number };
@@ -44,6 +45,7 @@
   let editorApi: EditorApi | null = $state(null);
 
   const traceCode = $derived(formatFeatureCode(data.project.codePrefix, data.feature.codeSeq));
+  const editable  = $derived(can('feature.author'));
 
   function insertSnippet(snippet: Snippet): void {
     if (!editorApi) return;
@@ -84,11 +86,13 @@
       featureId={data.feature.id}
       value={form.fields.description}
       onChange={(v) => (form.fields.description = v)}
+      readonly={!editable}
     />
 
     <ManualScenarios
       featureId={data.feature.id}
       initial={data.manualScenarios}
+      readonly={!editable}
     />
 
     <Gherkin
@@ -102,6 +106,7 @@
       featureCode={traceCode}
       onChange={(v) => (form.fields.content = v)}
       onInsert={insertSnippet}
+      readOnly={!editable}
       bind:api={editorApi}
     />
   </div>
