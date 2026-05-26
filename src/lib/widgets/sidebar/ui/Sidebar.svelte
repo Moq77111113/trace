@@ -7,6 +7,7 @@
   import FeatureTree   from './FeatureTree.svelte';
   import SidebarFooter from './SidebarFooter.svelte';
   import * as m from '$lib/paraglide/messages';
+  import { can } from '$lib/shared/authz/can';
 
   type Project = { id: string; slug: string; name: string };
   type FeatureRow = { id: string; name: string; code: string; latestFinishedStatus?: string | null };
@@ -30,11 +31,15 @@
       ? ([
           { key: 'overview',   label: m.nav_overview(),   icon: 'Home',     href: `/p/${project.slug}` },
           { key: 'executions', label: m.nav_executions(), icon: 'History',  href: `/p/${project.slug}/executions` },
-          { key: 'import',     label: m.nav_import(),     icon: 'Upload',   href: `/p/${project.slug}/import` },
+          { key: 'import',     label: m.nav_import(),     icon: 'Upload',   href: `/p/${project.slug}/import`, requires: 'feature.author' },
           { key: 'export',     label: m.nav_export(),     icon: 'Download', href: `/p/${project.slug}/export` },
-          { key: 'keys',       label: m.nav_settings(),   icon: 'Settings', href: `/p/${project.slug}/settings/access` },
+          { key: 'keys',       label: m.nav_settings(),   icon: 'Settings', href: `/p/${project.slug}/settings/access`, requires: 'project.manage' },
         ] as const)
       : ([{ key: 'home', label: m.nav_projects(), icon: 'Home', href: '/' }] as const)
+  );
+
+  const visibleSections = $derived(
+    sections.filter((s) => !('requires' in s) || can(s.requires)),
   );
 
   function activeSection(pathname: string): string {
@@ -65,7 +70,7 @@
     <ProjectChip name={project.name} projectCount={projects.length} />
   {/if}
 
-  <PrimaryNav {sections} {activeKey} />
+  <PrimaryNav sections={visibleSections} {activeKey} />
 
   {#if !project && projects.length > 0}
     <ProjectsList {projects} />
