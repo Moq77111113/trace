@@ -3,6 +3,7 @@
   import Status from '$lib/shared/ui/Status.svelte';
   import AbortFlow  from './AbortFlow.svelte';
   import FinishFlow from './FinishFlow.svelte';
+  import Gate from '$lib/shared/authz/Gate.svelte';
   import { useSelection } from '../../model/context';
 
   type Props = {
@@ -59,8 +60,8 @@
     </div>
 
     <div class="ml-auto flex items-center gap-2">
-      <AbortFlow />
-      <FinishFlow />
+      <Gate can="execution.run" disable><AbortFlow /></Gate>
+      <Gate can="execution.run" disable><FinishFlow /></Gate>
     </div>
   </div>
 

@@ -3,6 +3,7 @@
   import Button from '$lib/shared/ui/Button.svelte';
   import Kbd    from '$lib/shared/ui/Kbd.svelte';
   import Status from '$lib/shared/ui/Status.svelte';
+  import Gate   from '$lib/shared/authz/Gate.svelte';
   import { useSelection, type Verdict } from '../../model/context';
   import { optimisticMark } from '../../model/scenario-marking';
   import { attachShortcut, onPlainKey } from '../../model/shortcuts';
@@ -52,15 +53,17 @@
   }}
 >
   <input type="hidden" name="scenarioResultId" value={selection.selected?.id ?? ''}>
-  <Button type="submit" name="status" value="PASSED" variant="pass">
-    <Status kind="pass" size={12} /> Pass <Kbd>P</Kbd>
-  </Button>
-  <Button type="submit" name="status" value="FAILED" variant="fail">
-    <Status kind="fail" size={12} /> Fail <Kbd>F</Kbd>
-  </Button>
-  <Button type="submit" name="status" value="SKIPPED" variant="skip">
-    <Status kind="skip" size={12} /> Skip <Kbd>S</Kbd>
-  </Button>
+  <Gate can="execution.run" disable>
+    <Button type="submit" name="status" value="PASSED" variant="pass">
+      <Status kind="pass" size={12} /> Pass <Kbd>P</Kbd>
+    </Button>
+    <Button type="submit" name="status" value="FAILED" variant="fail">
+      <Status kind="fail" size={12} /> Fail <Kbd>F</Kbd>
+    </Button>
+    <Button type="submit" name="status" value="SKIPPED" variant="skip">
+      <Status kind="skip" size={12} /> Skip <Kbd>S</Kbd>
+    </Button>
+  </Gate>
   <div class="flex-1"></div>
   <span class="text-[11.5px] text-ink-3 max-md:hidden">
     <Kbd>↑</Kbd><Kbd>↓</Kbd> next/prev

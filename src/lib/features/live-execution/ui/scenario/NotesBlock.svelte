@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import { SvelteMap } from 'svelte/reactivity';
   import * as m from '$lib/paraglide/messages';
+  import Gate from '$lib/shared/authz/Gate.svelte';
   import { useSelection } from '../../model/context';
 
   const selection = useSelection();
@@ -60,14 +61,16 @@
     hidden
   ></form>
 
-  <textarea
-    class="w-full flex-1 min-h-[88px] px-3 py-2 text-[12.5px] leading-relaxed rounded-md bg-surface text-ink-2 placeholder:text-ink-3 border border-border focus:outline-none focus:ring-[3px] focus:ring-[var(--accent-ring)] focus:border-accent resize-y"
-    maxlength={8000}
-    value={draftValue}
-    oninput={(e) => setDraft(e.currentTarget.value)}
-    onblur={save}
-    placeholder={m.live_execution_notes_placeholder()}
-  ></textarea>
+  <Gate can="execution.run" disable>
+    <textarea
+      class="w-full flex-1 min-h-[88px] px-3 py-2 text-[12.5px] leading-relaxed rounded-md bg-surface text-ink-2 placeholder:text-ink-3 border border-border focus:outline-none focus:ring-[3px] focus:ring-[var(--accent-ring)] focus:border-accent resize-y"
+      maxlength={8000}
+      value={draftValue}
+      oninput={(e) => setDraft(e.currentTarget.value)}
+      onblur={save}
+      placeholder={m.live_execution_notes_placeholder()}
+    ></textarea>
+  </Gate>
 
   <div class="mt-1 min-h-[15px] text-[11px] tabular-nums">
     {#if status === 'saving'}
