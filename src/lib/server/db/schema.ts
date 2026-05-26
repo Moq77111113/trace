@@ -18,6 +18,9 @@ export const policySubjectKind = pgEnum('policy_subject_kind', ['user', 'any-use
 export const policyScopeKind   = pgEnum('policy_scope_kind',   ['instance', 'project', 'feature', 'execution']);
 export const policyEffect      = pgEnum('policy_effect',       ['allow', 'deny']);
 
+export const campaignStatus  = pgEnum('campaign_status',  ['OPEN', 'CLOSED']);
+export const campaignOutcome = pgEnum('campaign_outcome', ['PASSED', 'FAILED']);
+
 export type ParseError = { line: number; column?: number; message: string };
 
 export const projects = pgTable(
@@ -132,6 +135,37 @@ export const featureTags = pgTable(
   ],
 );
 
+export const campaigns = pgTable(
+  'campaigns',
+  {
+    id:         pk(),
+    projectId:  uuid('project_id').notNull().references(() => projects.id, { onDelete: 'restrict' }),
+    name:       text('name').notNull(),
+    appVersion: text('app_version').notNull(),
+    status:     campaignStatus('status').notNull().default('OPEN'),
+    outcome:    campaignOutcome('outcome'),
+    openedAt:   timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
+    closedAt:   timestamp('closed_at', { withTimezone: true }),
+    closedBy:   text('closed_by'),
+    createdBy:  text('created_by').notNull(),
+  },
+  (t) => [uniqueIndex('campaigns_project_name_idx').on(t.projectId, sql`LOWER(${t.name})`)],
+);
+
+export const campaignFeatures = pgTable(
+  'campaign_features',
+  {
+    campaignId: uuid('campaign_id').notNull().references(() => campaigns.id, { onDelete: 'cascade' }),
+    featureId:  uuid('feature_id').notNull().references(() => features.id,  { onDelete: 'restrict' }),
+    required:   boolean('required').notNull().default(true),
+    position:   integer('position').notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.campaignId, t.featureId] }),
+    check('campaign_features_position_positive', sql`${t.position} >= 1`),
+  ],
+);
+
 export const executions = pgTable(
   'executions',
   {
@@ -145,6 +179,7 @@ export const executions = pgTable(
     startedAt:             timestamp('started_at',  { withTimezone: true }).notNull().defaultNow(),
     finishedAt:            timestamp('finished_at', { withTimezone: true }),
     ciMetadata:            jsonb('ci_metadata').$type<CiMetadata>(),
+    campaignId:            uuid('campaign_id').references(() => campaigns.id, { onDelete: 'set null' }),
   },
   (t) => [index('executions_feature_started_idx').on(t.featureId, sql`${t.startedAt} DESC`)],
 );
