@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Gate from '$lib/shared/authz/Gate.svelte';
   import Icon from '$lib/shared/ui/Icon.svelte';
   import GroupSection from '$lib/features/feature-groups/ui/GroupSection.svelte';
   import FeatureRow, { type FeatureRowData } from '$lib/entities/feature/ui/FeatureRow.svelte';
@@ -43,23 +44,25 @@
         onCancel={() => (isEditing = false)} 
       />
     {:else}
-      <button
-        type="button"
-        aria-label="Rename group"
-        class="size-6.5 grid place-items-center bg-transparent border-0 rounded-md text-ink-3 cursor-pointer hover:bg-surface-2 hover:text-ink"
-        onclick={() => (isEditing = true)}
-      >
-        <Icon name="Settings" size={12} />
-      </button>
-      
-      <button
-        type="button"
-        aria-label="Delete group"
-        class="size-6.5 grid place-items-center bg-transparent border-0 rounded-md text-ink-3 cursor-pointer hover:bg-fail-soft hover:text-fail-ink"
-        onclick={() => onDeleteRequest({ id: groupNode.group.id, name: groupNode.group.name, count: groupNode.features.length })}
-      >
-        <Icon name="Trash" size={12} />
-      </button>
+      <Gate can="feature.author">
+        <button
+          type="button"
+          aria-label="Rename group"
+          class="size-6.5 grid place-items-center bg-transparent border-0 rounded-md text-ink-3 cursor-pointer hover:bg-surface-2 hover:text-ink"
+          onclick={() => (isEditing = true)}
+        >
+          <Icon name="Settings" size={12} />
+        </button>
+
+        <button
+          type="button"
+          aria-label="Delete group"
+          class="size-6.5 grid place-items-center bg-transparent border-0 rounded-md text-ink-3 cursor-pointer hover:bg-fail-soft hover:text-fail-ink"
+          onclick={() => onDeleteRequest({ id: groupNode.group.id, name: groupNode.group.name, count: groupNode.features.length })}
+        >
+          <Icon name="Trash" size={12} />
+        </button>
+      </Gate>
     {/if}
   {/snippet}
 
