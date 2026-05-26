@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import LiveExecution from '$lib/features/live-execution/ui/LiveExecution.svelte';
 
+vi.mock('$lib/shared/authz/can', () => ({ can: (action: string) => action === 'execution.run' }));
+
 const fakeData = {
   mode: 'live' as const,
   execution: {
