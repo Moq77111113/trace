@@ -6,6 +6,7 @@
   import ExecutionLauncher      from '$lib/entities/execution/ui/ExecutionLauncher.svelte';
   import FeatureExecutionsAside from '$lib/widgets/feature-executions-aside/ui/FeatureExecutionsAside.svelte';
   import PageTitle        from '$lib/shared/ui/PageTitle.svelte';
+  import Gate from '$lib/shared/authz/Gate.svelte';
   import { parse } from '$lib/shared/gherkin/parse';
 
   let { data } = $props();
@@ -23,21 +24,11 @@
 <div class="flex-1 min-h-0 grid grid-cols-[1fr_280px] max-xl:grid-cols-[1fr_240px] max-lg:grid-cols-[1fr]">
   <div class="flex flex-col min-h-0 min-w-0">
     <div class="flex items-center justify-end px-4 py-2 border-b border-border bg-bg">
-      {#if !isRunnable}
-        <span title={m.feature_no_runnable_scenarios()}>
-          <ExecutionLauncher
-            {projectSlug}
-            featureId={data.feature.id}
-            disabled={true}
-          />
+      <Gate can="execution.run" disable>
+        <span title={isRunnable ? undefined : m.feature_no_runnable_scenarios()}>
+          <ExecutionLauncher {projectSlug} featureId={data.feature.id} disabled={!isRunnable} />
         </span>
-      {:else}
-        <ExecutionLauncher
-          {projectSlug}
-          featureId={data.feature.id}
-          disabled={false}
-        />
-      {/if}
+      </Gate>
     </div>
 
     {#key data.feature.id}
