@@ -41,4 +41,6 @@
   </div>
 </header>
 
-<CloseCampaignModal open={closeOpen} onOpenChange={(v) => (closeOpen = v)} />
+{#if campaign.status === 'OPEN'}
+  <CloseCampaignModal open={closeOpen} onOpenChange={(v) => (closeOpen = v)} />
+{/if}

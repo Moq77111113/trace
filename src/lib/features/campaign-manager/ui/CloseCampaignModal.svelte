@@ -17,7 +17,17 @@
   }
 </script>
 
-<form bind:this={form} method="POST" action="?/close" use:enhance></form>
+<form
+  bind:this={form}
+  method="POST"
+  action="?/close"
+  use:enhance={() =>
+    async ({ update }) => {
+      await update();
+      closing = false;
+      onOpenChange(false);
+    }}
+></form>
 
 <Modal {open} {onOpenChange} title={m.campaign_close_title()}>
   <p>{m.campaign_close_body()}</p>
