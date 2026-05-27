@@ -1,10 +1,9 @@
+import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { executions, scenarioResults, projects, campaigns, campaignFeatures } from '$lib/server/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { projects } from '$lib/server/db/schema';
 import { ok, err, type Result } from '$lib/shared/lib/result';
-import { resolveFeature } from './matching/resolve-feature';
-import { formatFeatureCode } from '$lib/shared/lib/slug';
-import { formatTraceTag } from '$lib/features/feature-import/lib/trace-tag';
+import { resolveCampaign } from './resolve-campaign';
+import { recordFeatureRun, deriveFinalStatus, type IngestContext, type IngestedExecutionSummary } from './record-feature-run';
 import type { IngestedFeatureRun, ScenarioStatus } from './cucumber-json/types';
 import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 
@@ -14,14 +13,6 @@ export type IngestRunInput = {
   environment?: string | null;
   ciMetadata?:  CiMetadata | null;
   parsed:       IngestedFeatureRun[];
-};
-
-export type IngestedExecutionSummary = {
-  featureCode:      string;
-  executionId:      string;
-  status:           ScenarioStatus;
-  scenariosMatched: number;
-  matchedVia:       'code' | 'gherkin-name' | 'name';
 };
 
 export type IngestRunResult = {
@@ -34,107 +25,37 @@ export type IngestRunResult = {
 export type IngestRunErrorCode = 'INGEST_NO_FEATURES_MATCHED';
 export type IngestRunError     = { code: IngestRunErrorCode; detail: string };
 
-function deriveFinalStatus(statuses: ScenarioStatus[]): ScenarioStatus {
-  if (statuses.includes('FAILED')) return 'FAILED';
-  if (statuses.includes('PASSED')) return 'PASSED';
-  return 'SKIPPED';
+/** Loads the ingesting project's code prefix; throws if the project is gone. */
+async function requireProject(projectId: string): Promise<{ codePrefix: string }> {
+  const [projectRow] = await db.select({ codePrefix: projects.codePrefix }).from(projects).where(eq(projects.id, projectId));
+  if (!projectRow) throw new Error(`ingestRun: project ${projectId} not found`);
+  return projectRow;
 }
 
+/** Ingests a parsed CI run: attributes executions to a campaign by app version, persists one execution per matched feature, and reports per-feature outcomes and warnings. */
 export async function ingestRun(input: IngestRunInput): Promise<Result<IngestRunResult, IngestRunError>> {
-  const [projectRow] = await db.select({ codePrefix: projects.codePrefix }).from(projects).where(eq(projects.id, input.projectId));
-  if (!projectRow) throw new Error(`ingestRun: project ${input.projectId} not found`);
+  const { codePrefix } = await requireProject(input.projectId);
+  const { campaign, warnings: campaignWarnings } = await resolveCampaign(input.projectId, input.ciMetadata?.appVersion);
 
-  const summaries:       IngestedExecutionSummary[] = [];
-  const unknownFeatures: string[] = [];
-  const warnings:        string[] = [];
-
-  type CampaignAttach = { campaignId: string; members: Set<string> };
-  let attach: CampaignAttach | null = null;
-  const requestedVersion = input.ciMetadata?.appVersion;
-  if (requestedVersion) {
-    const [c] = await db
-      .select({ id: campaigns.id })
-      .from(campaigns)
-      .where(and(
-        eq(campaigns.projectId, input.projectId),
-        eq(campaigns.appVersion, requestedVersion),
-        eq(campaigns.status, 'OPEN'),
-      ));
-    if (c) {
-      const memberRows = await db
-        .select({ featureId: campaignFeatures.featureId })
-        .from(campaignFeatures)
-        .where(eq(campaignFeatures.campaignId, c.id));
-      attach = { campaignId: c.id, members: new Set(memberRows.map((m) => m.featureId)) };
-    } else {
-      warnings.push(`No open campaign targets version '${requestedVersion}'; executions ingested untagged.`);
-    }
-  }
+  const ctx = {
+    projectId:   input.projectId,
+    codePrefix,
+    campaign,
+    executedBy:  input.executedBy,
+    environment: input.environment ?? null,
+    ciMetadata:  input.ciMetadata ?? null,
+  } satisfies IngestContext;
 
   return db.transaction(async (tx) => {
+    const summaries:       IngestedExecutionSummary[] = [];
+    const unknownFeatures: string[] = [];
+    const warnings:        string[] = [...campaignWarnings];
+
     for (const parsed of input.parsed) {
-      warnings.push(...parsed.warnings);
-
-      const matched = await resolveFeature(parsed, input.projectId);
-      if (!matched.ok) {
-        unknownFeatures.push(parsed.featureName);
-        if (matched.error.code === 'MATCH_TAG_REFERENCES_MISSING_CODE') {
-          const code = matched.error.tagCode ?? '<unknown>';
-          warnings.push(`Feature tagged '${formatTraceTag(code)}' but no such code exists in project.`);
-        }
-        continue;
-      }
-
-      const { feature, via } = matched.value;
-      const status = deriveFinalStatus(parsed.scenarios.map((s) => s.status));
-      const now    = new Date();
-
-      let campaignId: string | null = null;
-      if (attach) {
-        if (attach.members.has(feature.id)) campaignId = attach.campaignId;
-        else warnings.push(`Feature '${parsed.featureName}' is not a campaign member; ingested untagged.`);
-      }
-
-      const [execution] = await tx.insert(executions).values({
-        featureId:             feature.id,
-        source:                'CI',
-        executedBy:            input.executedBy,
-        environment:           input.environment ?? null,
-        ciMetadata:            input.ciMetadata ?? null,
-        campaignId,
-        featureContentAtStart: feature.content,
-        status,
-        startedAt:             now,
-        finishedAt:            now,
-      }).returning();
-      if (!execution) throw new Error('ingestRun: execution insert returned no row');
-
-      if (parsed.scenarios.length) {
-        await tx.insert(scenarioResults).values(
-          parsed.scenarios.map((s, i) => ({
-            executionId:  execution.id,
-            scenarioName: s.name,
-            position:     i + 1,
-            status:       s.status,
-            durationMs:   s.durationMs,
-            logs:         s.logs,
-            errorMessage: s.errorMessage,
-          })),
-        );
-      }
-
-      const featureCode = formatFeatureCode(projectRow.codePrefix, feature.codeSeq);
-      summaries.push({
-        featureCode,
-        executionId:      execution.id,
-        status,
-        scenariosMatched: parsed.scenarios.length,
-        matchedVia:       via,
-      });
-
-      if (via !== 'code') {
-        warnings.push(`Feature '${parsed.featureName}' matched by name; add '${formatTraceTag(featureCode)}' to the Gherkin for stable matching.`);
-      }
+      const outcome = await recordFeatureRun(tx, parsed, ctx);
+      warnings.push(...outcome.warnings);
+      if (outcome.kind === 'unmatched') unknownFeatures.push(outcome.featureName);
+      else summaries.push(outcome.summary);
     }
 
     if (summaries.length === 0) {
@@ -142,7 +63,7 @@ export async function ingestRun(input: IngestRunInput): Promise<Result<IngestRun
     }
 
     return ok({
-      status: deriveFinalStatus(summaries.map((s) => s.status)),
+      status:          deriveFinalStatus(summaries.map((s) => s.status)),
       executions:      summaries,
       unknownFeatures,
       warnings,
