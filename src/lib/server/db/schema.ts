@@ -19,7 +19,7 @@ export const policyScopeKind   = pgEnum('policy_scope_kind',   ['instance', 'pro
 export const policyEffect      = pgEnum('policy_effect',       ['allow', 'deny']);
 
 export const campaignStatus  = pgEnum('campaign_status',  ['OPEN', 'CLOSED']);
-export const campaignOutcome = pgEnum('campaign_outcome', ['PASSED', 'FAILED']);
+export const campaignOutcome = pgEnum('campaign_outcome', ['PASSED', 'FAILED', 'INCONCLUSIVE']);
 
 export type ParseError = { line: number; column?: number; message: string };
 

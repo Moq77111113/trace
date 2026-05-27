@@ -63,6 +63,19 @@ describe('computeProgress', () => {
     expect(p.optionalTotal).toBe(1);
   });
 
+  it('reports INCONCLUSIVE when no member is required', async () => {
+    const project = await mkProject();
+    const optional = await mkFeature(project.id);
+    const c = await createCampaign({ projectId: project.id, name: 'P5', appVersion: '1', createdBy: 'x' });
+    await addMember({ campaignId: c.id, featureId: optional.id });
+    await setMemberRequired({ campaignId: c.id, featureId: optional.id, required: false });
+    await tag(optional.id, c.id, 'PASSED', new Date('2026-01-01T00:00:00Z'));
+
+    const p = await computeProgress(c.id);
+    expect(p.requiredTotal).toBe(0);
+    expect(p.outcome).toBe('INCONCLUSIVE');
+  });
+
   it('does not count an untagged execution of a member feature', async () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);

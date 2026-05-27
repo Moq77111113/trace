@@ -2,8 +2,8 @@ import { asc, eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { campaignFeatures, executions, executionStatus } from '$lib/server/db/schema';
 
-/** The campaign's pass/fail verdict. */
-export type CampaignOutcome = 'PASSED' | 'FAILED';
+/** The campaign's verdict: PASSED/FAILED over its required members, or INCONCLUSIVE when none are required. */
+export type CampaignOutcome = 'PASSED' | 'FAILED' | 'INCONCLUSIVE';
 
 /** The latest tagged execution status of a member feature, or `null` when never run under the campaign. */
 export type MemberStatus = (typeof executionStatus.enumValues)[number] | null;
@@ -33,7 +33,7 @@ export async function computeProgress(campaignId: string): Promise<CampaignProgr
         status:    executions.status,
         rn:        sql<number>`ROW_NUMBER() OVER (
           PARTITION BY ${executions.featureId}
-          ORDER BY ${executions.startedAt} DESC
+          ORDER BY ${executions.startedAt} DESC, ${executions.id} DESC
         )`.as('rn'),
       })
       .from(executions)
@@ -66,6 +66,11 @@ export async function computeProgress(campaignId: string): Promise<CampaignProgr
   const requiredPassed = required.filter((m) => m.status === 'PASSED').length;
   const requiredNotRun = required.filter((m) => m.status === null).length;
 
+  let outcome: CampaignOutcome = 'INCONCLUSIVE';
+  if (required.length > 0) {
+    outcome = required.every((m) => m.status === 'PASSED') ? 'PASSED' : 'FAILED';
+  }
+
   return {
     members:        progress,
     requiredTotal:  required.length,
@@ -75,6 +80,6 @@ export async function computeProgress(campaignId: string): Promise<CampaignProgr
     optionalTotal:  optional.length,
     optionalPassed: optional.filter((m) => m.status === 'PASSED').length,
     executed:       progress.filter((m) => m.status !== null).length,
-    outcome:        required.every((m) => m.status === 'PASSED') ? 'PASSED' : 'FAILED',
+    outcome,
   };
 }
