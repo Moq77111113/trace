@@ -20,6 +20,7 @@
     'execution.review':    m.verb_execution_review(),
     'feature.author':      m.verb_feature_author(),
     'execution.run':       m.verb_execution_run(),
+    'campaign.manage':     m.verb_campaign_manage(),
     'project.manage':      m.verb_project_manage(),
     'instance.administer': m.verb_instance_administer(),
   } satisfies Record<Action, string>);

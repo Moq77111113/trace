@@ -30,6 +30,7 @@
 	"verb_execution_review": "Consulter les résultats",
 	"verb_feature_author": "Modifier les tests",
 	"verb_execution_run": "Exécuter les tests",
+	"verb_campaign_manage": "Gérer les campagnes",
 	"verb_project_manage": "Administrer le projet",
 	"verb_instance_administer": "Administrer l'instance",
 	"access_anyone": "Toute personne connectée",

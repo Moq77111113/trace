@@ -6,6 +6,7 @@ export const ACTIONS = [
   'feature.author',
   'execution.run',
   'execution.review',
+  'campaign.manage',
   'instance.administer',
 ] as const;
 

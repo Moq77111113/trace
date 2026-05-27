@@ -1,0 +1,1 @@
+ALTER TYPE "public"."campaign_outcome" ADD VALUE 'INCONCLUSIVE';

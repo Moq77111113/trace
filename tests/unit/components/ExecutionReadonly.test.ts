@@ -16,6 +16,7 @@ const fakeData = {
     featureId:           'f1',
     featureContentAtStart: 'Feature: F\n  Scenario: A\n',
     ciMetadata:          null,
+    campaignId:          null,
   },
   feature: {
     id:          'f1',

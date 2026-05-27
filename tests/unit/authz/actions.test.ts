@@ -7,6 +7,7 @@ describe('authz actions', () => {
       'project.access', 'project.manage',
       'feature.view', 'feature.author',
       'execution.run', 'execution.review',
+      'campaign.manage',
       'instance.administer',
     ]);
   });

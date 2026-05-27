@@ -7,7 +7,7 @@ export const PROJECT_ROLES = ['viewer', 'editor', 'manager'] as const;
 export type ProjectRole = (typeof PROJECT_ROLES)[number];
 
 const VIEWER:  Action[] = ['project.access', 'feature.view', 'execution.review'];
-const EDITOR:  Action[] = [...VIEWER, 'feature.author', 'execution.run'];
+const EDITOR:  Action[] = [...VIEWER, 'feature.author', 'execution.run', 'campaign.manage'];
 const MANAGER: Action[] = [...EDITOR, 'project.manage'];
 
 const ROLE_VERBS: Record<ProjectRole, Action[]> = { viewer: VIEWER, editor: EDITOR, manager: MANAGER };

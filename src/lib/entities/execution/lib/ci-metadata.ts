@@ -13,6 +13,7 @@ export const ciMetadataSchema = z
     branch: trimmedShort(255).optional(),
     commit: trimmedShort(64).optional(),
     source: trimmedShort(64).optional(),
+    appVersion: trimmedShort(60).optional(),
   })
   .strict();
 
@@ -27,6 +28,7 @@ export const CI_HEADER_MAP: Readonly<Record<string, keyof CiMetadata>> = {
   'x-ci-branch': 'branch',
   'x-ci-commit': 'commit',
   'x-ci-source': 'source',
+  'x-ci-app-version': 'appVersion',
 };
 
 /**

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "campaigns_project_version_open_idx" ON "campaigns" USING btree ("project_id","app_version") WHERE "campaigns"."status" = 'OPEN';
