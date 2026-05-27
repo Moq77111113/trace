@@ -4,6 +4,8 @@
 	"app_name": "trace",
 	"title_suffix": "trace",
 
+	"cancel": "Annuler",
+
 	"locale_en": "English",
 	"locale_fr": "Français",
 
