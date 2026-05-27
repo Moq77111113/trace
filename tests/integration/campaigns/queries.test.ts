@@ -4,13 +4,14 @@ import { executions } from '$lib/server/db/schema';
 import { createCampaign } from '$lib/server/campaigns/lifecycle/create';
 import { addMember } from '$lib/server/campaigns/lifecycle/members';
 import { listCampaignsForProject, getCampaignDetail } from '$lib/server/campaigns/read/queries';
+import { unwrap } from '$lib/shared/lib/result';
 import { mkProject, mkFeature } from '$testing/fixtures';
 
 describe('campaign read queries', () => {
   it('lists project campaigns newest-first with progress attached', async () => {
     const project = await mkProject();
-    const older = await createCampaign({ projectId: project.id, name: 'Older', appVersion: '1', createdBy: 'x' });
-    const newer = await createCampaign({ projectId: project.id, name: 'Newer', appVersion: '2', createdBy: 'x' });
+    const older = unwrap(await createCampaign({ projectId: project.id, name: 'Older', appVersion: '1', createdBy: 'x' }));
+    const newer = unwrap(await createCampaign({ projectId: project.id, name: 'Newer', appVersion: '2', createdBy: 'x' }));
 
     const list = await listCampaignsForProject(project.id);
     expect(list.map((c) => c.id).slice(0, 2)).toEqual([newer.id, older.id]);
@@ -20,7 +21,7 @@ describe('campaign read queries', () => {
   it('returns detail with member code, name, required flag, and live status', async () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id, { name: 'Checkout' });
-    const c = await createCampaign({ projectId: project.id, name: 'D1', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'D1', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: f1.id });
     await db.insert(executions).values({
       featureId: f1.id, source: 'CI', executedBy: 'ci', featureContentAtStart: 'x', status: 'PASSED', campaignId: c.id,

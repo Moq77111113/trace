@@ -4,6 +4,7 @@ import { db } from '$lib/server/db/client';
 import { campaignFeatures } from '$lib/server/db/schema';
 import { createCampaign } from '$lib/server/campaigns/lifecycle/create';
 import { addMember, removeMember, setMemberRequired, reorderMembers } from '$lib/server/campaigns/lifecycle/members';
+import { unwrap } from '$lib/shared/lib/result';
 import { mkProject, mkFeature } from '$testing/fixtures';
 
 async function members(campaignId: string) {
@@ -19,7 +20,7 @@ describe('campaign membership', () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);
     const f2 = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'M1', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'M1', appVersion: '1', createdBy: 'x' }));
 
     await addMember({ campaignId: c.id, featureId: f1.id });
     await addMember({ campaignId: c.id, featureId: f2.id });
@@ -34,14 +35,14 @@ describe('campaign membership', () => {
     const a = await mkProject();
     const b = await mkProject();
     const foreign = await mkFeature(b.id);
-    const c = await createCampaign({ projectId: a.id, name: 'M2', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: a.id, name: 'M2', appVersion: '1', createdBy: 'x' }));
     await expect(addMember({ campaignId: c.id, featureId: foreign.id })).rejects.toThrow(/project/);
   });
 
   it('toggles required and removes a member', async () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'M3', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'M3', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: f1.id });
 
     await setMemberRequired({ campaignId: c.id, featureId: f1.id, required: false });
@@ -59,7 +60,7 @@ describe('campaign membership', () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);
     const f2 = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'M4', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'M4', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: f1.id });
     await addMember({ campaignId: c.id, featureId: f2.id });
 

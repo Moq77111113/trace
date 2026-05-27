@@ -8,6 +8,7 @@ import { createApiKey } from '$lib/server/api-keys';
 import { createCampaign } from '$lib/server/campaigns/lifecycle/create';
 import { addMember } from '$lib/server/campaigns/lifecycle/members';
 import { closeCampaign } from '$lib/server/campaigns/lifecycle/close';
+import { unwrap } from '$lib/shared/lib/result';
 import { mkFeature, mkProject } from '$testing/fixtures';
 import { mkUser } from '$testing/integration/_helpers/api-key';
 
@@ -50,7 +51,7 @@ async function tagOf(executionId: string) {
 describe('CI ingest X-CI-App-Version campaign attach', () => {
   it('tags the execution when an open campaign targets the version and the feature is a member', async () => {
     const { project, feature, auth } = await seed();
-    const c = await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '9.9.0', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '9.9.0', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: feature.id });
 
     const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-app-version': '9.9.0' });
@@ -61,7 +62,7 @@ describe('CI ingest X-CI-App-Version campaign attach', () => {
 
   it('leaves untagged and warns when the feature is not a member', async () => {
     const { project, auth } = await seed();
-    await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '9.9.1', createdBy: 'x' });
+    unwrap(await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '9.9.1', createdBy: 'x' }));
 
     const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-app-version': '9.9.1' });
     const body = await res.json();
@@ -81,7 +82,7 @@ describe('CI ingest X-CI-App-Version campaign attach', () => {
 
   it('leaves untagged and warns when the only campaign for the version is closed', async () => {
     const { project, feature, auth } = await seed();
-    const c = await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '9.9.2', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '9.9.2', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: feature.id });
     await closeCampaign({ campaignId: c.id, closedBy: 'x' });
 
