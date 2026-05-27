@@ -19,7 +19,7 @@
 
 <form
   data-testid="campaign-create-form"
-  class="flex flex-wrap items-end gap-2"
+  class="flex flex-col gap-3 rounded-md border border-border bg-surface p-4"
   method="POST"
   action="?/create"
   use:enhance={({ formData, cancel }) => {
@@ -46,21 +46,26 @@
     };
   }}
 >
-  <label class="flex flex-col gap-1 text-[12px] text-ink-3">
-    {m.campaign_name_label()}
-    <Input bind:value={name} />
-  </label>
-  <label class="flex flex-col gap-1 text-[12px] text-ink-3">
-    {m.campaign_version_label()}
-    <Input bind:value={appVersion} placeholder={m.campaign_version_placeholder()} />
-  </label>
-  <Button type="submit" variant="primary" disabled={saving || !name.trim() || !appVersion.trim()}>
-    {m.campaign_create()}
-  </Button>
+  <div class="flex flex-wrap items-end gap-3">
+    <label class="flex flex-col gap-1 text-[12px] text-ink-3">
+      {m.campaign_name_label()}
+      <Input bind:value={name} />
+    </label>
+    <label class="flex flex-col gap-1 text-[12px] text-ink-3">
+      {m.campaign_version_label()}
+      <Input bind:value={appVersion} placeholder={m.campaign_version_placeholder()} />
+    </label>
+  </div>
+
+  <p class="text-[12px] text-ink-3">{m.campaign_version_hint()}</p>
+
+  {#if error}
+    <p class="text-[12px] text-fail-ink">{error}</p>
+  {/if}
+
+  <div class="flex justify-end">
+    <Button type="submit" variant="primary" disabled={saving || !name.trim() || !appVersion.trim()}>
+      {m.campaign_create()}
+    </Button>
+  </div>
 </form>
-
-<p class="mt-1 text-[12px] text-ink-3">{m.campaign_version_hint()}</p>
-
-{#if error}
-  <p class="mt-2 text-[12px] text-fail-ink">{error}</p>
-{/if}
