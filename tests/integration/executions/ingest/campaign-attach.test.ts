@@ -80,4 +80,14 @@ describe('CI ingest X-CI-Campaign-Id strict attach', () => {
     expect(await tagOf(body.executions[0].execution_id)).toBeNull();
     expect(body.warnings.length).toBeGreaterThan(0);
   });
+
+  it('does not fail the ingest when the campaign id is malformed (not a uuid)', async () => {
+    const { auth } = await seed();
+
+    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-campaign-id': 'not-a-uuid' });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(await tagOf(body.executions[0].execution_id)).toBeNull();
+    expect(body.warnings.length).toBeGreaterThan(0);
+  });
 });

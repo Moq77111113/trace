@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { executions, scenarioResults, projects, campaigns, campaignFeatures } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -52,10 +53,13 @@ export async function ingestRun(input: IngestRunInput): Promise<Result<IngestRun
   type CampaignAttach = { campaignId: string; members: Set<string> };
   let attach: CampaignAttach | null = null;
   if (input.campaignId) {
-    const [c] = await db
-      .select({ id: campaigns.id, status: campaigns.status, projectId: campaigns.projectId })
-      .from(campaigns)
-      .where(eq(campaigns.id, input.campaignId));
+    const validId = z.uuid({ version: 'v7' }).safeParse(input.campaignId).success;
+    const [c] = validId
+      ? await db
+          .select({ id: campaigns.id, status: campaigns.status, projectId: campaigns.projectId })
+          .from(campaigns)
+          .where(eq(campaigns.id, input.campaignId))
+      : [];
     if (c && c.status === 'OPEN' && c.projectId === input.projectId) {
       const memberRows = await db
         .select({ featureId: campaignFeatures.featureId })
