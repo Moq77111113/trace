@@ -127,6 +127,7 @@
 	"campaign_version_placeholder": "2.4.0",
 	"campaign_create": "Créer la campagne",
 	"campaign_empty": "Aucune campagne pour le moment",
+	"campaign_no_features": "Aucune fonctionnalité dans cette campagne",
 	"campaign_status_open": "Ouverte",
 	"campaign_status_closed": "Fermée",
 	"campaign_outcome_passed": "Réussie",
