@@ -8,10 +8,10 @@ describe('authz/roles', () => {
       new Set<Action>(['project.access', 'feature.view', 'execution.review']),
     );
     expect(new Set(verbsForRole('editor'))).toEqual(
-      new Set<Action>(['project.access', 'feature.view', 'execution.review', 'feature.author', 'execution.run']),
+      new Set<Action>(['project.access', 'feature.view', 'execution.review', 'feature.author', 'execution.run', 'campaign.manage']),
     );
     expect(new Set(verbsForRole('manager'))).toEqual(
-      new Set<Action>(['project.access', 'feature.view', 'execution.review', 'feature.author', 'execution.run', 'project.manage']),
+      new Set<Action>(['project.access', 'feature.view', 'execution.review', 'feature.author', 'execution.run', 'campaign.manage', 'project.manage']),
     );
   });
 
