@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { desc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { executions } from '$lib/server/db/schema';
 import { createCampaign } from '$lib/server/campaigns/lifecycle/create';
@@ -31,6 +32,14 @@ describe('computeProgress', () => {
     expect(p.requiredPassed).toBe(2);
     expect(p.executed).toBe(2);
     expect(p.outcome).toBe('PASSED');
+
+    const [latestF1] = await db
+      .select({ id: executions.id })
+      .from(executions)
+      .where(eq(executions.featureId, f1.id))
+      .orderBy(desc(executions.startedAt));
+    const m1 = p.members.find((m) => m.featureId === f1.id);
+    expect(m1?.executionId).toBe(latestF1?.id);
   });
 
   it('reports FAILED and counts not-run when a required member has no tagged execution', async () => {
@@ -46,6 +55,8 @@ describe('computeProgress', () => {
     expect(p.requiredNotRun).toBe(1);
     expect(p.executed).toBe(1);
     expect(p.outcome).toBe('FAILED');
+
+    expect(p.members.find((m) => m.featureId === f2.id)?.executionId).toBeNull();
   });
 
   it('ignores optional members in the verdict', async () => {

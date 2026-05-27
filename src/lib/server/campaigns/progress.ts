@@ -9,7 +9,12 @@ export type CampaignOutcome = 'PASSED' | 'FAILED' | 'INCONCLUSIVE';
 export type MemberStatus = (typeof executionStatus.enumValues)[number] | null;
 
 /** A member feature's standing within the campaign. */
-export type MemberProgress = { featureId: string; required: boolean; status: MemberStatus };
+export type MemberProgress = {
+  featureId:   string;
+  required:    boolean;
+  status:      MemberStatus;
+  executionId: string | null;
+};
 
 /** Live progress for a campaign: per-member standing, count buckets, and the pass/fail verdict. */
 export type CampaignProgress = {
@@ -31,6 +36,7 @@ export async function computeProgress(campaignId: string): Promise<CampaignProgr
       .select({
         featureId: executions.featureId,
         status:    executions.status,
+        id:        executions.id,
         rn:        sql<number>`ROW_NUMBER() OVER (
           PARTITION BY ${executions.featureId}
           ORDER BY ${executions.startedAt} DESC, ${executions.id} DESC
@@ -42,7 +48,7 @@ export async function computeProgress(campaignId: string): Promise<CampaignProgr
 
   const latest = await db
     .with(ranked)
-    .select({ featureId: ranked.featureId, status: ranked.status })
+    .select({ featureId: ranked.featureId, status: ranked.status, id: ranked.id })
     .from(ranked)
     .where(eq(ranked.rn, 1));
 
@@ -52,13 +58,17 @@ export async function computeProgress(campaignId: string): Promise<CampaignProgr
     .where(eq(campaignFeatures.campaignId, campaignId))
     .orderBy(asc(campaignFeatures.position));
 
-  const statusByFeature = new Map(latest.map((r) => [r.featureId, r.status]));
+  const latestByFeature = new Map(latest.map((r) => [r.featureId, { status: r.status, executionId: r.id }]));
 
-  const progress: MemberProgress[] = members.map((m) => ({
-    featureId: m.featureId,
-    required:  m.required,
-    status:    statusByFeature.get(m.featureId) ?? null,
-  }));
+  const progress: MemberProgress[] = members.map((m) => {
+    const l = latestByFeature.get(m.featureId);
+    return {
+      featureId:   m.featureId,
+      required:    m.required,
+      status:      l?.status ?? null,
+      executionId: l?.executionId ?? null,
+    };
+  });
 
   const required = progress.filter((m) => m.required);
   const optional = progress.filter((m) => !m.required);
