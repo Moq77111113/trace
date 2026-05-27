@@ -25,6 +25,7 @@ export class SaveFlow {
           case 'saved':
             this.form.reset(outcome.feature);
             this.onSavedCallback?.(outcome.feature);
+            void invalidateAll();
             return;
           case 'conflict':
             this.conflictWith = outcome.currentFeature;
