@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db/client';
-import { executions, scenarioResults, projects } from '$lib/server/db/schema';
+import { executions, scenarioResults, projects, campaigns, campaignFeatures } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { ok, err, type Result } from '$lib/shared/lib/result';
 import { resolveFeature } from './matching/resolve-feature';
@@ -13,6 +13,7 @@ export type IngestRunInput = {
   executedBy:   string;
   environment?: string | null;
   ciMetadata?:  CiMetadata | null;
+  campaignId?:  string | null;
   parsed:       IngestedFeatureRun[];
 };
 
@@ -48,6 +49,24 @@ export async function ingestRun(input: IngestRunInput): Promise<Result<IngestRun
   const unknownFeatures: string[] = [];
   const warnings:        string[] = [];
 
+  type CampaignAttach = { campaignId: string; members: Set<string> };
+  let attach: CampaignAttach | null = null;
+  if (input.campaignId) {
+    const [c] = await db
+      .select({ id: campaigns.id, status: campaigns.status, projectId: campaigns.projectId })
+      .from(campaigns)
+      .where(eq(campaigns.id, input.campaignId));
+    if (c && c.status === 'OPEN' && c.projectId === input.projectId) {
+      const memberRows = await db
+        .select({ featureId: campaignFeatures.featureId })
+        .from(campaignFeatures)
+        .where(eq(campaignFeatures.campaignId, c.id));
+      attach = { campaignId: c.id, members: new Set(memberRows.map((m) => m.featureId)) };
+    } else {
+      warnings.push('Campaign not attachable (missing, closed, or wrong project); executions ingested untagged.');
+    }
+  }
+
   return db.transaction(async (tx) => {
     for (const parsed of input.parsed) {
       warnings.push(...parsed.warnings);
@@ -66,12 +85,19 @@ export async function ingestRun(input: IngestRunInput): Promise<Result<IngestRun
       const status = deriveFinalStatus(parsed.scenarios.map((s) => s.status));
       const now    = new Date();
 
+      let campaignId: string | null = null;
+      if (attach) {
+        if (attach.members.has(feature.id)) campaignId = attach.campaignId;
+        else warnings.push(`Feature '${parsed.featureName}' is not a campaign member; ingested untagged.`);
+      }
+
       const [execution] = await tx.insert(executions).values({
         featureId:             feature.id,
         source:                'CI',
         executedBy:            input.executedBy,
         environment:           input.environment ?? null,
         ciMetadata:            input.ciMetadata ?? null,
+        campaignId,
         featureContentAtStart: feature.content,
         status,
         startedAt:             now,

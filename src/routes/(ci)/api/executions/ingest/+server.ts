@@ -13,6 +13,7 @@ function throwHttp(code: CiHttpErrorCode): never {
 export const POST: RequestHandler = ciHandler(async (event, { executor, projectId }) => {
   const environment = event.request.headers.get('x-environment');
   const ciMetadata  = readCiMetadata((name) => event.request.headers.get(name));
+  const campaignId  = event.request.headers.get('x-ci-campaign-id');
 
   let payload: unknown;
   try {
@@ -29,6 +30,7 @@ export const POST: RequestHandler = ciHandler(async (event, { executor, projectI
     executedBy:  executor,
     environment,
     ciMetadata,
+    campaignId,
     parsed:      parsed.value,
   });
   if (!result.ok) throwHttp(result.error.code);
