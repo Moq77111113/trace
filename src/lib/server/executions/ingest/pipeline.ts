@@ -1,7 +1,6 @@
-import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { executions, scenarioResults, projects, campaigns, campaignFeatures } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { ok, err, type Result } from '$lib/shared/lib/result';
 import { resolveFeature } from './matching/resolve-feature';
 import { formatFeatureCode } from '$lib/shared/lib/slug';
@@ -14,7 +13,6 @@ export type IngestRunInput = {
   executedBy:   string;
   environment?: string | null;
   ciMetadata?:  CiMetadata | null;
-  campaignId?:  string | null;
   parsed:       IngestedFeatureRun[];
 };
 
@@ -52,22 +50,24 @@ export async function ingestRun(input: IngestRunInput): Promise<Result<IngestRun
 
   type CampaignAttach = { campaignId: string; members: Set<string> };
   let attach: CampaignAttach | null = null;
-  if (input.campaignId) {
-    const validId = z.uuid({ version: 'v7' }).safeParse(input.campaignId).success;
-    const [c] = validId
-      ? await db
-          .select({ id: campaigns.id, status: campaigns.status, projectId: campaigns.projectId })
-          .from(campaigns)
-          .where(eq(campaigns.id, input.campaignId))
-      : [];
-    if (c && c.status === 'OPEN' && c.projectId === input.projectId) {
+  const requestedVersion = input.ciMetadata?.appVersion;
+  if (requestedVersion) {
+    const [c] = await db
+      .select({ id: campaigns.id })
+      .from(campaigns)
+      .where(and(
+        eq(campaigns.projectId, input.projectId),
+        eq(campaigns.appVersion, requestedVersion),
+        eq(campaigns.status, 'OPEN'),
+      ));
+    if (c) {
       const memberRows = await db
         .select({ featureId: campaignFeatures.featureId })
         .from(campaignFeatures)
         .where(eq(campaignFeatures.campaignId, c.id));
       attach = { campaignId: c.id, members: new Set(memberRows.map((m) => m.featureId)) };
     } else {
-      warnings.push('Campaign not attachable (missing, closed, or wrong project); executions ingested untagged.');
+      warnings.push(`No open campaign targets version '${requestedVersion}'; executions ingested untagged.`);
     }
   }
 

@@ -47,13 +47,13 @@ async function tagOf(executionId: string) {
   return row?.campaignId ?? null;
 }
 
-describe('CI ingest X-CI-Campaign-Id strict attach', () => {
-  it('tags the execution when the campaign is OPEN and the feature is a member', async () => {
+describe('CI ingest X-CI-App-Version campaign attach', () => {
+  it('tags the execution when an open campaign targets the version and the feature is a member', async () => {
     const { project, feature, auth } = await seed();
-    const c = await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '1', createdBy: 'x' });
+    const c = await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '9.9.0', createdBy: 'x' });
     await addMember({ campaignId: c.id, featureId: feature.id });
 
-    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-campaign-id': c.id });
+    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-app-version': '9.9.0' });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(await tagOf(body.executions[0].execution_id)).toBe(c.id);
@@ -61,31 +61,31 @@ describe('CI ingest X-CI-Campaign-Id strict attach', () => {
 
   it('leaves untagged and warns when the feature is not a member', async () => {
     const { project, auth } = await seed();
-    const c = await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '1', createdBy: 'x' });
+    await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '9.9.1', createdBy: 'x' });
 
-    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-campaign-id': c.id });
+    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-app-version': '9.9.1' });
     const body = await res.json();
     expect(await tagOf(body.executions[0].execution_id)).toBeNull();
     expect(body.warnings.join(' ')).toMatch(/member/i);
   });
 
-  it('leaves untagged and warns when the campaign is CLOSED', async () => {
-    const { project, feature, auth } = await seed();
-    const c = await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '1', createdBy: 'x' });
-    await addMember({ campaignId: c.id, featureId: feature.id });
-    await closeCampaign({ campaignId: c.id, closedBy: 'x' });
+  it('leaves untagged and warns when no open campaign targets the version', async () => {
+    const { auth } = await seed();
 
-    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-campaign-id': c.id });
+    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-app-version': '0.0.0' });
+    expect(res.status).toBe(200);
     const body = await res.json();
     expect(await tagOf(body.executions[0].execution_id)).toBeNull();
     expect(body.warnings.length).toBeGreaterThan(0);
   });
 
-  it('does not fail the ingest when the campaign id is malformed (not a uuid)', async () => {
-    const { auth } = await seed();
+  it('leaves untagged and warns when the only campaign for the version is closed', async () => {
+    const { project, feature, auth } = await seed();
+    const c = await createCampaign({ projectId: project.id, name: 'Rel', appVersion: '9.9.2', createdBy: 'x' });
+    await addMember({ campaignId: c.id, featureId: feature.id });
+    await closeCampaign({ campaignId: c.id, closedBy: 'x' });
 
-    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-campaign-id': 'not-a-uuid' });
-    expect(res.status).toBe(200);
+    const res = await fetchWith(cucumberPayload('Login'), { authorization: auth, 'x-ci-app-version': '9.9.2' });
     const body = await res.json();
     expect(await tagOf(body.executions[0].execution_id)).toBeNull();
     expect(body.warnings.length).toBeGreaterThan(0);
