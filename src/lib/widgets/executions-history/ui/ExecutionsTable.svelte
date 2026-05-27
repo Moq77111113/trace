@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Badge   from '$lib/shared/ui/Badge.svelte';
+  import Icon    from '$lib/shared/ui/Icon.svelte';
   import Pill    from '$lib/shared/ui/Pill.svelte';
   import Table   from '$lib/shared/ui/Table.svelte';
   import DistBar from '$lib/entities/execution/ui/DistBar.svelte';
@@ -7,21 +9,23 @@
   import { formatBranchCommit, type CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 
   type Row = {
-    id:          string;
-    status:      string;
-    source:      string;
-    executedBy:  string;
-    environment: string | null;
-    startedAt:   Date | string;
-    finishedAt:  Date | string | null;
-    ciMetadata:  CiMetadata | null;
-    featureId:   string;
-    featureName: string;
-    featureCode: string;
-    passed:      number;
-    failed:      number;
-    skipped:     number;
-    pending:     number;
+    id:           string;
+    status:       string;
+    source:       string;
+    executedBy:   string;
+    environment:  string | null;
+    startedAt:    Date | string;
+    finishedAt:   Date | string | null;
+    ciMetadata:   CiMetadata | null;
+    featureId:    string;
+    featureName:  string;
+    featureCode:  string;
+    campaignId:   string | null;
+    campaignName: string | null;
+    passed:       number;
+    failed:       number;
+    skipped:      number;
+    pending:      number;
   };
 
   type Props = {
@@ -58,6 +62,14 @@
             </a>
             {#if flakeFeatureIds.has(r.featureId)}
               <Pill kind="flake">flake</Pill>
+            {/if}
+            {#if r.campaignId && r.campaignName}
+              <a href="/p/{projectSlug}/campaigns/{r.campaignId}" class="hover:text-accent-soft-ink">
+                <Badge variant="neutral" glyph={false}>
+                  <Icon name="Rocket" size={11} />
+                  {r.campaignName}
+                </Badge>
+              </a>
             {/if}
           </span>
         </td>
