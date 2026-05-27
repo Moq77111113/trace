@@ -149,7 +149,12 @@ export const campaigns = pgTable(
     closedBy:   text('closed_by'),
     createdBy:  text('created_by').notNull(),
   },
-  (t) => [uniqueIndex('campaigns_project_name_idx').on(t.projectId, sql`LOWER(${t.name})`)],
+  (t) => [
+    uniqueIndex('campaigns_project_name_idx').on(t.projectId, sql`LOWER(${t.name})`),
+    uniqueIndex('campaigns_project_version_open_idx')
+      .on(t.projectId, t.appVersion)
+      .where(sql`${t.status} = 'OPEN'`),
+  ],
 );
 
 export const campaignFeatures = pgTable(

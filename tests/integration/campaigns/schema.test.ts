@@ -43,4 +43,20 @@ describe('campaigns schema', () => {
     if (!run) throw new Error('execution insert returned no row');
     expect(run.campaignId).toBe(c.id);
   });
+
+  it('forbids two OPEN campaigns sharing a version in one project, but allows reuse after close', async () => {
+    const project = await mkProject();
+    await db.insert(campaigns).values({ projectId: project.id, name: 'A', appVersion: '7.0.0', createdBy: 't' });
+
+    await expect(
+      db.insert(campaigns).values({ projectId: project.id, name: 'B', appVersion: '7.0.0', createdBy: 't' }),
+    ).rejects.toThrow();
+
+    await db.update(campaigns).set({ status: 'CLOSED' }).where(eq(campaigns.projectId, project.id));
+    const reopened = await db
+      .insert(campaigns)
+      .values({ projectId: project.id, name: 'C', appVersion: '7.0.0', createdBy: 't' })
+      .returning();
+    expect(reopened).toHaveLength(1);
+  });
 });
