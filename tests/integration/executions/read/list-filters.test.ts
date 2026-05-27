@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
 import { executions, featureGroups, policies } from '$lib/server/db/schema';
 import { listExecutionEnvironments, listExecutionsForProject } from '$lib/server/executions/read/queries';
+import { createCampaign } from '$lib/server/campaigns/lifecycle/create';
+import { addMember } from '$lib/server/campaigns/lifecycle/members';
+import { startExecution } from '$lib/server/executions/run/start';
+import { unwrap } from '$lib/shared/lib/result';
 import { mkFeature, mkProject, mkUser, grantProjectAccess } from '$testing/fixtures';
 import { makeAuthorizer } from '$lib/server/authz/authorizer';
 
@@ -141,6 +145,31 @@ describe('listExecutionsForProject — filters', () => {
 
     const envs = await listExecutionEnvironments(p.id);
     expect(envs).toEqual(['prod', 'staging']);
+  });
+
+  it('exposes campaignId and campaignName on rows tagged to a campaign', async () => {
+    const u = await mkUser();
+    const p = await seedProject();
+    const f = await seedFeature(p.id, 'Login');
+    await grantProjectAccess(u.id, p.id, 'execution.review');
+
+    const campaignName = 'Release 1.0';
+    const c = unwrap(await createCampaign({ projectId: p.id, name: campaignName, appVersion: '1.0.0', createdBy: u.id }));
+    await addMember({ campaignId: c.id, featureId: f.id });
+
+    await startExecution({ featureId: f.id, executedBy: u.id, campaignId: c.id });
+    await startExecution({ featureId: f.id, executedBy: u.id });
+
+    const authz = makeAuthorizer(asUser(u.id));
+    const res = await listExecutionsForProject(authz, p.id, {});
+
+    const tagged   = res.rows.find((r) => r.campaignId !== null);
+    const untagged = res.rows.find((r) => r.campaignId === null);
+
+    expect(tagged?.campaignId).toBe(c.id);
+    expect(tagged?.campaignName).toBe(campaignName);
+    expect(untagged?.campaignId).toBeNull();
+    expect(untagged?.campaignName).toBeNull();
   });
 
   it('excludes executions whose feature the caller cannot review', async () => {

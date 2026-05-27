@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, sql, type SQL } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { attachments, executions, features, projects, scenarioResults } from '$lib/server/db/schema';
+import { attachments, campaigns, executions, features, projects, scenarioResults } from '$lib/server/db/schema';
 import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 import { EXPORT_ROW_CAP } from '$lib/features/csv-export/lib/csv';
 import type { Authorizer } from '$lib/server/authz/authorizer';
@@ -65,9 +65,11 @@ export async function listExecutionsForProject(authz: Authorizer, projectId: str
       startedAt:   executions.startedAt,
       finishedAt:  executions.finishedAt,
       ciMetadata:  executions.ciMetadata,
-      featureId:   features.id,
-      featureName: features.name,
-      featureCode: featureCodeSql,
+      featureId:    features.id,
+      featureName:  features.name,
+      featureCode:  featureCodeSql,
+      campaignId:   executions.campaignId,
+      campaignName: campaigns.name,
       passed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'PASSED'  THEN 1 ELSE 0 END), 0)::int`,
       failed:  sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'FAILED'  THEN 1 ELSE 0 END), 0)::int`,
       skipped: sql<number>`COALESCE(SUM(CASE WHEN ${scenarioResults.status} = 'SKIPPED' THEN 1 ELSE 0 END), 0)::int`,
@@ -76,9 +78,10 @@ export async function listExecutionsForProject(authz: Authorizer, projectId: str
     .from(executions)
     .innerJoin(features, eq(features.id, executions.featureId))
     .innerJoin(projects, eq(projects.id, features.projectId))
+    .leftJoin(campaigns, eq(campaigns.id, executions.campaignId))
     .leftJoin(scenarioResults, eq(scenarioResults.executionId, executions.id))
     .where(and(...conds))
-    .groupBy(executions.id, features.id, features.name, projects.codePrefix, features.codeSeq)
+    .groupBy(executions.id, features.id, features.name, projects.codePrefix, features.codeSeq, campaigns.name)
     .orderBy(desc(executions.startedAt))
     .limit(pageSize)
     .offset(offset);

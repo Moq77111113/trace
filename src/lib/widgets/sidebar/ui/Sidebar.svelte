@@ -31,6 +31,7 @@
       ? ([
           { key: 'overview',   label: m.nav_overview(),   icon: 'Home',     href: `/p/${project.slug}` },
           { key: 'executions', label: m.nav_executions(), icon: 'History',  href: `/p/${project.slug}/executions` },
+          { key: 'campaigns',  label: m.nav_campaigns(),  icon: 'Rocket',   href: `/p/${project.slug}/campaigns` },
           { key: 'import',     label: m.nav_import(),     icon: 'Upload',   href: `/p/${project.slug}/import`, requires: 'feature.author' },
           { key: 'export',     label: m.nav_export(),     icon: 'Download', href: `/p/${project.slug}/export` },
           { key: 'keys',       label: m.nav_settings(),   icon: 'Settings', href: `/p/${project.slug}/settings/access`, requires: 'project.manage' },
@@ -47,6 +48,7 @@
     const base = `/p/${project.slug}`;
     if (pathname.startsWith(`${base}/settings`))   return 'keys';
     if (pathname.startsWith(`${base}/executions`)) return 'executions';
+    if (pathname.startsWith(`${base}/campaigns`))  return 'campaigns';
     if (pathname.startsWith(`${base}/import`))     return 'import';
     if (pathname.startsWith(`${base}/export`))     return 'export';
     return 'overview';

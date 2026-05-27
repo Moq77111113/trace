@@ -31,6 +31,7 @@
   import Plug          from 'lucide-svelte/icons/plug';
   import Plus          from 'lucide-svelte/icons/plus';
   import RefreshCw     from 'lucide-svelte/icons/refresh-cw';
+  import Rocket        from 'lucide-svelte/icons/rocket';
   import Search        from 'lucide-svelte/icons/search';
   import Server        from 'lucide-svelte/icons/server';
   import Settings      from 'lucide-svelte/icons/settings';
@@ -76,6 +77,7 @@
     Plug,
     Plus,
     RefreshCw,
+    Rocket,
     Search,
     Server,
     Settings,

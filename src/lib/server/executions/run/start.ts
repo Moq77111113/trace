@@ -9,6 +9,7 @@ export type StartRunInput = {
   featureId:    string;
   executedBy:   string;
   environment?: string | null;
+  campaignId?:  string | null;
 };
 
 /**
@@ -45,6 +46,7 @@ export async function startExecution(input: StartRunInput) {
         executedBy:            input.executedBy,
         environment:           input.environment ?? null,
         featureContentAtStart: feature.content,
+        campaignId:            input.campaignId ?? null,
       })
       .returning();
     if (!run) throw new Error('startExecution: run insert returned no row');

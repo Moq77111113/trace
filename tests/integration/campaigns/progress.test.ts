@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { desc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { executions } from '$lib/server/db/schema';
 import { createCampaign } from '$lib/server/campaigns/lifecycle/create';
 import { addMember, setMemberRequired } from '$lib/server/campaigns/lifecycle/members';
 import { computeProgress } from '$lib/server/campaigns/progress';
+import { unwrap } from '$lib/shared/lib/result';
 import { mkProject, mkFeature } from '$testing/fixtures';
 
 async function tag(featureId: string, campaignId: string, status: 'PASSED' | 'FAILED', startedAt: Date) {
@@ -17,7 +19,7 @@ describe('computeProgress', () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);
     const f2 = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'P1', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'P1', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: f1.id });
     await addMember({ campaignId: c.id, featureId: f2.id });
 
@@ -30,13 +32,21 @@ describe('computeProgress', () => {
     expect(p.requiredPassed).toBe(2);
     expect(p.executed).toBe(2);
     expect(p.outcome).toBe('PASSED');
+
+    const [latestF1] = await db
+      .select({ id: executions.id })
+      .from(executions)
+      .where(eq(executions.featureId, f1.id))
+      .orderBy(desc(executions.startedAt));
+    const m1 = p.members.find((m) => m.featureId === f1.id);
+    expect(m1?.executionId).toBe(latestF1?.id);
   });
 
   it('reports FAILED and counts not-run when a required member has no tagged execution', async () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);
     const f2 = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'P2', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'P2', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: f1.id });
     await addMember({ campaignId: c.id, featureId: f2.id });
     await tag(f1.id, c.id, 'PASSED', new Date('2026-01-01T00:00:00Z'));
@@ -45,13 +55,15 @@ describe('computeProgress', () => {
     expect(p.requiredNotRun).toBe(1);
     expect(p.executed).toBe(1);
     expect(p.outcome).toBe('FAILED');
+
+    expect(p.members.find((m) => m.featureId === f2.id)?.executionId).toBeNull();
   });
 
   it('ignores optional members in the verdict', async () => {
     const project = await mkProject();
     const required = await mkFeature(project.id);
     const optional = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'P3', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'P3', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: required.id });
     await addMember({ campaignId: c.id, featureId: optional.id });
     await setMemberRequired({ campaignId: c.id, featureId: optional.id, required: false });
@@ -66,7 +78,7 @@ describe('computeProgress', () => {
   it('reports INCONCLUSIVE when no member is required', async () => {
     const project = await mkProject();
     const optional = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'P5', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'P5', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: optional.id });
     await setMemberRequired({ campaignId: c.id, featureId: optional.id, required: false });
     await tag(optional.id, c.id, 'PASSED', new Date('2026-01-01T00:00:00Z'));
@@ -79,7 +91,7 @@ describe('computeProgress', () => {
   it('does not count an untagged execution of a member feature', async () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'P4', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'P4', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: f1.id });
     await db.insert(executions).values({
       featureId: f1.id, source: 'MANUAL', executedBy: 'x', featureContentAtStart: 'x', status: 'PASSED',

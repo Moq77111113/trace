@@ -4,6 +4,7 @@ import { executions } from '$lib/server/db/schema';
 import { createCampaign } from '$lib/server/campaigns/lifecycle/create';
 import { addMember } from '$lib/server/campaigns/lifecycle/members';
 import { closeCampaign } from '$lib/server/campaigns/lifecycle/close';
+import { unwrap } from '$lib/shared/lib/result';
 import { mkProject, mkFeature } from '$testing/fixtures';
 
 async function tag(featureId: string, campaignId: string, status: 'PASSED' | 'FAILED') {
@@ -16,7 +17,7 @@ describe('closeCampaign', () => {
   it('records PASSED when every required member passed, and locks the campaign', async () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'C1', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'C1', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: f1.id });
     await tag(f1.id, c.id, 'PASSED');
 
@@ -30,7 +31,7 @@ describe('closeCampaign', () => {
   it('records FAILED when a required member did not pass', async () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'C2', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'C2', appVersion: '1', createdBy: 'x' }));
     await addMember({ campaignId: c.id, featureId: f1.id });
     await tag(f1.id, c.id, 'FAILED');
 
@@ -40,7 +41,7 @@ describe('closeCampaign', () => {
 
   it('refuses to close an already-closed campaign', async () => {
     const project = await mkProject();
-    const c = await createCampaign({ projectId: project.id, name: 'C3', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'C3', appVersion: '1', createdBy: 'x' }));
     await closeCampaign({ campaignId: c.id, closedBy: 'x' });
     await expect(closeCampaign({ campaignId: c.id, closedBy: 'x' })).rejects.toThrow(/closed/);
   });
@@ -48,7 +49,7 @@ describe('closeCampaign', () => {
   it('locks membership mutation once closed', async () => {
     const project = await mkProject();
     const f1 = await mkFeature(project.id);
-    const c = await createCampaign({ projectId: project.id, name: 'C4', appVersion: '1', createdBy: 'x' });
+    const c = unwrap(await createCampaign({ projectId: project.id, name: 'C4', appVersion: '1', createdBy: 'x' }));
     await closeCampaign({ campaignId: c.id, closedBy: 'x' });
     await expect(addMember({ campaignId: c.id, featureId: f1.id })).rejects.toThrow(/closed/);
   });
