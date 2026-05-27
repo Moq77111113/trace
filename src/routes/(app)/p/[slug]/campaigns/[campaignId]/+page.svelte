@@ -27,6 +27,6 @@
   {#if data.members.length === 0}
     <EmptyState title={m.campaign_no_features()} />
   {:else}
-    <MemberList members={data.members} {locked} />
+    <MemberList members={data.members} {locked} slug={data.project.slug} />
   {/if}
 </div>

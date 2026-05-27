@@ -3,8 +3,8 @@
   import { enhance } from '$app/forms';
   import MemberRow, { type CampaignMember } from './MemberRow.svelte';
 
-  type Props = { members: CampaignMember[]; locked: boolean };
-  let { members, locked }: Props = $props();
+  type Props = { members: CampaignMember[]; locked: boolean; slug: string };
+  let { members, locked, slug }: Props = $props();
 
   let reorderForm: HTMLFormElement;
   let dragId = $state('');
@@ -52,7 +52,7 @@
       ondragover={(e) => e.preventDefault()}
       ondrop={() => onDrop(member.featureId)}
     >
-      <MemberRow {member} {locked} />
+      <MemberRow {member} {locked} {slug} />
     </div>
   {/each}
 </ul>

@@ -2,12 +2,14 @@
   export type MemberRunStatus = 'IN_PROGRESS' | 'PASSED' | 'FAILED' | 'SKIPPED' | 'ABORTED';
 
   export type CampaignMember = {
-    featureId: string;
-    code:      string;
-    name:      string;
-    required:  boolean;
-    position:  number;
-    status:    MemberRunStatus | null;
+    featureId:         string;
+    code:              string;
+    name:              string;
+    required:          boolean;
+    position:          number;
+    status:            MemberRunStatus | null;
+    runnable:          boolean;
+    latestExecutionId: string | null;
   };
 </script>
 
@@ -19,8 +21,8 @@
   import { statusBadgeVariant } from '$lib/entities/execution/lib/format';
   import * as m from '$lib/paraglide/messages';
 
-  type Props = { member: CampaignMember; locked: boolean };
-  let { member, locked }: Props = $props();
+  type Props = { member: CampaignMember; locked: boolean; slug: string };
+  let { member, locked, slug }: Props = $props();
 
   function statusLabel(status: MemberRunStatus): string {
     if (status === 'PASSED')      return m.campaign_outcome_passed();
@@ -37,6 +39,10 @@
 
   {#if member.status === null}
     <Badge variant="neutral" glyph={false}>{m.campaign_not_run()}</Badge>
+  {:else if member.latestExecutionId}
+    <a href="/p/{slug}/executions/{member.latestExecutionId}">
+      <Badge variant={statusBadgeVariant(member.status)}>{statusLabel(member.status)}</Badge>
+    </a>
   {:else}
     <Badge variant={statusBadgeVariant(member.status)}>{statusLabel(member.status)}</Badge>
   {/if}
@@ -55,7 +61,9 @@
     <Gate can="execution.run">
       <form method="POST" action="?/startRun" use:enhance>
         <input type="hidden" name="featureId" value={member.featureId} />
-        <Button type="submit" variant="secondary" size="sm">{m.campaign_run()}</Button>
+        <span title={member.runnable ? undefined : m.feature_no_runnable_scenarios()}>
+          <Button type="submit" variant="secondary" size="sm" disabled={!member.runnable}>{m.campaign_run()}</Button>
+        </span>
       </form>
     </Gate>
 
