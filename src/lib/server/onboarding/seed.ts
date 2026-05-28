@@ -15,6 +15,7 @@ import projectFileJson from './demo/project.json';
 import groupsFileJson from './demo/groups.json';
 import featuresMetaJson from './demo/features-meta.json';
 import runFileJson from './demo/run.json';
+import { seedDemoCampaigns } from './seed-campaigns';
 
 const DEMO_NAME = 'Trace Demo';
 
@@ -150,4 +151,6 @@ export async function seedDemoProject(adminUserId: string): Promise<void> {
 		.update(executions)
 		.set({ status: aggregate, finishedAt: new Date() })
 		.where(eq(executions.id, run.id));
+
+	await seedDemoCampaigns(project.id, featureIdByFilename, readFeature);
 }

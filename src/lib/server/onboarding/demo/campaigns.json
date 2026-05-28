@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Release 1.0",
+    "appVersion": "1.0.0",
+    "status": "CLOSED",
+    "outcome": "FAILED",
+    "closedDaysAgo": 14,
+    "createdBy": "Demo Operator",
+    "closedBy": "Demo Operator",
+    "members": [
+      { "featureFile": "01-ticket-lifecycle-create.feature",      "required": true, "position": 1, "execution": { "source": "CI", "status": "PASSED", "executedBy": "ci-pipeline", "environment": "staging", "daysAgo": 15 } },
+      { "featureFile": "02-ticket-lifecycle-transitions.feature", "required": true, "position": 2, "execution": { "source": "CI", "status": "PASSED", "executedBy": "ci-pipeline", "environment": "staging", "daysAgo": 15 } },
+      { "featureFile": "03-notifications-assignment.feature",     "required": true, "position": 3, "execution": { "source": "CI", "status": "PASSED", "executedBy": "ci-pipeline", "environment": "staging", "daysAgo": 15 } },
+      { "featureFile": "04-sla-breach.feature",                   "required": true, "position": 4, "execution": { "source": "CI", "status": "FAILED", "executedBy": "ci-pipeline", "environment": "staging", "daysAgo": 15, "errorMessage": "expected unflagged, got flagged — clock-reset logic ignored comments older than 24 h" } }
+    ]
+  },
+  {
+    "name": "Release 1.1 release candidate",
+    "appVersion": "1.1.0-rc1",
+    "status": "OPEN",
+    "createdBy": "Demo Operator",
+    "members": [
+      { "featureFile": "01-ticket-lifecycle-create.feature",      "required": true,  "position": 1, "execution": { "source": "MANUAL", "status": "PASSED", "executedBy": "Demo Operator", "environment": "demo-staging", "daysAgo": 2 } },
+      { "featureFile": "02-ticket-lifecycle-transitions.feature", "required": true,  "position": 2, "execution": { "source": "MANUAL", "status": "PASSED", "executedBy": "Demo Operator", "environment": "demo-staging", "daysAgo": 2 } },
+      { "featureFile": "03-notifications-assignment.feature",     "required": false, "position": 3, "execution": null },
+      { "featureFile": "04-sla-breach.feature",                   "required": true,  "position": 4, "execution": { "source": "MANUAL", "status": "FAILED", "executedBy": "Demo Operator", "environment": "demo-staging", "daysAgo": 1, "errorMessage": "clock-reset bug still present — comments older than 24h reset the inactivity timer" } }
+    ]
+  }
+]

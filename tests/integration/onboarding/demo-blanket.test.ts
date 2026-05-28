@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { policies, projects, features, executions } from '$lib/server/db/schema';
+import { policies, projects, features, executions, campaigns } from '$lib/server/db/schema';
 import { seedDemoProject } from '$lib/server/onboarding/seed';
 import { mkUser } from '$testing/fixtures';
 
@@ -18,6 +18,7 @@ async function clearDemo() {
   if (feats.length > 0) {
     await db.delete(executions).where(inArray(executions.featureId, feats.map((f) => f.id)));
   }
+  await db.delete(campaigns).where(eq(campaigns.projectId, demo.id));
   await db.delete(projects).where(eq(projects.id, demo.id));
 }
 
