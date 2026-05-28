@@ -7,6 +7,7 @@
   import ExecutionsTable          from '$lib/widgets/executions-history/ui/ExecutionsTable.svelte';
   import ExecutionsPager          from '$lib/widgets/executions-history/ui/ExecutionsPager.svelte';
   import ExecutionsExportButton   from '$lib/features/csv-export/ui/ExecutionsExportButton.svelte';
+  import ReportButton             from '$lib/features/print-report/ui/ReportButton.svelte';
   import * as m                   from '$lib/paraglide/messages';
   import { hasAnyExecutionFilter } from '$lib/entities/execution/lib/format';
   import { createExecutionsFilterNav } from '$lib/widgets/executions-history/lib/filter-nav';
@@ -28,6 +29,13 @@
     params.delete('page');
     const qs = params.toString();
     return `/p/${data.project.slug}/executions/export.csv${qs ? `?${qs}` : ''}`;
+  });
+
+  const reportHref = $derived.by(() => {
+    const params = new URLSearchParams(page.url.searchParams);
+    params.delete('page');
+    const qs = params.toString();
+    return `/p/${data.project.slug}/executions/report.html${qs ? `?${qs}` : ''}`;
   });
 </script>
 
@@ -67,7 +75,16 @@
     <ExecutionsTable rows={data.rows} projectSlug={data.project.slug} flakeFeatureIds={data.flakeFeatureIds} />
 
     <footer class="mt-6 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-4 text-[12.5px]">
-      <ExecutionsExportButton href={exportHref} total={data.total} />
+      <div class="flex items-center gap-2">
+        <ExecutionsExportButton href={exportHref} total={data.total} />
+        <ReportButton
+          href={reportHref}
+          options={[
+            { label: 'Full',          scope: null },
+            { label: 'Failures only', scope: 'failed' },
+          ]}
+        />
+      </div>
       <ExecutionsPager page={data.page} {lastPage} onGoToPage={nav.goToPage} />
     </footer>
   {/if}
