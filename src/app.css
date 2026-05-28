@@ -251,4 +251,9 @@ body {
     height: auto !important;
     min-height: 0 !important;
   }
+
+  .report-shell {
+    max-width: none !important;
+    padding: 0 !important;
+  }
 }

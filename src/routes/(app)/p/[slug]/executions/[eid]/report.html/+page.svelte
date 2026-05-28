@@ -1,5 +1,6 @@
 <script lang="ts">
   import RunReportBody from '$lib/features/print-report/ui/RunReportBody.svelte';
+  import ReportShell   from '$lib/features/print-report/ui/ReportShell.svelte';
   import * as m from '$lib/paraglide/messages';
 
   let { data } = $props();
@@ -9,4 +10,6 @@
   <title>{m.page_title_report_run()}</title>
 </svelte:head>
 
-<RunReportBody {data} scope={data.scope} />
+<ReportShell>
+  <RunReportBody {data} scope={data.scope} />
+</ReportShell>
