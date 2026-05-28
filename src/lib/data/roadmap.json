@@ -108,7 +108,6 @@
       "id": "self-host-one-liner",
       "title": "Install on your own server in one command",
       "status": "shipped",
-      "new": true,
       "summary": "Run a single command and trace is up. No subscription, no account, your data stays on your machine."
     },
     {
@@ -121,13 +120,13 @@
     {
       "id": "tags-v2",
       "title": "Use tags to organise tests",
-      "status": "in-progress",
+      "status": "later",
       "summary": "Add labels like \"smoke\" or \"login\" to your tests. Then filter, group, or rename them from one place across the whole tool."
     },
     {
       "id": "html-reports",
       "title": "Reports you can print or share",
-      "status": "next",
+      "status": "in-progress",
       "summary": "A clean summary of a run that you can hand to a client or a manager. Print it, or save it as a PDF."
     },
     {
@@ -140,7 +139,8 @@
     {
       "id": "campaigns",
       "title": "Group all tests for a release",
-      "status": "next",
+      "status": "shipped",
+      "new": true,
       "summary": "Bundle every test that needs to pass for a release in one place. Track progress as the team works through it. Lock the result once it's signed off."
     },
     {
