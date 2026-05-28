@@ -23,7 +23,7 @@ export const load = (async ({ params, url, locals }) => {
 
   return {
     campaign: detail.campaign,
-    project:  { id: project.id, slug: project.slug },
+    project:  { id: project.id, name: project.name, slug: project.slug },
     progress: detail.progress,
     members,
     scope:    parseCampaignScope(url.searchParams.get('scope')),
