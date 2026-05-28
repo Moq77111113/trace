@@ -1,171 +1,189 @@
 {
-  "version": 1,
-  "stamp": "2026-05-23",
-  "items": [
-    {
-      "id": "gherkin-editor",
-      "title": "Easy editor to write your tests",
-      "status": "shipped",
-      "summary": "An editor right inside trace. Colours and instant feedback while you type, so you spot mistakes early."
-    },
-    {
-      "id": "feature-codes",
-      "title": "Short codes for each test",
-      "status": "shipped",
-      "summary": "Every test gets a short code like AUTH-42. Quick to mention in chat or in a meeting. The link keeps working even if you rename the test later."
-    },
-    {
-      "id": "feature-groups",
-      "title": "Sort your tests into folders",
-      "status": "shipped",
-      "summary": "Put related tests in named folders. Drag them around to reorder. Everyone on the team sees the same order."
-    },
-    {
-      "id": "live-cockpit",
-      "title": "Walk through a test live",
-      "status": "shipped",
-      "summary": "Click through a test step by step as you run it. Mark each step pass, fail, or skip. Drop in screenshots or short notes when something looks off."
-    },
-    {
-      "id": "abort-run",
-      "title": "Stop a run in the middle",
-      "status": "shipped",
-      "summary": "Need to cancel a run halfway? One click and the rest of the steps are marked skipped, so the run closes cleanly."
-    },
-    {
-      "id": "rerun-failed",
-      "title": "Re-run only the failed steps",
-      "status": "shipped",
-      "summary": "When part of a run fails, re-run just those steps without redoing the ones that already passed."
-    },
-    {
-      "id": "dashboard",
-      "title": "Project dashboard at a glance",
-      "status": "shipped",
-      "summary": "See your project health in one screen: pass rate over the last week, runs today, and where the action's been."
-    },
-    {
-      "id": "command-palette",
-      "title": "Quick search with one keystroke",
-      "status": "shipped",
-      "summary": "Press Cmd+K (or Ctrl+K) to jump to any test from anywhere in trace. Type a name, a code, hit enter."
-    },
-    {
-      "id": "themes",
-      "title": "Light, dark, and accent colours",
-      "status": "shipped",
-      "summary": "Switch between light and dark mode any time. Pick the accent colour that feels right (pink, amber, cyan, lime)."
-    },
-    {
-      "id": "demo-onboarding",
-      "title": "Ready-to-explore demo project on day one",
-      "status": "shipped",
-      "summary": "When you first sign up, you get a sample project with real-looking tests and a past run so you can poke around right away."
-    },
-    {
-      "id": "ci-ingest",
-      "title": "Collect results from automated tests",
-      "status": "shipped",
-      "summary": "Run your tests automatically and send the cucumber report with one API key, no other setup. Each result lands on the right test in trace, even when names change, and a single run can cover many tests at once."
-    },
-    {
-      "id": "ci-metadata",
-      "title": "Know where each result came from",
-      "status": "shipped",
-      "summary": "Every run remembers which version of the app was tested. Search old runs by version, branch, or where they ran."
-    },
-    {
-      "id": "history-filters",
-      "title": "Find old runs, spot tests that flip-flop",
-      "status": "shipped",
-      "summary": "Look back through past runs and narrow the list down. Tests that pass one day and fail the next get flagged for you. Save the list as a spreadsheet anytime."
-    },
-    {
-      "id": "import-export",
-      "title": "Move your tests in and out",
-      "status": "shipped",
-      "summary": "Drag in a folder of test files to add them all at once. Or download a whole project as one file you can send to someone or keep as a backup."
-    },
-    {
-      "id": "oidc-sso",
-      "title": "Sign in with your work account",
-      "status": "shipped",
-      "summary": "Use the same login as your other work tools. Email and password still works too. (Some specific providers still need real-world testing.)"
-    },
-    {
-      "id": "api-keys",
-      "title": "Private keys for your automated tools",
-      "status": "shipped",
-      "summary": "Each project has its own private keys that automated tools use to send results in. Change them whenever you like from the project settings."
-    },
-    {
-      "id": "i18n",
-      "title": "Available in English and French",
-      "status": "shipped",
-      "summary": "The interface follows your browser language. Switch any time from your account."
-    },
-    {
-      "id": "self-host-one-liner",
-      "title": "Install on your own server in one command",
-      "status": "shipped",
-      "summary": "Run a single command and trace is up. No subscription, no account, your data stays on your machine."
-    },
-    {
-      "id": "manual-features",
-      "title": "Write tests you run by hand too",
-      "status": "shipped",
-      "new": true,
-      "summary": "Some tests are not automated, you run them by hand. trace lets you write those tests in the same place as the rest, alongside the Gherkin ones."
-    },
-    {
-      "id": "tags-v2",
-      "title": "Use tags to organise tests",
-      "status": "later",
-      "summary": "Add labels like \"smoke\" or \"login\" to your tests. Then filter, group, or rename them from one place across the whole tool."
-    },
-    {
-      "id": "html-reports",
-      "title": "Reports you can print or share",
-      "status": "in-progress",
-      "summary": "A clean summary of a run that you can hand to a client or a manager. Print it, or save it as a PDF."
-    },
-    {
-      "id": "pbac",
-      "title": "Decide who can do what",
-      "status": "shipped",
-      "new": true,
-      "summary": "Choose, project by project, who can read, run, or change tests. Lets you safely show your work to a client without giving them edit rights."
-    },
-    {
-      "id": "campaigns",
-      "title": "Group all tests for a release",
-      "status": "shipped",
-      "new": true,
-      "summary": "Bundle every test that needs to pass for a release in one place. Track progress as the team works through it. Lock the result once it's signed off."
-    },
-    {
-      "id": "run-diff",
-      "title": "Compare two runs side by side",
-      "status": "later",
-      "summary": "Pick any two past runs of the same test. See at a glance which steps changed verdict between them."
-    },
-    {
-      "id": "webhooks",
-      "title": "Get a Slack message when a run ends",
-      "status": "later",
-      "summary": "When a run finishes (or fails), trace can drop a message into Slack, Teams, or anywhere else your team hangs out."
-    },
-    {
-      "id": "source-traceability",
-      "title": "Jump from a failing test to its code",
-      "status": "later",
-      "summary": "Click straight from a step that failed to the part of the project where that step lives. Faster bug hunting."
-    },
-    {
-      "id": "auth-ui-polish",
-      "title": "Polished sign in / sign up",
-      "status": "later",
-      "summary": "A cleaner welcome screen so the very first impression of trace feels finished."
-    }
-  ]
+    "version": 1,
+    "stamp": "2026-05-28",
+    "items": [
+        {
+            "id": "gherkin-editor",
+            "title": "Easy editor to write your tests",
+            "status": "shipped",
+            "summary": "An editor right inside trace. Colours and instant feedback while you type, so you spot mistakes early."
+        },
+        {
+            "id": "feature-codes",
+            "title": "Short codes for each test",
+            "status": "shipped",
+            "summary": "Every test gets a short code like AUTH-42. Quick to mention in chat or in a meeting. The link keeps working even if you rename the test later."
+        },
+        {
+            "id": "feature-groups",
+            "title": "Sort your tests into folders",
+            "status": "shipped",
+            "summary": "Put related tests in named folders. Drag them around to reorder. Everyone on the team sees the same order."
+        },
+        {
+            "id": "live-cockpit",
+            "title": "Walk through a test live",
+            "status": "shipped",
+            "summary": "Click through a test step by step as you run it. Mark each step pass, fail, or skip. Drop in screenshots or short notes when something looks off."
+        },
+        {
+            "id": "abort-run",
+            "title": "Stop a run in the middle",
+            "status": "shipped",
+            "summary": "Need to cancel a run halfway? One click and the rest of the steps are marked skipped, so the run closes cleanly."
+        },
+        {
+            "id": "rerun-failed",
+            "title": "Re-run only the failed steps",
+            "status": "shipped",
+            "summary": "When part of a run fails, re-run just those steps without redoing the ones that already passed."
+        },
+        {
+            "id": "dashboard",
+            "title": "Project dashboard at a glance",
+            "status": "shipped",
+            "summary": "See your project health in one screen: pass rate over the last week, runs today, and where the action's been."
+        },
+        {
+            "id": "command-palette",
+            "title": "Quick search with one keystroke",
+            "status": "shipped",
+            "summary": "Press Cmd+K (or Ctrl+K) to jump to any test from anywhere in trace. Type a name, a code, hit enter."
+        },
+        {
+            "id": "themes",
+            "title": "Light, dark, and accent colours",
+            "status": "shipped",
+            "summary": "Switch between light and dark mode any time. Pick the accent colour that feels right (pink, amber, cyan, lime)."
+        },
+        {
+            "id": "demo-onboarding",
+            "title": "Ready-to-explore demo project on day one",
+            "status": "shipped",
+            "summary": "When you first sign up, you get a sample project with real-looking tests and a past run so you can poke around right away."
+        },
+        {
+            "id": "ci-ingest",
+            "title": "Collect results from automated tests",
+            "status": "shipped",
+            "summary": "Run your tests automatically and send the cucumber report with one API key, no other setup. Each result lands on the right test in trace, even when names change, and a single run can cover many tests at once."
+        },
+        {
+            "id": "ci-metadata",
+            "title": "Know where each result came from",
+            "status": "shipped",
+            "summary": "Every run remembers which version of the app was tested. Search old runs by version, branch, or where they ran."
+        },
+        {
+            "id": "history-filters",
+            "title": "Find old runs, spot tests that flip-flop",
+            "status": "shipped",
+            "summary": "Look back through past runs and narrow the list down. Tests that pass one day and fail the next get flagged for you. Save the list as a spreadsheet anytime."
+        },
+        {
+            "id": "import-export",
+            "title": "Move your tests in and out",
+            "status": "shipped",
+            "summary": "Drag in a folder of test files to add them all at once. Or download a whole project as one file you can send to someone or keep as a backup."
+        },
+        {
+            "id": "oidc-sso",
+            "title": "Sign in with your work account",
+            "status": "shipped",
+            "summary": "Use the same login as your other work tools. Email and password still works too. (Some specific providers still need real-world testing.)"
+        },
+        {
+            "id": "api-keys",
+            "title": "Private keys for your automated tools",
+            "status": "shipped",
+            "summary": "Each project has its own private keys that automated tools use to send results in. Change them whenever you like from the project settings."
+        },
+        {
+            "id": "i18n",
+            "title": "Available in English and French",
+            "status": "shipped",
+            "summary": "The interface follows your browser language. Switch any time from your account."
+        },
+        {
+            "id": "self-host-one-liner",
+            "title": "Install on your own server in one command",
+            "status": "shipped",
+            "summary": "Run a single command and trace is up. No subscription, no account, your data stays on your machine."
+        },
+        {
+            "id": "manual-features",
+            "title": "Write tests you run by hand too",
+            "status": "shipped",
+            "new": true,
+            "summary": "Some tests are not automated, you run them by hand. trace lets you write those tests in the same place as the rest, alongside the Gherkin ones."
+        },
+        {
+            "id": "tags-v2",
+            "title": "Use tags to organise tests",
+            "status": "later",
+            "summary": "Add labels like \"smoke\" or \"login\" to your tests. Then filter, group, or rename them from one place across the whole tool."
+        },
+        {
+            "id": "html-reports",
+            "title": "Reports you can print or share",
+            "status": "in-progress",
+            "summary": "A clean summary of a run that you can hand to a client or a manager. Print it, or save it as a PDF."
+        },
+        {
+            "id": "pbac",
+            "title": "Decide who can do what",
+            "status": "shipped",
+            "new": true,
+            "summary": "Choose, project by project, who can read, run, or change tests. Lets you safely show your work to a client without giving them edit rights."
+        },
+        {
+            "id": "campaigns",
+            "title": "Group all tests for a release",
+            "status": "shipped",
+            "new": true,
+            "summary": "Bundle every test that needs to pass for a release in one place. Track progress as the team works through it. Lock the result once it's signed off."
+        },
+        {
+            "id": "manual-scenario-steps",
+            "title": "Write manual tests as steps with expected outcomes",
+            "status": "later",
+            "summary": "Break a manual test into numbered steps, each with what you expect to see. The same shape your team already uses, instead of one long paragraph."
+        },
+        {
+            "id": "live-exec-per-step",
+            "title": "Keep each step's verdict, not just the whole test's",
+            "status": "later",
+            "summary": "When you walk through a test in the live cockpit, your pass or fail on each step is kept for the record. Works for both automated and manual tests, so a half-failed test shows exactly where it broke."
+        },
+        {
+            "id": "manual-scenarios-import",
+            "title": "Bring your existing manual tests in",
+            "status": "later",
+            "summary": "Pull manual tests or a spreadsheet straight into trace. No retyping, no copy-paste marathon."
+        },
+        {
+            "id": "run-diff",
+            "title": "Compare two runs side by side",
+
+            "summary": "Pick any two past runs of the same test. See at a glance which steps changed verdict between them."
+        },
+        {
+            "id": "webhooks",
+            "title": "Get a Slack message when a run ends",
+            "status": "later",
+            "summary": "When a run finishes (or fails), trace can drop a message into Slack, Teams, or anywhere else your team hangs out."
+        },
+        {
+            "id": "source-traceability",
+            "title": "Jump from a failing test to its code",
+            "status": "later",
+            "summary": "Click straight from a step that failed to the part of the project where that step lives. Faster bug hunting."
+        },
+        {
+            "id": "auth-ui-polish",
+            "title": "Polished sign in / sign up",
+            "status": "later",
+            "summary": "A cleaner welcome screen so the very first impression of trace feels finished."
+        }
+    ]
 }
