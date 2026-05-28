@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { db } from '$lib/server/db/client';
 import { executions } from '$lib/server/db/schema';
-import { load } from '~/src/routes/(reports)/p/[slug]/executions/[eid]/report.html/+page.server';
+import { load } from '~/src/routes/(app)/p/[slug]/executions/[eid]/report.html/+page.server';
 import { mkFeature, mkProject } from '$testing/fixtures';
 import { makeAuthorizer } from '$lib/server/authz/authorizer';
 import { grantAnyUserBlanket } from '$lib/server/authz/seed';
