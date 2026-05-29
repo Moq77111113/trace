@@ -127,7 +127,7 @@ describe('ingestRun', () => {
 
   it('freezes the gherkin steps of each matched scenario into scenario_results', async () => {
     const project = await mkProject({ name: `Steps ${Date.now()}-${Math.random()}` });
-    const feature = await mkFeature(project.id, {
+    await mkFeature(project.id, {
       name: 'Login',
       content: 'Feature: Login\n\n  Scenario: X\n    Given a\n    When b\n    Then c\n',
     });
@@ -141,18 +141,17 @@ describe('ingestRun', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const executionId = result.value.executions[0]?.executionId;
-    expect(executionId).toBeDefined();
+    if (!executionId) throw new Error('expected an ingested execution id');
 
     const [row] = await db
       .select()
       .from(scenarioResults)
-      .where(eq(scenarioResults.executionId, executionId!));
+      .where(eq(scenarioResults.executionId, executionId));
     expect(row?.steps).toEqual([
       { keyword: 'Given', text: 'a', expected: null },
       { keyword: 'When',  text: 'b', expected: null },
       { keyword: 'Then',  text: 'c', expected: null },
     ]);
-    expect(feature.id).toBeDefined();
   });
 
   it('assigns position 1..N to ingested scenarios in input order', async () => {
