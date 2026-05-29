@@ -7,6 +7,7 @@
   import { formatExecutionDuration } from '$lib/entities/execution/lib/format';
   import ExecutionLauncher from '$lib/entities/execution/ui/ExecutionLauncher.svelte';
   import RerunFailedForm   from './RerunFailedForm.svelte';
+  import ReportButton      from '$lib/features/print-report/ui/ReportButton.svelte';
 
   type Props = {
     featureName: string;
@@ -64,6 +65,13 @@
       {#if failedCount > 0}
         <RerunFailedForm {failedCount} />
       {/if}
+      <ReportButton
+        href={`/p/${projectSlug}/executions/${executionId}/report.html`}
+        options={[
+          { label: 'Full',          scope: null },
+          { label: 'Failures only', scope: 'failed' },
+        ]}
+      />
       <ExecutionLauncher {projectSlug} {featureId} />
     </div>
   </div>

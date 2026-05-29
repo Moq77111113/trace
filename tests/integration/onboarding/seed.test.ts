@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import {
 	projects,
@@ -7,6 +7,7 @@ import {
 	featureGroups,
 	executions,
 	scenarioResults,
+	campaigns,
 	user,
 } from '$lib/server/db/schema';
 import { seedDemoProject } from '$lib/server/onboarding/seed';
@@ -20,6 +21,7 @@ async function clearDemo() {
 	if (feats.length > 0) {
 		await db.delete(executions).where(inArray(executions.featureId, feats.map((f) => f.id)));
 	}
+	await db.delete(campaigns).where(eq(campaigns.projectId, demo.id));
 	await db.delete(projects).where(eq(projects.id, demo.id));
 }
 
@@ -59,16 +61,21 @@ describe('seedDemoProject', () => {
 		expect(feats).toHaveLength(4);
 	});
 
-	it('creates one finished run with mixed scenario statuses', async () => {
+	it('creates one finished standalone run with mixed scenario statuses', async () => {
 		const admin = await seedAdmin();
 		await seedDemoProject(admin.id);
 		const [p]    = await db.select().from(projects).where(eq(projects.name, DEMO_NAME));
 		const feats  = await db.select({ id: features.id }).from(features).where(eq(features.projectId, p!.id));
-		const allRuns = await db.select().from(executions).where(inArray(executions.featureId, feats.map((f) => f.id)));
-		expect(allRuns).toHaveLength(1);
-		expect(allRuns[0]?.finishedAt).not.toBeNull();
+		const standaloneRuns = await db
+			.select()
+			.from(executions)
+			.where(and(inArray(executions.featureId, feats.map((f) => f.id)), isNull(executions.campaignId)));
+		expect(standaloneRuns).toHaveLength(1);
+		const run = standaloneRuns[0];
+		if (!run) throw new Error('expected the standalone demo run');
+		expect(run.finishedAt).not.toBeNull();
 
-		const sr = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, allRuns[0]!.id));
+		const sr = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, run.id));
 		const statuses = new Set(sr.map((r) => r.status));
 		expect(statuses.has('PASSED')).toBe(true);
 		expect(statuses.has('FAILED')).toBe(true);

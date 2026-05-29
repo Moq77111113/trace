@@ -236,3 +236,24 @@ body {
 [data-tbl] tbody tr:hover td {
   background: var(--surface-2);
 }
+
+@media print {
+  [data-no-print] { display: none !important; }
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  .app {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .report-shell {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}
