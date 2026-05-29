@@ -7,10 +7,11 @@
   import AddInput from './AddInput.svelte';
   import * as m from '$lib/paraglide/messages';
   import type { ManualScenarioRow } from '$lib/server/features/manual-scenarios';
+  import type { ManualScenarioStepRow } from '$lib/server/features/manual-scenario-steps';
 
   type Props = {
     featureId: string;
-    initial:   ManualScenarioRow[];
+    initial:   (ManualScenarioRow & { steps: ManualScenarioStepRow[] })[];
     readonly?: boolean;
   };
 
@@ -18,6 +19,7 @@
 
   let error           = $state<string | null>(null);
   const archiving     = new SvelteSet<string>();
+  const expandedIds   = new SvelteSet<string>();
   const visible       = $derived(initial.filter((r) => !archiving.has(r.id)));
   const empty         = $derived(visible.length === 0);
 
@@ -45,6 +47,9 @@
         <Row
           {row}
           {readonly}
+          steps={row.steps}
+          expanded={expandedIds.has(row.id)}
+          onToggle={() => (expandedIds.has(row.id) ? expandedIds.delete(row.id) : expandedIds.add(row.id))}
           onOptimisticArchive={() => archiving.add(row.id)}
           onArchiveRestore={() => archiving.delete(row.id)}
           onError={(msg) => (error = msg)}

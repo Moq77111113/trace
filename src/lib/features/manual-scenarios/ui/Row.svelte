@@ -4,16 +4,21 @@
   import { failureReason } from '$lib/shared/forms/action-result';
   import * as m from '$lib/paraglide/messages';
   import type { ManualScenarioRow } from '$lib/server/features/manual-scenarios';
+  import type { ManualScenarioStepRow } from '$lib/server/features/manual-scenario-steps';
+  import StepList from './steps/StepList.svelte';
 
   type Props = {
     row:                 ManualScenarioRow;
+    steps:               ManualScenarioStepRow[];
+    expanded:            boolean;
+    onToggle:            () => void;
     onOptimisticArchive: () => void;
     onArchiveRestore:    () => void;
     onError:             (msg: string | null) => void;
     readonly?:           boolean;
   };
 
-  let { row, onOptimisticArchive, onArchiveRestore, onError, readonly = false }: Props = $props();
+  let { row, steps, expanded, onToggle, onOptimisticArchive, onArchiveRestore, onError, readonly = false }: Props = $props();
 
   let editing                          = $state(false);
   let draft                            = $state(untrack(() => row.name));
@@ -46,7 +51,17 @@
   });
 </script>
 
-<li class="flex items-center gap-3 rounded-md border border-border bg-surface px-3 py-2">
+<li class="flex flex-col gap-2 rounded-md border border-border bg-surface px-3 py-2">
+  <div class="flex items-center gap-3">
+  <button
+    type="button"
+    onclick={onToggle}
+    class="text-ink-mute hover:text-ink-2 px-1 transition-transform"
+    class:rotate-90={expanded}
+    aria-expanded={expanded}
+    aria-label={m.manual_scenario_steps_toggle()}
+  >▸</button>
+
   {#if editing}
     <input
       bind:this={inputEl}
@@ -114,5 +129,12 @@
         aria-label={m.manual_scenarios_archive()}
       >×</button>
     </form>
+  {/if}
+  </div>
+
+  {#if expanded}
+    <div class="mt-2 mb-1">
+      <StepList scenarioId={row.id} {steps} {readonly} />
+    </div>
   {/if}
 </li>

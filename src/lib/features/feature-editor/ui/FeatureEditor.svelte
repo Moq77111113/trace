@@ -10,6 +10,7 @@
   import Gherkin         from './sections/Gherkin.svelte';
   import ManualScenarios from '$lib/features/manual-scenarios/ui/ManualScenarios.svelte';
   import type { ManualScenarioRow } from '$lib/server/features/manual-scenarios';
+  import type { ManualScenarioStepRow } from '$lib/server/features/manual-scenario-steps';
   import SaveError       from './parts/SaveError.svelte';
   import type { Snippet } from '$lib/shared/gherkin/snippets';
   import { FeatureForm }   from '../model/feature-form.svelte';
@@ -30,7 +31,7 @@
       project:         ProjectRef;
       projectTags:     ProjectTag[];
       groups:          Group[];
-      manualScenarios: ManualScenarioRow[];
+      manualScenarios: (ManualScenarioRow & { steps: ManualScenarioStepRow[] })[];
     };
     onSaved?: (feature: Feature) => void;
   };

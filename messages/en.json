@@ -192,6 +192,13 @@
 	"manual_scenario_name_taken_manual": "A manual check with this name already exists in this feature.",
 	"manual_scenario_name_taken_gherkin": "A Gherkin scenario with this name already exists in this feature.",
 	"manual_step_expected": "Expected",
+	"manual_steps_add": "+ Add a step",
+	"manual_step_action_placeholder": "Action to perform",
+	"manual_step_expected_placeholder": "Expected outcome (optional)",
+	"manual_step_remove": "Remove step",
+	"manual_steps_empty": "No steps yet.",
+	"manual_scenario_steps_toggle": "Steps",
+	"manual_step_error": "Could not save your change, please retry.",
 
 	"feature_save_manual_name_collision": "Scenario name {name} conflicts with an existing manual check. Rename one of them before saving.",
 	"feature_no_runnable_scenarios": "Cannot start a run, this feature has no Gherkin scenarios and no manual checks.",

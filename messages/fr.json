@@ -189,6 +189,13 @@
 	"manual_scenario_name_taken_manual": "Une vérification manuelle porte déjà ce nom dans cette feature.",
 	"manual_scenario_name_taken_gherkin": "Un scénario Gherkin porte déjà ce nom dans cette feature.",
 	"manual_step_expected": "Attendu",
+	"manual_steps_add": "+ Ajouter une étape",
+	"manual_step_action_placeholder": "Action à réaliser",
+	"manual_step_expected_placeholder": "Résultat attendu (optionnel)",
+	"manual_step_remove": "Supprimer l'étape",
+	"manual_steps_empty": "Aucune étape pour le moment.",
+	"manual_scenario_steps_toggle": "Étapes",
+	"manual_step_error": "Impossible d'enregistrer, veuillez réessayer.",
 
 	"feature_save_manual_name_collision": "Le nom de scénario {name} entre en conflit avec une vérification manuelle existante. Renommez l'un des deux avant d'enregistrer.",
 	"feature_no_runnable_scenarios": "Impossible de démarrer une exécution, cette feature n'a ni scénario Gherkin ni vérification manuelle.",
