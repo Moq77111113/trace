@@ -57,6 +57,7 @@ const data: NonNullable<ExecutionPageData> = {
       logs:         null,
       errorMessage: null,
       notes:        null,
+      steps:        [],
       updatedAt:    new Date('2026-05-28T10:00:30Z'),
     },
     {
@@ -70,6 +71,7 @@ const data: NonNullable<ExecutionPageData> = {
       logs:         null,
       errorMessage: 'boom',
       notes:        null,
+      steps:        [],
       updatedAt:    new Date('2026-05-28T10:01:00Z'),
     },
   ],
