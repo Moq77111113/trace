@@ -7,9 +7,10 @@
   type Props = {
     featureId: string;
     onError:   (msg: string | null) => void;
+    onClose:   () => void;
   };
 
-  let { featureId, onError }: Props = $props();
+  let { featureId, onError, onClose }: Props = $props();
 
   let newName  = $state('');
   let action   = $state('');
@@ -40,7 +41,7 @@
         else                                      onError('add failed');
         return;
       }
-      if (result.type === 'success') { newName = ''; action = ''; expected = ''; }
+      if (result.type === 'success') { newName = ''; action = ''; expected = ''; onClose(); }
       await update();
     };
   }}
@@ -66,5 +67,10 @@
       variant="primary"
       disabled={saving || newName.trim() === '' || action.trim() === ''}
     >{m.manual_scenarios_add()}</Button>
+    <button
+      type="button"
+      class="text-[12px] text-ink-3 hover:text-ink"
+      onclick={() => { onError(null); onClose(); }}
+    >{m.cancel()}</button>
   </div>
 </form>

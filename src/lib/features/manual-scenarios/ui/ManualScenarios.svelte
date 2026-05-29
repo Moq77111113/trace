@@ -18,6 +18,7 @@
   let { featureId, initial, readonly = false }: Props = $props();
 
   let error           = $state<string | null>(null);
+  let adding          = $state(false);
   const archiving     = new SvelteSet<string>();
   const expandedIds   = new SvelteSet<string>();
   const visible       = $derived(initial.filter((r) => !archiving.has(r.id)));
@@ -37,6 +38,7 @@
   onAdd={() => {
     if (readonly) return;
     open.value = true;
+    adding = true;
   }}
 >
   {#if empty}
@@ -59,7 +61,19 @@
   {/if}
 
   {#if !readonly}
-    <AddInput {featureId} onError={(msg) => (error = msg)} />
+    {#if adding}
+      <AddInput
+        {featureId}
+        onError={(msg) => (error = msg)}
+        onClose={() => (adding = false)}
+      />
+    {:else}
+      <button
+        type="button"
+        class="self-start text-[12px] text-ink-2 hover:text-ink"
+        onclick={() => (adding = true)}
+      >{m.manual_scenarios_add()}</button>
+    {/if}
   {/if}
 
   {#if error}
