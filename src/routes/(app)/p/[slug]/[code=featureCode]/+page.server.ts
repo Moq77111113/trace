@@ -19,6 +19,13 @@ import {
   reorderInput,
   reorderManualScenarios,
 } from '$lib/server/features/manual-scenarios';
+import {
+  addStepInput, addStep,
+  editStepInput, editStep,
+  removeStepInput, removeStep,
+  reorderStepsInput, reorderSteps,
+  listSteps,
+} from '$lib/server/features/manual-scenario-steps';
 import { requireFeature } from '$lib/server/features/authz';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -26,12 +33,17 @@ export const load = (async ({ params, parent, locals }) => {
   const { breadcrumbs } = await parent();
   const feature = await requireFeature(locals.authz, params.slug, params.code, 'feature.view');
 
+  const scenarios = await listManualScenarios({ featureId: feature.id });
+  const manualScenarios = await Promise.all(
+    scenarios.map(async (s) => ({ ...s, steps: await listSteps({ scenarioId: s.id }) })),
+  );
+
   return {
     feature,
     projectTags:     await listProjectTags(feature.projectId),
     groups:          await listGroups(feature.projectId),
     recentRuns:      await listRecentExecutionsForFeature(feature.id, 5),
-    manualScenarios: await listManualScenarios({ featureId: feature.id }),
+    manualScenarios,
     breadcrumbs:     appendCrumb(breadcrumbs, { label: feature.name }),
   };
 }) satisfies PageServerLoad;
@@ -134,6 +146,43 @@ export const actions = {
     const parsed = reorderInput.safeParse({ featureId: data.featureId, order });
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'reorderManualScenarios' });
     await reorderManualScenarios(parsed.data);
+    return { ok: true as const };
+  },
+
+  addStep: async ({ request, params, locals }) => {
+    await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
+    const data   = stringFields(await request.formData());
+    const parsed = addStepInput.safeParse(data);
+    if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'addStep' });
+    const step = await addStep(parsed.data);
+    return { step };
+  },
+
+  editStep: async ({ request, params, locals }) => {
+    await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
+    const data   = stringFields(await request.formData());
+    const parsed = editStepInput.safeParse(data);
+    if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'editStep' });
+    const step = await editStep(parsed.data);
+    return { step };
+  },
+
+  removeStep: async ({ request, params, locals }) => {
+    await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
+    const data   = stringFields(await request.formData());
+    const parsed = removeStepInput.safeParse(data);
+    if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'removeStep' });
+    await removeStep(parsed.data);
+    return { ok: true as const };
+  },
+
+  reorderSteps: async ({ request, params, locals }) => {
+    await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
+    const data   = stringFields(await request.formData());
+    const order  = (data.order ?? '').split(',').filter(Boolean);
+    const parsed = reorderStepsInput.safeParse({ scenarioId: data.scenarioId, order });
+    if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'reorderSteps' });
+    await reorderSteps(parsed.data);
     return { ok: true as const };
   },
 } satisfies Actions;
