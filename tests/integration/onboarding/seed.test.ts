@@ -9,6 +9,8 @@ import {
 	scenarioResults,
 	campaigns,
 	user,
+	manualScenarios,
+	manualScenarioSteps,
 } from '$lib/server/db/schema';
 import { seedDemoProject } from '$lib/server/onboarding/seed';
 
@@ -87,5 +89,22 @@ describe('seedDemoProject', () => {
 		await seedDemoProject(admin.id);
 		const demos = await db.select().from(projects).where(eq(projects.name, DEMO_NAME));
 		expect(demos).toHaveLength(1);
+	});
+
+	it('seeds manual scenarios with their steps', async () => {
+		const admin = await seedAdmin();
+		await seedDemoProject(admin.id);
+		const [p]   = await db.select().from(projects).where(eq(projects.name, DEMO_NAME));
+		const feats = await db.select({ id: features.id }).from(features).where(eq(features.projectId, p!.id));
+		const scenarios = await db
+			.select()
+			.from(manualScenarios)
+			.where(inArray(manualScenarios.featureId, feats.map((f) => f.id)));
+		const stepped = await db
+			.select()
+			.from(manualScenarioSteps)
+			.where(inArray(manualScenarioSteps.scenarioId, scenarios.map((s) => s.id)));
+		expect(stepped.length).toBeGreaterThan(0);
+		expect(stepped.some((s) => s.expected !== null)).toBe(true);
 	});
 });
