@@ -33,6 +33,7 @@ export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedR
     .select({
       scenarioName: scenarioResults.scenarioName,
       source:       scenarioResults.source,
+      steps:        scenarioResults.steps,
     })
     .from(scenarioResults)
     .where(and(eq(scenarioResults.executionId, parent.id), eq(scenarioResults.status, 'FAILED')))

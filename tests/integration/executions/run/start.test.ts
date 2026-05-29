@@ -5,6 +5,7 @@ import { features, scenarioResults } from '$lib/server/db/schema';
 import type { ParseError } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/run/start';
 import { addManualScenario, archiveManualScenario } from '$lib/server/features/manual-scenarios';
+import { addStep, editStep } from '$lib/server/features/manual-scenario-steps';
 import { mkFeature, mkProject } from '$testing/fixtures';
 
 async function freshFeatureBase(content: string) {
@@ -121,5 +122,53 @@ describe('startExecution', () => {
     ]);
     expect(a.position).toBe(1);
     expect(c.position).toBe(3);
+  });
+});
+
+describe('startExecution step snapshot', () => {
+  it('freezes gherkin steps into scenario_results.steps with expected null', async () => {
+    const { feature } = await freshFeatureBase(twoScenarioFeature);
+    const run = await startExecution({ featureId: feature.id, executedBy: 'Alice' });
+
+    const [a] = await db
+      .select()
+      .from(scenarioResults)
+      .where(and(eq(scenarioResults.executionId, run.id), eq(scenarioResults.scenarioName, 'A')));
+    if (!a) throw new Error('expected scenario A');
+    expect(a.steps).toEqual([{ keyword: 'Given', text: 'x', expected: null }]);
+  });
+
+  it('freezes manual steps as keyword null, action as text, expected preserved', async () => {
+    const { feature } = await freshFeatureBase('');
+    const scenario = await addManualScenario({ featureId: feature.id, name: 'Visual' });
+    await addStep({ scenarioId: scenario.id, action: 'open the page' });
+    await addStep({ scenarioId: scenario.id, action: 'click submit', expected: 'a toast shows' });
+
+    const run = await startExecution({ featureId: feature.id, executedBy: 'Alice' });
+    const [snap] = await db
+      .select()
+      .from(scenarioResults)
+      .where(and(eq(scenarioResults.executionId, run.id), eq(scenarioResults.source, 'MANUAL')));
+    if (!snap) throw new Error('expected the manual snapshot row');
+    expect(snap.steps).toEqual([
+      { keyword: null, text: 'open the page', expected: null },
+      { keyword: null, text: 'click submit',  expected: 'a toast shows' },
+    ]);
+  });
+
+  it('does not change an existing run snapshot when steps are edited afterwards', async () => {
+    const { feature } = await freshFeatureBase('');
+    const scenario = await addManualScenario({ featureId: feature.id, name: 'Visual' });
+    const step = await addStep({ scenarioId: scenario.id, action: 'original' });
+
+    const run = await startExecution({ featureId: feature.id, executedBy: 'Alice' });
+    await editStep({ stepId: step.id, action: 'edited after start' });
+
+    const [snap] = await db
+      .select()
+      .from(scenarioResults)
+      .where(and(eq(scenarioResults.executionId, run.id), eq(scenarioResults.source, 'MANUAL')));
+    if (!snap) throw new Error('expected the manual snapshot row');
+    expect(snap.steps).toEqual([{ keyword: null, text: 'original', expected: null }]);
   });
 });
