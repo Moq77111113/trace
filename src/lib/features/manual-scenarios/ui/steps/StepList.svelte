@@ -80,7 +80,5 @@
     }}
 >
   <input type="hidden" name="scenarioId" value={scenarioId} />
-  {#each order as id (id)}
-    <input type="hidden" name="order" value={id} />
-  {/each}
+  <input type="hidden" name="order" value={order.join(',')} />
 </form>
