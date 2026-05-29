@@ -2,7 +2,9 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { executions, features, scenarioResults } from '$lib/server/db/schema';
 import { parse } from '$lib/shared/gherkin/parse';
+import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
 import { listManualScenarios } from '$lib/server/features/manual-scenarios';
+import { listSteps } from '$lib/server/features/manual-scenario-steps';
 import { buildScenarioRows } from './scenario-rows';
 
 export type StartRunInput = {
@@ -37,6 +39,8 @@ export async function startExecution(input: StartRunInput) {
     throw new Error('startExecution: cannot start, feature has no runnable scenarios');
   }
 
+  const manualSteps = await Promise.all(manuals.map((m) => listSteps({ scenarioId: m.id })));
+
   return db.transaction(async (tx) => {
     const [run] = await tx
       .insert(executions)
@@ -52,8 +56,24 @@ export async function startExecution(input: StartRunInput) {
     if (!run) throw new Error('startExecution: run insert returned no row');
 
     const rows = buildScenarioRows([
-      ...parsed.scenarios.map((s) => ({ scenarioName: s.name, source: 'GHERKIN' as const })),
-      ...manuals.map((m)       => ({ scenarioName: m.name, source: 'MANUAL'  as const })),
+      ...parsed.scenarios.map((s) => ({
+        scenarioName: s.name,
+        source:       'GHERKIN' as const,
+        steps:        extractScenarioSteps(feature.content, s.name).map((st) => ({
+          keyword:  st.keyword,
+          text:     st.text,
+          expected: null,
+        })),
+      })),
+      ...manuals.map((m, i) => ({
+        scenarioName: m.name,
+        source:       'MANUAL' as const,
+        steps:        (manualSteps[i] ?? []).map((st) => ({
+          keyword:  null,
+          text:     st.action,
+          expected: st.expected,
+        })),
+      })),
     ]);
 
     await tx.insert(scenarioResults).values(rows.map((r) => ({ ...r, executionId: run.id })));

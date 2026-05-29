@@ -1,5 +1,6 @@
 import { db } from '$lib/server/db/client';
 import { campaigns, campaignFeatures, executions, scenarioResults } from '$lib/server/db/schema';
+import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
 import campaignsFileJson from './demo/campaigns.json';
 
 const DAY_MS = 86_400_000;
@@ -125,6 +126,7 @@ export async function seedDemoCampaigns(
 				position:     1,
 				status:       executionStatusToScenarioStatus(exec.status),
 				errorMessage: exec.errorMessage ?? null,
+				steps:        extractScenarioSteps(content, firstScenarioName(content)).map((st) => ({ keyword: st.keyword, text: st.text, expected: null })),
 			});
 		}
 	}

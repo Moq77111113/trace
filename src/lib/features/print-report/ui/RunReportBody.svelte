@@ -3,7 +3,6 @@
   import SummaryTile   from './blocks/SummaryTile.svelte';
   import ScenarioBlock from './blocks/ScenarioBlock.svelte';
   import { formatExecutionDuration } from '$lib/entities/execution/lib/format';
-  import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
   import type { ExecutionPageData } from '$lib/server/executions/read/queries';
   import type { RunScope } from '$lib/features/print-report/lib/scope';
 
@@ -11,13 +10,12 @@
   let { data, scope }: Props = $props();
 
   const code     = $derived(`${data.project.codePrefix}-${data.feature.codeSeq}`);
-  const featureContent = $derived(data.execution.featureContentAtStart);
   const adapted = $derived(
     data.scenarios.map((s) => ({
       id:           s.id,
       name:         s.scenarioName,
       status:       s.status,
-      steps:        extractScenarioSteps(featureContent, s.scenarioName),
+      steps:        s.steps,
       errorMessage: s.errorMessage,
     })),
   );

@@ -5,12 +5,14 @@ import {
 	featureGroups,
 	features,
 	manualScenarios,
+	manualScenarioSteps,
 	executions,
 	scenarioResults,
 } from '$lib/server/db/schema';
 import { createProject } from '$lib/server/projects/create';
 import { grantAnyUserBlanket } from '$lib/server/authz/seed';
 import { allocateCodeSeq } from '$lib/server/features/internal/code-seq';
+import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
 import projectFileJson from './demo/project.json';
 import groupsFileJson from './demo/groups.json';
 import featuresMetaJson from './demo/features-meta.json';
@@ -21,7 +23,8 @@ const DEMO_NAME = 'Trace Demo';
 
 type ProjectFile      = { name: string; description: string };
 type GroupsFile       = Array<{ name: string; position: number; features: string[] }>;
-type FeatureMeta      = { description: string; manualScenarios: string[] };
+type ManualScenarioMeta = { name: string; steps?: { action: string; expected?: string }[] };
+type FeatureMeta        = { description: string; manualScenarios: ManualScenarioMeta[] };
 type FeaturesMetaFile = Record<string, FeatureMeta>;
 type RunFile     = {
 	featureFile: string;
@@ -93,10 +96,17 @@ export async function seedDemoProject(adminUserId: string): Promise<void> {
 				if (!row) throw new Error('demo seed: feature insert failed');
 
 				const scenarios = meta?.manualScenarios ?? [];
-				for (const [i, name] of scenarios.entries()) {
-					await tx
+				for (const [i, sc] of scenarios.entries()) {
+					const [scRow] = await tx
 						.insert(manualScenarios)
-						.values({ featureId: row.id, position: i + 1, name });
+						.values({ featureId: row.id, position: i + 1, name: sc.name })
+						.returning();
+					if (!scRow) throw new Error('demo seed: manual scenario insert failed');
+					for (const [j, st] of (sc.steps ?? []).entries()) {
+						await tx
+							.insert(manualScenarioSteps)
+							.values({ scenarioId: scRow.id, position: j + 1, action: st.action, expected: st.expected ?? null });
+					}
 				}
 
 				return row;
@@ -134,6 +144,7 @@ export async function seedDemoProject(adminUserId: string): Promise<void> {
 			durationMs:   s.durationMs,
 			logs:         s.logs,
 			errorMessage: s.errorMessage,
+			steps:        extractScenarioSteps(runFeatureContent, s.name).map((st) => ({ keyword: st.keyword, text: st.text, expected: null })),
 		});
 		if (s.status === 'FAILED') aggregate = 'FAILED';
 		else if (s.status === 'SKIPPED' && aggregate !== 'FAILED') aggregate = 'SKIPPED';
@@ -145,6 +156,10 @@ export async function seedDemoProject(adminUserId: string): Promise<void> {
 		source:       'MANUAL',
 		position:     1,
 		status:       'PASSED',
+		steps: [
+			{ keyword: null, text: 'Open the dashboard', expected: 'All tiles render without layout shift' },
+			{ keyword: null, text: 'Compare tile counts to the active filters', expected: 'Counts match the filtered ticket set' },
+		],
 	});
 
 	await db

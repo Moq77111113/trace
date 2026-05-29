@@ -7,6 +7,7 @@ import { markScenario } from '$lib/server/executions/scenario/mark-scenario';
 import { finishExecution } from '$lib/server/executions/run/finish';
 import { rerunFailed } from '$lib/server/executions/run/rerun-failed';
 import { addManualScenario } from '$lib/server/features/manual-scenarios';
+import { addStep } from '$lib/server/features/manual-scenario-steps';
 import { mkFeature, mkProject } from '$testing/fixtures';
 
 const FEATURE_CONTENT = `Feature: Login
@@ -173,5 +174,39 @@ describe('rerunFailed', () => {
       .where(eq(scenarioResults.executionId, result.value.id));
 
     expect(rerunRows).toEqual([{ name: 'M1', source: 'MANUAL', position: 1 }]);
+  });
+
+  it('carries the parent frozen steps into the re-run row', async () => {
+    const project = await mkProject({ name: `Rerun steps ${Date.now()}-${Math.random()}` });
+    const feature = await mkFeature(project.id, { name: 'Steps', content: 'Feature: Steps\n' });
+    const scenario = await addManualScenario({ featureId: feature.id, name: 'M1' });
+    await addStep({ scenarioId: scenario.id, action: 'open the page', expected: 'page is visible' });
+    await addStep({ scenarioId: scenario.id, action: 'click submit', expected: null });
+
+    const run = await startExecution({ featureId: feature.id, executedBy: 'Alice' });
+    const [seeded] = await db
+      .select()
+      .from(scenarioResults)
+      .where(eq(scenarioResults.executionId, run.id));
+    if (!seeded) throw new Error('seed: expected one scenario');
+
+    await markScenario({ executionId: run.id, scenarioResultId: seeded.id, status: 'FAILED' });
+    await finishExecution(run.id);
+
+    const result = await rerunFailed({ parentExecutionId: run.id, executedBy: 'Alice' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const [rerunRow] = await db
+      .select({ steps: scenarioResults.steps })
+      .from(scenarioResults)
+      .where(eq(scenarioResults.executionId, result.value.id));
+    if (!rerunRow) throw new Error('rerun: expected one scenario');
+
+    expect(rerunRow.steps).toEqual(seeded.steps);
+    expect(rerunRow.steps).toEqual([
+      { keyword: null, text: 'open the page', expected: 'page is visible' },
+      { keyword: null, text: 'click submit',  expected: null },
+    ]);
   });
 });

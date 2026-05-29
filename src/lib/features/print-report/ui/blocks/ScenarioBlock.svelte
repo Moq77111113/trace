@@ -2,10 +2,10 @@
   import Pill from '$lib/shared/ui/Pill.svelte';
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
   import ScenarioSteps from '$lib/entities/execution/ui/ScenarioSteps.svelte';
-  import type { ScenarioStep } from '$lib/shared/gherkin/steps';
+  import type { StepView } from '$lib/entities/execution/lib/step-view';
 
   type Attachment = { id: string; filename: string; mimeType: string; sizeBytes: number };
-  type Scenario   = { id: string; name: string; status: string; steps: ScenarioStep[]; errorMessage: string | null };
+  type Scenario   = { id: string; name: string; status: string; steps: StepView[]; errorMessage: string | null };
 
   type Props = { scenario: Scenario; attachments: Attachment[] };
   let { scenario, attachments }: Props = $props();

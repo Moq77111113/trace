@@ -112,6 +112,23 @@ export const manualScenarios = pgTable(
   ],
 );
 
+export const manualScenarioSteps = pgTable(
+  'manual_scenario_steps',
+  {
+    id:         pk(),
+    scenarioId: uuid('scenario_id').notNull().references(() => manualScenarios.id, { onDelete: 'cascade' }),
+    position:   integer('position').notNull(),
+    action:     text('action').notNull(),
+    expected:   text('expected'),
+    createdAt:  timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:  timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('manual_scenario_steps_scenario_position_unique').on(t.scenarioId, t.position),
+    check('manual_scenario_steps_position_positive', sql`${t.position} >= 1`),
+  ],
+);
+
 export const tags = pgTable(
   'tags',
   {
@@ -189,6 +206,12 @@ export const executions = pgTable(
   (t) => [index('executions_feature_started_idx').on(t.featureId, sql`${t.startedAt} DESC`)],
 );
 
+export type ScenarioResultStep = {
+  keyword:  string | null;
+  text:     string;
+  expected: string | null;
+};
+
 export const scenarioResults = pgTable(
   'scenario_results',
   {
@@ -202,6 +225,7 @@ export const scenarioResults = pgTable(
     logs:         text('logs'),
     errorMessage: text('error_message'),
     notes:        text('notes'),
+    steps:        jsonb('steps').$type<ScenarioResultStep[]>().notNull().default(sql`'[]'::jsonb`),
     updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

@@ -1,8 +1,9 @@
 import { and, asc, eq, max, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, type DbTx } from '$lib/server/db/client';
-import { features, manualScenarios } from '$lib/server/db/schema';
+import { features, manualScenarios, manualScenarioSteps } from '$lib/server/db/schema';
 import { parse } from '$lib/shared/gherkin/parse';
+import { stepAction, stepExpected } from './manual-scenario-steps';
 
 const featureId = z.uuid({ version: 'v7' });
 const scenarioId = z.uuid({ version: 'v7' });
@@ -16,22 +17,36 @@ export const reorderInput = z.object({ featureId, order: z.array(scenarioId).min
 
 export type ManualScenarioRow = typeof manualScenarios.$inferSelect;
 
+async function appendScenario(tx: DbTx, featureId: string, name: string): Promise<ManualScenarioRow> {
+  await assertNameAvailable(tx, { featureId, name });
+  const [agg] = await tx
+    .select({ next: sql<number>`coalesce(${max(manualScenarios.position)}, 0) + 1` })
+    .from(manualScenarios)
+    .where(and(eq(manualScenarios.featureId, featureId), eq(manualScenarios.archived, false)));
+  if (!agg) throw new Error('appendScenario: position aggregate returned no rows');
+  const [row] = await tx
+    .insert(manualScenarios)
+    .values({ featureId, position: agg.next, name })
+    .returning();
+  if (!row) throw new Error('appendScenario: insert returned no row');
+  return row;
+}
+
 export async function addManualScenario(input: z.infer<typeof addInput>): Promise<ManualScenarioRow> {
   const parsed = addInput.parse(input);
-  return db.transaction(async (tx) => {
-    await assertNameAvailable(tx, { featureId: parsed.featureId, name: parsed.name });
+  return db.transaction((tx) => appendScenario(tx, parsed.featureId, parsed.name));
+}
 
-    const [agg] = await tx
-      .select({ next: sql<number>`coalesce(${max(manualScenarios.position)}, 0) + 1` })
-      .from(manualScenarios)
-      .where(and(eq(manualScenarios.featureId, parsed.featureId), eq(manualScenarios.archived, false)));
-    if (!agg) throw new Error('addManualScenario: position aggregate returned no rows');
-    const [row] = await tx
-      .insert(manualScenarios)
-      .values({ featureId: parsed.featureId, position: agg.next, name: parsed.name })
-      .returning();
-    if (!row) throw new Error('addManualScenario: insert returned no row');
-    return row;
+export const addWithStepInput = z.object({ featureId, name, action: stepAction, expected: stepExpected });
+
+export async function addManualScenarioWithStep(input: z.input<typeof addWithStepInput>): Promise<ManualScenarioRow> {
+  const parsed = addWithStepInput.parse(input);
+  return db.transaction(async (tx) => {
+    const scenario = await appendScenario(tx, parsed.featureId, parsed.name);
+    await tx
+      .insert(manualScenarioSteps)
+      .values({ scenarioId: scenario.id, position: 1, action: parsed.action, expected: parsed.expected });
+    return scenario;
   });
 }
 

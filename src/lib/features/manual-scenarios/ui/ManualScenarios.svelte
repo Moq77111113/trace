@@ -7,17 +7,20 @@
   import AddInput from './AddInput.svelte';
   import * as m from '$lib/paraglide/messages';
   import type { ManualScenarioRow } from '$lib/server/features/manual-scenarios';
+  import type { ManualScenarioStepRow } from '$lib/server/features/manual-scenario-steps';
 
   type Props = {
     featureId: string;
-    initial:   ManualScenarioRow[];
+    initial:   (ManualScenarioRow & { steps: ManualScenarioStepRow[] })[];
     readonly?: boolean;
   };
 
   let { featureId, initial, readonly = false }: Props = $props();
 
   let error           = $state<string | null>(null);
+  let adding          = $state(false);
   const archiving     = new SvelteSet<string>();
+  const expandedIds   = new SvelteSet<string>();
   const visible       = $derived(initial.filter((r) => !archiving.has(r.id)));
   const empty         = $derived(visible.length === 0);
 
@@ -35,6 +38,7 @@
   onAdd={() => {
     if (readonly) return;
     open.value = true;
+    adding = true;
   }}
 >
   {#if empty}
@@ -45,6 +49,9 @@
         <Row
           {row}
           {readonly}
+          steps={row.steps}
+          expanded={expandedIds.has(row.id)}
+          onToggle={() => (expandedIds.has(row.id) ? expandedIds.delete(row.id) : expandedIds.add(row.id))}
           onOptimisticArchive={() => archiving.add(row.id)}
           onArchiveRestore={() => archiving.delete(row.id)}
           onError={(msg) => (error = msg)}
@@ -54,7 +61,19 @@
   {/if}
 
   {#if !readonly}
-    <AddInput {featureId} onError={(msg) => (error = msg)} />
+    {#if adding}
+      <AddInput
+        {featureId}
+        onError={(msg) => (error = msg)}
+        onClose={() => (adding = false)}
+      />
+    {:else}
+      <button
+        type="button"
+        class="w-full rounded-md border border-dashed border-border px-3 py-2 text-[12px] text-ink-3 hover:text-ink hover:border-border-strong"
+        onclick={() => (adding = true)}
+      >{m.manual_scenarios_add()}</button>
+    {/if}
   {/if}
 
   {#if error}

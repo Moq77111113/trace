@@ -7,23 +7,29 @@
   type Props = {
     featureId: string;
     onError:   (msg: string | null) => void;
+    onClose:   () => void;
   };
 
-  let { featureId, onError }: Props = $props();
+  let { featureId, onError, onClose }: Props = $props();
 
-  let newName = $state('');
-  let saving  = $state(false);
+  let newName  = $state('');
+  let action   = $state('');
+  let expected = $state('');
+  let saving   = $state(false);
 </script>
 
 <form
-  class="flex items-center gap-2"
+  class="flex flex-col gap-2 rounded-md border border-border bg-surface px-3 py-3"
   action="?/addManualScenario"
   method="POST"
   use:enhance={({ formData, cancel }) => {
-    const trimmed = newName.trim();
-    if (!trimmed) { cancel(); return; }
+    const name = newName.trim();
+    const act  = action.trim();
+    if (!name || !act) { cancel(); return; }
     formData.set('featureId', featureId);
-    formData.set('name',      trimmed);
+    formData.set('name',      name);
+    formData.set('action',    act);
+    formData.set('expected',  expected.trim());
     onError(null);
     saving = true;
     return async ({ result, update }) => {
@@ -35,19 +41,42 @@
         else                                      onError('add failed');
         return;
       }
-      if (result.type === 'success') newName = '';
+      if (result.type === 'success') { newName = ''; action = ''; expected = ''; onClose(); }
       await update();
     };
   }}
 >
+  <span class="text-[11px] font-medium uppercase tracking-wide text-ink-3">{m.manual_scenario_new()}</span>
+
   <input
-    class="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
+    class="rounded-md border border-border bg-bg px-2 py-1.5 text-sm text-ink"
     placeholder={m.manual_scenarios_placeholder()}
     bind:value={newName}
   />
-  <Button
-    type="submit"
-    variant="primary"
-    disabled={saving || newName.trim() === ''}
-  >{m.manual_scenarios_add()}</Button>
+
+  <div class="grid grid-cols-2 gap-2">
+    <input
+      class="rounded-md border border-border bg-bg px-2 py-1.5 text-[12.5px] text-ink"
+      placeholder={m.manual_step_action_placeholder()}
+      bind:value={action}
+    />
+    <input
+      class="rounded-md border border-border bg-bg px-2 py-1.5 text-[12.5px] text-ink-3"
+      placeholder={m.manual_step_expected_placeholder()}
+      bind:value={expected}
+    />
+  </div>
+
+  <div class="flex items-center justify-end gap-2">
+    <button
+      type="button"
+      class="text-[12px] text-ink-3 hover:text-ink"
+      onclick={() => { onError(null); onClose(); }}
+    >{m.cancel()}</button>
+    <Button
+      type="submit"
+      variant="primary"
+      disabled={saving || newName.trim() === '' || action.trim() === ''}
+    >{m.manual_scenario_create()}</Button>
+  </div>
 </form>

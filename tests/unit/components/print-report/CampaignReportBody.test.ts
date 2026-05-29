@@ -14,7 +14,7 @@ const member1 = {
       featureContentAtStart: '' },
     feature: { id: 'f1', name: 'Login', codeSeq: 1 },
     project: { id: 'p1', name: 'Trace', slug: 'trace', codePrefix: 'TRC' },
-    scenarios: [{ id: 's1', scenarioName: 'Boom', status: 'FAILED', errorMessage: 'oops' }],
+    scenarios: [{ id: 's1', scenarioName: 'Boom', status: 'FAILED', errorMessage: 'oops', steps: [] }],
     attachmentsByScenario: {},
   },
 };
@@ -27,7 +27,7 @@ const member2 = {
       featureContentAtStart: '' },
     feature: { id: 'f2', name: 'Logout', codeSeq: 2 },
     project: { id: 'p1', name: 'Trace', slug: 'trace', codePrefix: 'TRC' },
-    scenarios: [{ id: 's2', scenarioName: 'Goodbye', status: 'PASSED', errorMessage: null }],
+    scenarios: [{ id: 's2', scenarioName: 'Goodbye', status: 'PASSED', errorMessage: null, steps: [] }],
     attachmentsByScenario: {},
   },
 };

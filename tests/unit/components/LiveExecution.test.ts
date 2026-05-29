@@ -57,6 +57,7 @@ const fakeData = {
       logs:         null,
       errorMessage: null,
       notes:        null,
+      steps:        [],
       updatedAt:    new Date(),
     },
     {
@@ -70,6 +71,7 @@ const fakeData = {
       logs:         null,
       errorMessage: null,
       notes:        null,
+      steps:        [],
       updatedAt:    new Date(),
     },
   ],

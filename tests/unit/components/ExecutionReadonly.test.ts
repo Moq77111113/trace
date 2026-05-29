@@ -55,6 +55,7 @@ const fakeData = {
       logs:         null,
       errorMessage: 'Expected red banner',
       notes:        null,
+      steps:        [],
       updatedAt:    new Date(),
     },
   ],
