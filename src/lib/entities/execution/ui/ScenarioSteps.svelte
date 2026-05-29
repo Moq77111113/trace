@@ -35,8 +35,7 @@
           </span>
         </div>
         {#if step.expected}
-          <div class="grid grid-cols-[14px_auto_1fr] gap-x-2 items-baseline mt-0.5">
-            <span></span>
+          <div class="grid grid-cols-[auto_1fr] gap-x-2 items-baseline mt-0.5 ml-[22px]">
             <span class="font-mono text-[11px] font-semibold text-ink-3 tabular-nums w-[44px]">{m.manual_step_expected()}</span>
             <span class="text-[12px] text-ink-3 leading-relaxed">{step.expected}</span>
           </div>
