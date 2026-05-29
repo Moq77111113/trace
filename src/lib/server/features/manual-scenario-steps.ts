@@ -6,7 +6,7 @@ import { manualScenarioSteps } from '$lib/server/db/schema';
 const scenarioId = z.uuid({ version: 'v7' });
 const stepId     = z.uuid({ version: 'v7' });
 
-export const STEP_TEXT_MAX = 2000;
+const STEP_TEXT_MAX = 2000;
 
 export const stepAction = z.string().trim().min(1).max(STEP_TEXT_MAX);
 export const stepExpected = z
