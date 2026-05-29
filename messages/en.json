@@ -185,6 +185,8 @@
 	"manual_scenarios_title": "Manual scenarios",
 	"manual_scenarios_subtitle": "Cases to run by hand.",
 	"manual_scenarios_add": "+ Add a scenario",
+	"manual_scenario_new": "New scenario",
+	"manual_scenario_create": "Create",
 	"manual_scenarios_placeholder": "Scenario name",
 	"manual_scenarios_archive": "Remove scenario",
 	"manual_scenarios_empty": "No manual scenarios yet.",

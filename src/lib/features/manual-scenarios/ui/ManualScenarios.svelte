@@ -70,7 +70,7 @@
     {:else}
       <button
         type="button"
-        class="self-start text-[12px] text-ink-2 hover:text-ink"
+        class="w-full rounded-md border border-dashed border-border px-3 py-2 text-[12px] text-ink-3 hover:text-ink hover:border-border-strong"
         onclick={() => (adding = true)}
       >{m.manual_scenarios_add()}</button>
     {/if}

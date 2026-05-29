@@ -19,7 +19,7 @@
 </script>
 
 <form
-  class="flex flex-col gap-2"
+  class="flex flex-col gap-2 rounded-md border border-border bg-surface px-3 py-3"
   action="?/addManualScenario"
   method="POST"
   use:enhance={({ formData, cancel }) => {
@@ -46,31 +46,37 @@
     };
   }}
 >
+  <span class="text-[11px] font-medium uppercase tracking-wide text-ink-3">{m.manual_scenario_new()}</span>
+
   <input
-    class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
+    class="rounded-md border border-border bg-bg px-2 py-1.5 text-sm text-ink"
     placeholder={m.manual_scenarios_placeholder()}
     bind:value={newName}
   />
-  <input
-    class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
-    placeholder={m.manual_step_action_placeholder()}
-    bind:value={action}
-  />
-  <div class="flex items-center gap-2">
+
+  <div class="grid grid-cols-2 gap-2">
     <input
-      class="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink-3"
+      class="rounded-md border border-border bg-bg px-2 py-1.5 text-[12.5px] text-ink"
+      placeholder={m.manual_step_action_placeholder()}
+      bind:value={action}
+    />
+    <input
+      class="rounded-md border border-border bg-bg px-2 py-1.5 text-[12.5px] text-ink-3"
       placeholder={m.manual_step_expected_placeholder()}
       bind:value={expected}
     />
-    <Button
-      type="submit"
-      variant="primary"
-      disabled={saving || newName.trim() === '' || action.trim() === ''}
-    >{m.manual_scenarios_add()}</Button>
+  </div>
+
+  <div class="flex items-center justify-end gap-2">
     <button
       type="button"
       class="text-[12px] text-ink-3 hover:text-ink"
       onclick={() => { onError(null); onClose(); }}
     >{m.cancel()}</button>
+    <Button
+      type="submit"
+      variant="primary"
+      disabled={saving || newName.trim() === '' || action.trim() === ''}
+    >{m.manual_scenario_create()}</Button>
   </div>
 </form>

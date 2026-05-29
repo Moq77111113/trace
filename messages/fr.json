@@ -182,6 +182,8 @@
 	"manual_scenarios_title": "Scénarios manuels",
 	"manual_scenarios_subtitle": "Cas à jouer à la main.",
 	"manual_scenarios_add": "+ Ajouter un scénario",
+	"manual_scenario_new": "Nouveau scénario",
+	"manual_scenario_create": "Créer",
 	"manual_scenarios_placeholder": "Nom du scénario",
 	"manual_scenarios_archive": "Retirer le scénario",
 	"manual_scenarios_empty": "Aucun scénario manuel pour l'instant.",
