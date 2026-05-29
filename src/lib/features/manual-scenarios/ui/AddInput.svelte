@@ -11,19 +11,24 @@
 
   let { featureId, onError }: Props = $props();
 
-  let newName = $state('');
-  let saving  = $state(false);
+  let newName  = $state('');
+  let action   = $state('');
+  let expected = $state('');
+  let saving   = $state(false);
 </script>
 
 <form
-  class="flex items-center gap-2"
+  class="flex flex-col gap-2"
   action="?/addManualScenario"
   method="POST"
   use:enhance={({ formData, cancel }) => {
-    const trimmed = newName.trim();
-    if (!trimmed) { cancel(); return; }
+    const name = newName.trim();
+    const act  = action.trim();
+    if (!name || !act) { cancel(); return; }
     formData.set('featureId', featureId);
-    formData.set('name',      trimmed);
+    formData.set('name',      name);
+    formData.set('action',    act);
+    formData.set('expected',  expected.trim());
     onError(null);
     saving = true;
     return async ({ result, update }) => {
@@ -35,19 +40,31 @@
         else                                      onError('add failed');
         return;
       }
-      if (result.type === 'success') newName = '';
+      if (result.type === 'success') { newName = ''; action = ''; expected = ''; }
       await update();
     };
   }}
 >
   <input
-    class="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
+    class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
     placeholder={m.manual_scenarios_placeholder()}
     bind:value={newName}
   />
-  <Button
-    type="submit"
-    variant="primary"
-    disabled={saving || newName.trim() === ''}
-  >{m.manual_scenarios_add()}</Button>
+  <input
+    class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
+    placeholder={m.manual_step_action_placeholder()}
+    bind:value={action}
+  />
+  <div class="flex items-center gap-2">
+    <input
+      class="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink-3"
+      placeholder={m.manual_step_expected_placeholder()}
+      bind:value={expected}
+    />
+    <Button
+      type="submit"
+      variant="primary"
+      disabled={saving || newName.trim() === '' || action.trim() === ''}
+    >{m.manual_scenarios_add()}</Button>
+  </div>
 </form>

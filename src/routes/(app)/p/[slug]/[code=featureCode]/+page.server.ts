@@ -8,8 +8,8 @@ import { listProjectTags } from '$lib/server/features/read/queries';
 import { featureSaveBody, saveFeature } from '$lib/server/features/lifecycle/save';
 import { listGroups } from '$lib/server/groups/queries';
 import {
-  addInput,
-  addManualScenario,
+  addWithStepInput,
+  addManualScenarioWithStep,
   archiveInput,
   archiveManualScenario,
   listManualScenarios,
@@ -100,10 +100,10 @@ export const actions = {
     await requireFeature(locals.authz, params.slug, params.code, 'feature.author');
 
     const data   = stringFields(await request.formData());
-    const parsed = addInput.safeParse(data);
+    const parsed = addWithStepInput.safeParse(data);
     if (!parsed.success) return fail(400, { error: 'invalid-input', action: 'addManualScenario' });
     try {
-      const scenario = await addManualScenario(parsed.data);
+      const scenario = await addManualScenarioWithStep(parsed.data);
       return { scenario };
     } catch (e) {
       const failure = mapManualNameTakenToFail(e);

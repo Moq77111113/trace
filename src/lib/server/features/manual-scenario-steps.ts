@@ -6,18 +6,18 @@ import { manualScenarioSteps } from '$lib/server/db/schema';
 const scenarioId = z.uuid({ version: 'v7' });
 const stepId     = z.uuid({ version: 'v7' });
 
-const STEP_TEXT_MAX = 2000;
+export const STEP_TEXT_MAX = 2000;
 
-const action = z.string().trim().min(1).max(STEP_TEXT_MAX);
-const expected = z
+export const stepAction = z.string().trim().min(1).max(STEP_TEXT_MAX);
+export const stepExpected = z
   .string()
   .trim()
   .max(STEP_TEXT_MAX)
   .nullish()
   .transform((v) => (v && v.length > 0 ? v : null));
 
-export const addStepInput     = z.object({ scenarioId, action, expected });
-export const editStepInput    = z.object({ stepId, action, expected });
+export const addStepInput     = z.object({ scenarioId, action: stepAction, expected: stepExpected });
+export const editStepInput    = z.object({ stepId, action: stepAction, expected: stepExpected });
 export const removeStepInput   = z.object({ stepId });
 export const listStepsInput    = z.object({ scenarioId });
 export const reorderStepsInput = z.object({ scenarioId, order: z.array(stepId).min(1) });

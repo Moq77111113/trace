@@ -3,7 +3,11 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { manualScenarios, manualScenarioSteps } from '$lib/server/db/schema';
 import { mkFeature, mkProject } from '$testing/fixtures';
-import { addManualScenario } from '$lib/server/features/manual-scenarios';
+import {
+  addManualScenario,
+  addManualScenarioWithStep,
+  ManualScenarioNameTakenError,
+} from '$lib/server/features/manual-scenarios';
 import {
   addStep,
   editStep,
@@ -17,6 +21,12 @@ async function freshScenario() {
   const feature  = await mkFeature(project.id, { name: 'F', content: 'Feature: F\n' });
   const scenario = await addManualScenario({ featureId: feature.id, name: 'Visual check' });
   return { feature, scenario };
+}
+
+async function freshFeature() {
+  const project = await mkProject({ name: `WithStep ${Date.now()}-${Math.random()}` });
+  const feature = await mkFeature(project.id, { name: 'F', content: 'Feature: F\n' });
+  return { feature };
 }
 
 describe('manual scenario steps CRUD', () => {
@@ -107,5 +117,50 @@ describe('manual scenario steps CRUD', () => {
     await db.delete(manualScenarios).where(eq(manualScenarios.id, scenario.id));
     const rows = await db.select().from(manualScenarioSteps).where(eq(manualScenarioSteps.scenarioId, scenario.id));
     expect(rows).toHaveLength(0);
+  });
+});
+
+describe('addManualScenarioWithStep', () => {
+  it('creates the scenario and its first step atomically', async () => {
+    const { feature } = await freshFeature();
+    const scenario = await addManualScenarioWithStep({
+      featureId: feature.id, name: 'Checkout', action: 'open the cart', expected: 'items listed',
+    });
+    expect(scenario.name).toBe('Checkout');
+    expect(scenario.position).toBe(1);
+    const steps = await listSteps({ scenarioId: scenario.id });
+    expect(steps).toHaveLength(1);
+    expect(steps[0]?.position).toBe(1);
+    expect(steps[0]?.action).toBe('open the cart');
+    expect(steps[0]?.expected).toBe('items listed');
+  });
+
+  it('leaves expected null when omitted', async () => {
+    const { feature } = await freshFeature();
+    const scenario = await addManualScenarioWithStep({ featureId: feature.id, name: 'Visual', action: 'look at it' });
+    const steps = await listSteps({ scenarioId: scenario.id });
+    expect(steps[0]?.expected).toBeNull();
+  });
+
+  it('rejects a blank action and creates nothing', async () => {
+    const { feature } = await freshFeature();
+    await expect(
+      addManualScenarioWithStep({ featureId: feature.id, name: 'NoAction', action: '   ' }),
+    ).rejects.toThrow();
+    const rows = await db.select().from(manualScenarios).where(eq(manualScenarios.featureId, feature.id));
+    expect(rows).toHaveLength(0);
+  });
+
+  it('rejects a duplicate name and rolls back so no scenario or step is created', async () => {
+    const { feature } = await freshFeature();
+    await addManualScenario({ featureId: feature.id, name: 'Dup' });
+    await expect(
+      addManualScenarioWithStep({ featureId: feature.id, name: 'dup', action: 'x' }),
+    ).rejects.toBeInstanceOf(ManualScenarioNameTakenError);
+    const scenarios = await db.select().from(manualScenarios).where(eq(manualScenarios.featureId, feature.id));
+    expect(scenarios).toHaveLength(1);
+    const steps = await db.select().from(manualScenarioSteps);
+    const forThisFeature = steps.filter((s) => scenarios.some((sc) => sc.id === s.scenarioId));
+    expect(forThisFeature).toHaveLength(0);
   });
 });
