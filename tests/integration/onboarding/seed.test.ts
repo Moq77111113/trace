@@ -83,6 +83,26 @@ describe('seedDemoProject', () => {
 		expect(statuses.has('FAILED')).toBe(true);
 	});
 
+	it('freezes steps onto the standalone run scenario results, including the manual row', async () => {
+		const admin = await seedAdmin();
+		await seedDemoProject(admin.id);
+		const [p]   = await db.select().from(projects).where(eq(projects.name, DEMO_NAME));
+		const feats = await db.select({ id: features.id }).from(features).where(eq(features.projectId, p!.id));
+		const standaloneRuns = await db
+			.select()
+			.from(executions)
+			.where(and(inArray(executions.featureId, feats.map((f) => f.id)), isNull(executions.campaignId)));
+		const run = standaloneRuns[0];
+		if (!run) throw new Error('expected the standalone demo run');
+
+		const sr = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, run.id));
+		expect(sr.some((r) => r.steps.length > 0)).toBe(true);
+
+		const manual = sr.find((r) => r.scenarioName === 'Visual check of dashboard tiles');
+		expect(manual?.steps).toHaveLength(2);
+		expect(manual?.steps.every((s) => s.expected !== null)).toBe(true);
+	});
+
 	it('is idempotent — skips if a Trace Demo project already exists', async () => {
 		const admin = await seedAdmin();
 		await seedDemoProject(admin.id);

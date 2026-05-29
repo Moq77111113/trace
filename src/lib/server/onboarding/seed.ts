@@ -12,6 +12,7 @@ import {
 import { createProject } from '$lib/server/projects/create';
 import { grantAnyUserBlanket } from '$lib/server/authz/seed';
 import { allocateCodeSeq } from '$lib/server/features/internal/code-seq';
+import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
 import projectFileJson from './demo/project.json';
 import groupsFileJson from './demo/groups.json';
 import featuresMetaJson from './demo/features-meta.json';
@@ -143,6 +144,7 @@ export async function seedDemoProject(adminUserId: string): Promise<void> {
 			durationMs:   s.durationMs,
 			logs:         s.logs,
 			errorMessage: s.errorMessage,
+			steps:        extractScenarioSteps(runFeatureContent, s.name).map((st) => ({ keyword: st.keyword, text: st.text, expected: null })),
 		});
 		if (s.status === 'FAILED') aggregate = 'FAILED';
 		else if (s.status === 'SKIPPED' && aggregate !== 'FAILED') aggregate = 'SKIPPED';
@@ -154,6 +156,10 @@ export async function seedDemoProject(adminUserId: string): Promise<void> {
 		source:       'MANUAL',
 		position:     1,
 		status:       'PASSED',
+		steps: [
+			{ keyword: null, text: 'Open the dashboard', expected: 'All tiles render without layout shift' },
+			{ keyword: null, text: 'Compare tile counts to the active filters', expected: 'Counts match the filtered ticket set' },
+		],
 	});
 
 	await db

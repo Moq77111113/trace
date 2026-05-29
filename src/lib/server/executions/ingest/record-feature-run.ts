@@ -3,6 +3,7 @@ import { executions, scenarioResults } from '$lib/server/db/schema';
 import { resolveFeature } from './matching/resolve-feature';
 import { formatFeatureCode } from '$lib/shared/lib/slug';
 import { formatTraceTag } from '$lib/features/feature-import/lib/trace-tag';
+import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
 import type { IngestedFeatureRun, ScenarioStatus } from './cucumber-json/types';
 import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 import type { ResolvedCampaign } from './resolve-campaign';
@@ -40,7 +41,7 @@ export function deriveFinalStatus(statuses: ScenarioStatus[]): ScenarioStatus {
 }
 
 /** Inserts the scenario rows for one execution, in payload order. No-op when the feature run carried no scenarios. */
-async function insertScenarioResults(tx: IngestTx, executionId: string, scenarios: IngestedFeatureRun['scenarios']) {
+async function insertScenarioResults(tx: IngestTx, executionId: string, featureContent: string, scenarios: IngestedFeatureRun['scenarios']) {
   if (!scenarios.length) return;
   await tx.insert(scenarioResults).values(
     scenarios.map((s, i) => ({
@@ -51,6 +52,7 @@ async function insertScenarioResults(tx: IngestTx, executionId: string, scenario
       durationMs:   s.durationMs,
       logs:         s.logs,
       errorMessage: s.errorMessage,
+      steps:        extractScenarioSteps(featureContent, s.name).map((st) => ({ keyword: st.keyword, text: st.text, expected: null })),
     })),
   );
 }
@@ -92,7 +94,7 @@ export async function recordFeatureRun(tx: IngestTx, parsed: IngestedFeatureRun,
   }).returning();
   if (!execution) throw new Error('ingestRun: execution insert returned no row');
 
-  await insertScenarioResults(tx, execution.id, parsed.scenarios);
+  await insertScenarioResults(tx, execution.id, feature.content, parsed.scenarios);
 
   const featureCode = formatFeatureCode(ctx.codePrefix, feature.codeSeq);
   if (via !== 'code') {
