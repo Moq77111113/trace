@@ -25,6 +25,20 @@ const failing = {
   ],
 };
 
+const manual = {
+  scenario: {
+    id: 's3',
+    name: 'Visual review',
+    status: 'PASSED',
+    steps: [
+      { keyword: null, text: 'open the homepage', expected: null },
+      { keyword: null, text: 'check the hero banner', expected: 'banner is centered' },
+    ],
+    errorMessage: null,
+  },
+  attachments: [],
+};
+
 describe('ScenarioBlock', () => {
   it('renders scenario name, status pill, and all steps', () => {
     render(ScenarioBlock, { props: passing });
@@ -40,5 +54,13 @@ describe('ScenarioBlock', () => {
     const img = screen.getByAltText('screen.png') as HTMLImageElement;
     expect(img.src).toContain('/api/attachments/a1');
     expect(screen.getByText(/log\.txt/)).toBeInTheDocument();
+  });
+
+  it('renders manual steps with an expected sub-line and no keyword', () => {
+    render(ScenarioBlock, { props: manual });
+    expect(screen.getByText('open the homepage')).toBeInTheDocument();
+    expect(screen.getByText('check the hero banner')).toBeInTheDocument();
+    expect(screen.getByText('banner is centered')).toBeInTheDocument();
+    expect(screen.getByText('Expected')).toBeInTheDocument();
   });
 });

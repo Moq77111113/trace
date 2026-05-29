@@ -188,6 +188,7 @@
 	"manual_scenario_no_steps": "Vérification manuelle. Sans étapes automatisées, notez le verdict de votre essai.",
 	"manual_scenario_name_taken_manual": "Une vérification manuelle porte déjà ce nom dans cette feature.",
 	"manual_scenario_name_taken_gherkin": "Un scénario Gherkin porte déjà ce nom dans cette feature.",
+	"manual_step_expected": "Attendu",
 
 	"feature_save_manual_name_collision": "Le nom de scénario {name} entre en conflit avec une vérification manuelle existante. Renommez l'un des deux avant d'enregistrer.",
 	"feature_no_runnable_scenarios": "Impossible de démarrer une exécution, cette feature n'a ni scénario Gherkin ni vérification manuelle.",

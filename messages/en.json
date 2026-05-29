@@ -191,6 +191,7 @@
 	"manual_scenario_no_steps": "Manual check. No automated steps; record the verdict from your testing.",
 	"manual_scenario_name_taken_manual": "A manual check with this name already exists in this feature.",
 	"manual_scenario_name_taken_gherkin": "A Gherkin scenario with this name already exists in this feature.",
+	"manual_step_expected": "Expected",
 
 	"feature_save_manual_name_collision": "Scenario name {name} conflicts with an existing manual check. Rename one of them before saving.",
 	"feature_no_runnable_scenarios": "Cannot start a run, this feature has no Gherkin scenarios and no manual checks.",
