@@ -1,49 +1,48 @@
-import { describe, it, expect } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { describe, expect, it } from 'vitest';
+import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { executions, scenarioResults } from '$lib/server/db/schema';
+import { scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
+import { mkProject, mkFeature } from '$testing/fixtures';
 import { startExecution } from '$lib/server/executions/run/start';
 import { markScenario } from '$lib/server/executions/scenario/mark-scenario';
-import { mkFeature, mkProject } from '$testing/fixtures';
 
-async function seedRun() {
-  const p = await mkProject({ name: `Mark ${Date.now()}-${Math.random()}` });
-  const f = await mkFeature(p.id, {
-    name:    'F',
-    content: 'Feature: F\n\n  Scenario: S\n    Given x\n',
+async function runWithScenario() {
+  const project = await mkProject({ name: `Mark ${Date.now()}-${Math.random()}` });
+  const feature = await mkFeature(project.id, {
+    name: 'F', content: 'Feature: F\n  Scenario: S\n    Given a\n    Then b\n',
   });
-
-  const run = await startExecution({ featureId: f.id, executedBy: 'Alice' });
+  const run = await startExecution({ featureId: feature.id, executedBy: 'tester' });
   const [scenario] = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, run.id));
-  if (!scenario) throw new Error('seed: scenario_results not created');
-
-  return { project: p, feature: f, run, scenario };
+  return { run, scenario };
 }
 
-describe('markScenario', () => {
-  it('updates scenario status + duration', async () => {
-    const { run, scenario } = await seedRun();
+describe('markScenario fill-and-derive', () => {
+  it('PASSED fills all pending steps and derives PASSED', async () => {
+    const { run, scenario } = await runWithScenario();
+    await markScenario({ executionId: run.id, scenarioResultId: scenario.id, status: 'PASSED' });
 
-    const updated = await markScenario({ executionId: run.id, scenarioResultId: scenario.id, status: 'PASSED', durationMs: 1200 });
+    const steps = await db.select().from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, scenario.id)).orderBy(asc(scenarioResultSteps.position));
+    const [after] = await db.select().from(scenarioResults).where(eq(scenarioResults.id, scenario.id));
 
-    expect(updated.status).toBe('PASSED');
-    expect(updated.durationMs).toBe(1200);
+    expect(steps.every((s) => s.verdict === 'PASSED')).toBe(true);
+    expect(after.status).toBe('PASSED');
   });
 
-  it('rejects when run is not RUNNING', async () => {
-    const { run, scenario } = await seedRun();
-    await db.update(executions).set({ status: 'PASSED', finishedAt: new Date() }).where(eq(executions.id, run.id));
+  it('leaves an already-FAILED step untouched and derives FAILED', async () => {
+    const { run, scenario } = await runWithScenario();
+    const steps = await db.select().from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, scenario.id)).orderBy(asc(scenarioResultSteps.position));
+    await db.update(scenarioResultSteps).set({ verdict: 'FAILED' }).where(eq(scenarioResultSteps.id, steps[0].id));
 
-    await expect(
-      markScenario({ executionId: run.id, scenarioResultId: scenario.id, status: 'PASSED' }),
-    ).rejects.toThrow(/not running/i);
-  });
+    await markScenario({ executionId: run.id, scenarioResultId: scenario.id, status: 'PASSED' });
 
-  it('rejects scenario not in this run', async () => {
-    const { run } = await seedRun();
+    const after = await db.select().from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, scenario.id)).orderBy(asc(scenarioResultSteps.position));
+    const [sc] = await db.select().from(scenarioResults).where(eq(scenarioResults.id, scenario.id));
 
-    await expect(
-      markScenario({ executionId: run.id, scenarioResultId: '00000000-0000-0000-0000-000000000000', status: 'PASSED' }),
-    ).rejects.toThrow(/not found/i);
+    expect(after[0].verdict).toBe('FAILED');
+    expect(after[1].verdict).toBe('PASSED');
+    expect(sc.status).toBe('FAILED');
   });
 });
