@@ -2,6 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import ScenarioBlock from '$lib/features/print-report/ui/blocks/ScenarioBlock.svelte';
 
+const perStepVerdicts = {
+  scenario: {
+    id: 's4',
+    name: 'Mixed verdicts',
+    status: 'FAILED',
+    steps: [
+      { keyword: 'Given', text: 'a passing step', verdict: 'PASSED' },
+      { keyword: 'When',  text: 'a failing step', verdict: 'FAILED' },
+    ],
+    errorMessage: null,
+  },
+  attachments: [],
+};
+
 const passing = {
   scenario: {
     id: 's1',
@@ -62,5 +76,12 @@ describe('ScenarioBlock', () => {
     expect(screen.getByText('check the hero banner')).toBeInTheDocument();
     expect(screen.getByText('banner is centered')).toBeInTheDocument();
     expect(screen.getByText('Expected')).toBeInTheDocument();
+  });
+
+  it('renders each step with its own frozen verdict', () => {
+    const { container } = render(ScenarioBlock, { props: perStepVerdicts });
+    const marks = container.querySelectorAll('ol li [data-s]');
+    expect(marks[0]?.getAttribute('data-s')).toBe('pass');
+    expect(marks[1]?.getAttribute('data-s')).toBe('fail');
   });
 });

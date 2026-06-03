@@ -53,7 +53,6 @@
         <ReplayScenarioPanel
           scenario={selected}
           attachments={selectedAttachments}
-          featureContentAtStart={data.execution.featureContentAtStart}
         />
       {/if}
     </article>

@@ -55,14 +55,26 @@ const fakeData = {
       logs:         null,
       errorMessage: 'Expected red banner',
       notes:        null,
-      steps:        [],
+      steps: [
+        {
+          id:               'gst1',
+          scenarioResultId: 's1',
+          position:         1,
+          keyword:          'Given',
+          text:             'a logged-in user',
+          expected:         null,
+          verdict:          'FAILED' as const,
+          note:             null,
+          updatedAt:        new Date(),
+        },
+      ],
       updatedAt:    new Date(),
     },
   ],
   attachmentsByScenario: {
     s1: [
-      { id: 'a1', scenarioResultId: 's1', filename: 'shot.png', mimeType: 'image/png', sizeBytes: 2048 },
-      { id: 'a2', scenarioResultId: 's1', filename: 'console.log', mimeType: 'text/plain', sizeBytes: 512 },
+      { id: 'a1', scenarioResultId: 's1', scenarioResultStepId: null, filename: 'shot.png', mimeType: 'image/png', sizeBytes: 2048 },
+      { id: 'a2', scenarioResultId: 's1', scenarioResultStepId: null, filename: 'console.log', mimeType: 'text/plain', sizeBytes: 512 },
     ],
   },
 };
@@ -86,20 +98,54 @@ describe('ExecutionReadonly', () => {
     expect(screen.getByText(/exact Gherkin/i)).toBeInTheDocument();
   });
 
-  it('shows the no-steps line on a selected MANUAL scenario', () => {
-    const baseScenario = fakeData.scenarios[0]!;
+  it('renders the frozen steps of a selected MANUAL scenario', () => {
+    const baseScenario = fakeData.scenarios[0];
+    if (!baseScenario) throw new Error('missing base scenario fixture');
     const manualRow = {
       ...baseScenario,
       id:           'sm1',
       scenarioName: 'Manual one',
       source:       'MANUAL' as const,
       position:     1,
+      steps: [
+        {
+          id:               'st1',
+          scenarioResultId: 'sm1',
+          position:         1,
+          keyword:          null,
+          text:             'Open the settings drawer',
+          expected:         'Drawer is visible',
+          verdict:          'PASSED' as const,
+          note:             null,
+          updatedAt:        new Date(),
+        },
+      ],
     };
     const dataWithManual = {
       ...fakeData,
       scenarios: [manualRow, baseScenario],
     };
     render(ExecutionReadonly, { props: { data: dataWithManual } });
+
+    expect(screen.getByText(/Open the settings drawer/i)).toBeInTheDocument();
+  });
+
+  it('shows the no-steps line on a selected scenario without frozen steps', () => {
+    const baseScenario = fakeData.scenarios[0];
+    if (!baseScenario) throw new Error('missing base scenario fixture');
+    const emptyRow = {
+      ...baseScenario,
+      id:           'se1',
+      scenarioName: 'No steps here',
+      source:       'MANUAL' as const,
+      position:     1,
+      steps:        [],
+    };
+    const dataWithEmpty = {
+      ...fakeData,
+      scenarios: [emptyRow, baseScenario],
+    };
+    render(ExecutionReadonly, { props: { data: dataWithEmpty } });
 
     expect(screen.getByText(/manual check\. no automated steps/i)).toBeInTheDocument();
   });

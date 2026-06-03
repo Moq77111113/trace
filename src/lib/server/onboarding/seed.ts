@@ -8,6 +8,7 @@ import {
 	manualScenarioSteps,
 	executions,
 	scenarioResults,
+	scenarioResultSteps,
 } from '$lib/server/db/schema';
 import { createProject } from '$lib/server/projects/create';
 import { grantAnyUserBlanket } from '$lib/server/authz/seed';
@@ -136,31 +137,37 @@ export async function seedDemoProject(adminUserId: string): Promise<void> {
 
 	let aggregate: 'PASSED' | 'FAILED' | 'SKIPPED' = 'PASSED';
 	for (const [i, s] of runFile.scenarios.entries()) {
-		await db.insert(scenarioResults).values({
+		const status = s.status === 'PENDING' ? ('SKIPPED' as const) : s.status;
+		const [scRow] = await db.insert(scenarioResults).values({
 			executionId:  run.id,
 			scenarioName: s.name,
 			position:     i + 1,
-			status:       s.status === 'PENDING' ? 'SKIPPED' : s.status,
+			status,
 			durationMs:   s.durationMs,
 			logs:         s.logs,
 			errorMessage: s.errorMessage,
-			steps:        extractScenarioSteps(runFeatureContent, s.name).map((st) => ({ keyword: st.keyword, text: st.text, expected: null })),
-		});
+		}).returning({ id: scenarioResults.id });
+		if (!scRow) throw new Error('demo seed: scenario result insert failed');
+		const stepRows = extractScenarioSteps(runFeatureContent, s.name).map((st, j) => ({
+			scenarioResultId: scRow.id, position: j + 1, keyword: st.keyword, text: st.text, expected: null, verdict: status,
+		}));
+		if (stepRows.length > 0) await db.insert(scenarioResultSteps).values(stepRows);
 		if (s.status === 'FAILED') aggregate = 'FAILED';
 		else if (s.status === 'SKIPPED' && aggregate !== 'FAILED') aggregate = 'SKIPPED';
 	}
 
-	await db.insert(scenarioResults).values({
+	const [visualSc] = await db.insert(scenarioResults).values({
 		executionId:  run.id,
 		scenarioName: 'Visual check of dashboard tiles',
 		source:       'MANUAL',
 		position:     1,
 		status:       'PASSED',
-		steps: [
-			{ keyword: null, text: 'Open the dashboard', expected: 'All tiles render without layout shift' },
-			{ keyword: null, text: 'Compare tile counts to the active filters', expected: 'Counts match the filtered ticket set' },
-		],
-	});
+	}).returning({ id: scenarioResults.id });
+	if (!visualSc) throw new Error('demo seed: visual scenario insert failed');
+	await db.insert(scenarioResultSteps).values([
+		{ scenarioResultId: visualSc.id, position: 1, keyword: null, text: 'Open the dashboard', expected: 'All tiles render without layout shift', verdict: 'PASSED' },
+		{ scenarioResultId: visualSc.id, position: 2, keyword: null, text: 'Compare tile counts to the active filters', expected: 'Counts match the filtered ticket set', verdict: 'PASSED' },
+	]);
 
 	await db
 		.update(executions)

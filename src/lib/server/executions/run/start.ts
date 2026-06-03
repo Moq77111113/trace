@@ -1,11 +1,11 @@
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { executions, features, scenarioResults } from '$lib/server/db/schema';
+import { executions, features, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import { parse } from '$lib/shared/gherkin/parse';
 import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
 import { listManualScenarios } from '$lib/server/features/manual-scenarios';
 import { listSteps } from '$lib/server/features/manual-scenario-steps';
-import { buildScenarioRows } from './scenario-rows';
+import { buildScenarioRows, buildStepRows } from './scenario-rows';
 
 export type StartRunInput = {
   featureId:    string;
@@ -76,7 +76,18 @@ export async function startExecution(input: StartRunInput) {
       })),
     ]);
 
-    await tx.insert(scenarioResults).values(rows.map((r) => ({ ...r, executionId: run.id })));
+    const inserted = await tx
+      .insert(scenarioResults)
+      .values(rows.map((r) => ({ scenarioName: r.scenarioName, source: r.source, position: r.position, executionId: run.id })))
+      .returning({ id: scenarioResults.id });
+
+    const stepRows = rows.flatMap((r, i) => {
+      const sr = inserted[i];
+      if (!sr) throw new Error('startExecution: scenario insert returned fewer rows than expected');
+      return buildStepRows(sr.id, r.steps);
+    });
+    if (stepRows.length > 0) await tx.insert(scenarioResultSteps).values(stepRows);
+
     return run;
   });
 }

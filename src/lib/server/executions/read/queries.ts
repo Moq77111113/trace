@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, sql, type SQL } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { attachments, campaigns, executions, features, projects, scenarioResults } from '$lib/server/db/schema';
+import { attachments, campaigns, executions, features, projects, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import type { CiMetadata } from '$lib/entities/execution/lib/ci-metadata';
 import { EXPORT_ROW_CAP } from '$lib/features/csv-export/lib/csv';
 import type { Authorizer } from '$lib/server/authz/authorizer';
@@ -242,13 +242,24 @@ export async function loadExecutionPage(executionId: string) {
     .orderBy(asc(scenarioResults.source), asc(scenarioResults.position));
 
   const scenarioIds = scenarios.map((s) => s.id);
+
+  const stepRows = scenarioIds.length
+    ? await db.select().from(scenarioResultSteps)
+        .where(inArray(scenarioResultSteps.scenarioResultId, scenarioIds))
+        .orderBy(asc(scenarioResultSteps.position))
+    : [];
+
+  const stepsByScenario: Record<string, typeof stepRows> = {};
+  for (const st of stepRows) (stepsByScenario[st.scenarioResultId] ??= []).push(st);
+
   const atts = scenarioIds.length
     ? await db.select({
-        id:               attachments.id,
-        scenarioResultId: attachments.scenarioResultId,
-        filename:         attachments.filename,
-        mimeType:         attachments.mimeType,
-        sizeBytes:        attachments.sizeBytes,
+        id:                   attachments.id,
+        scenarioResultId:     attachments.scenarioResultId,
+        scenarioResultStepId: attachments.scenarioResultStepId,
+        filename:             attachments.filename,
+        mimeType:             attachments.mimeType,
+        sizeBytes:            attachments.sizeBytes,
       })
       .from(attachments)
       .where(inArray(attachments.scenarioResultId, scenarioIds))
@@ -265,9 +276,9 @@ export async function loadExecutionPage(executionId: string) {
   return {
     mode,
     execution: head.execution,
-    feature:               head.feature,
-    project:               head.project,
-    scenarios,
+    feature:   head.feature,
+    project:   head.project,
+    scenarios: scenarios.map((s) => ({ ...s, steps: stepsByScenario[s.id] ?? [] })),
     attachmentsByScenario,
   };
 }
