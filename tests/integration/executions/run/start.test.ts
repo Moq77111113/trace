@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { and, asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { features, scenarioResults } from '$lib/server/db/schema';
+import { features, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import type { ParseError } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/run/start';
 import { addManualScenario, archiveManualScenario } from '$lib/server/features/manual-scenarios';
@@ -123,10 +123,39 @@ describe('startExecution', () => {
     expect(a.position).toBe(1);
     expect(c.position).toBe(3);
   });
+
+  it('freezes each scenario step as a PENDING row in scenario_result_steps', async () => {
+    const project = await mkProject({ name: `Start steps ${Date.now()}-${Math.random()}` });
+    const feature = await mkFeature(project.id, {
+      name: 'F',
+      content: 'Feature: F\n  Scenario: S\n    Given a\n    Then b\n',
+    });
+
+    const run = await startExecution({ featureId: feature.id, executedBy: 'tester' });
+
+    const [scenario] = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, run.id));
+    if (!scenario) throw new Error('expected a scenario result');
+    const steps = await db.select().from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, scenario.id))
+      .orderBy(asc(scenarioResultSteps.position));
+
+    expect(steps.map((s) => [s.position, s.keyword, s.text, s.verdict])).toEqual([
+      [1, 'Given', 'a', 'PENDING'],
+      [2, 'Then',  'b', 'PENDING'],
+    ]);
+  });
 });
 
+async function stepsOf(scenarioResultId: string) {
+  return db
+    .select()
+    .from(scenarioResultSteps)
+    .where(eq(scenarioResultSteps.scenarioResultId, scenarioResultId))
+    .orderBy(asc(scenarioResultSteps.position));
+}
+
 describe('startExecution step snapshot', () => {
-  it('freezes gherkin steps into scenario_results.steps with expected null', async () => {
+  it('freezes gherkin steps into scenario_result_steps with expected null', async () => {
     const { feature } = await freshFeatureBase(twoScenarioFeature);
     const run = await startExecution({ featureId: feature.id, executedBy: 'Alice' });
 
@@ -135,7 +164,10 @@ describe('startExecution step snapshot', () => {
       .from(scenarioResults)
       .where(and(eq(scenarioResults.executionId, run.id), eq(scenarioResults.scenarioName, 'A')));
     if (!a) throw new Error('expected scenario A');
-    expect(a.steps).toEqual([{ keyword: 'Given', text: 'x', expected: null }]);
+    const steps = await stepsOf(a.id);
+    expect(steps.map((s) => ({ keyword: s.keyword, text: s.text, expected: s.expected }))).toEqual([
+      { keyword: 'Given', text: 'x', expected: null },
+    ]);
   });
 
   it('freezes manual steps as keyword null, action as text, expected preserved', async () => {
@@ -150,7 +182,8 @@ describe('startExecution step snapshot', () => {
       .from(scenarioResults)
       .where(and(eq(scenarioResults.executionId, run.id), eq(scenarioResults.source, 'MANUAL')));
     if (!snap) throw new Error('expected the manual snapshot row');
-    expect(snap.steps).toEqual([
+    const steps = await stepsOf(snap.id);
+    expect(steps.map((s) => ({ keyword: s.keyword, text: s.text, expected: s.expected }))).toEqual([
       { keyword: null, text: 'open the page', expected: null },
       { keyword: null, text: 'click submit',  expected: 'a toast shows' },
     ]);
@@ -169,6 +202,9 @@ describe('startExecution step snapshot', () => {
       .from(scenarioResults)
       .where(and(eq(scenarioResults.executionId, run.id), eq(scenarioResults.source, 'MANUAL')));
     if (!snap) throw new Error('expected the manual snapshot row');
-    expect(snap.steps).toEqual([{ keyword: null, text: 'original', expected: null }]);
+    const steps = await stepsOf(snap.id);
+    expect(steps.map((s) => ({ keyword: s.keyword, text: s.text, expected: s.expected }))).toEqual([
+      { keyword: null, text: 'original', expected: null },
+    ]);
   });
 });
