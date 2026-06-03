@@ -57,7 +57,7 @@ const data: NonNullable<ExecutionPageData> = {
       logs:         null,
       errorMessage: null,
       notes:        null,
-      steps:        [{ keyword: 'Given', text: 'x', expected: null }],
+      steps:        [{ id: 'st1', scenarioResultId: 's1', position: 1, keyword: 'Given', text: 'x', expected: null, verdict: 'PASSED', note: null, updatedAt: new Date('2026-05-28T10:00:30Z') }],
       updatedAt:    new Date('2026-05-28T10:00:30Z'),
     },
     {
@@ -71,7 +71,7 @@ const data: NonNullable<ExecutionPageData> = {
       logs:         null,
       errorMessage: 'boom',
       notes:        null,
-      steps:        [{ keyword: 'When', text: 'y', expected: null }],
+      steps:        [{ id: 'st2', scenarioResultId: 's2', position: 1, keyword: 'When', text: 'y', expected: null, verdict: 'FAILED', note: null, updatedAt: new Date('2026-05-28T10:01:00Z') }],
       updatedAt:    new Date('2026-05-28T10:01:00Z'),
     },
   ],

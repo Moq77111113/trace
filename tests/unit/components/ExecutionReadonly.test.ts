@@ -61,8 +61,8 @@ const fakeData = {
   ],
   attachmentsByScenario: {
     s1: [
-      { id: 'a1', scenarioResultId: 's1', filename: 'shot.png', mimeType: 'image/png', sizeBytes: 2048 },
-      { id: 'a2', scenarioResultId: 's1', filename: 'console.log', mimeType: 'text/plain', sizeBytes: 512 },
+      { id: 'a1', scenarioResultId: 's1', scenarioResultStepId: null, filename: 'shot.png', mimeType: 'image/png', sizeBytes: 2048 },
+      { id: 'a2', scenarioResultId: 's1', scenarioResultStepId: null, filename: 'console.log', mimeType: 'text/plain', sizeBytes: 512 },
     ],
   },
 };
