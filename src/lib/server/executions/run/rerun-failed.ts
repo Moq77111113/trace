@@ -1,8 +1,8 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { executions, scenarioResults } from '$lib/server/db/schema';
+import { executions, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import { ok, err, type Result } from '$lib/shared/lib/result';
-import { buildScenarioRows } from './scenario-rows';
+import { buildScenarioRows, buildStepRows, type FrozenStep } from './scenario-rows';
 
 export type RerunFailedInput = {
   parentExecutionId: string;
@@ -30,18 +30,27 @@ export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedR
   if (parent.status === 'IN_PROGRESS') return err('parent-in-progress');
 
   const failed = await db
-    .select({
-      scenarioName: scenarioResults.scenarioName,
-      source:       scenarioResults.source,
-      steps:        scenarioResults.steps,
-    })
+    .select({ id: scenarioResults.id, scenarioName: scenarioResults.scenarioName, source: scenarioResults.source })
     .from(scenarioResults)
     .where(and(eq(scenarioResults.executionId, parent.id), eq(scenarioResults.status, 'FAILED')))
     .orderBy(asc(scenarioResults.source), asc(scenarioResults.position));
 
   if (failed.length === 0) return err('no-failed-scenarios');
 
-  const rows = buildScenarioRows(failed);
+  const stepsByScenario = new Map<string, FrozenStep[]>();
+  for (const f of failed) {
+    const st = await db.select({ keyword: scenarioResultSteps.keyword, text: scenarioResultSteps.text, expected: scenarioResultSteps.expected })
+      .from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, f.id))
+      .orderBy(asc(scenarioResultSteps.position));
+    stepsByScenario.set(f.id, st);
+  }
+
+  const rows = buildScenarioRows(failed.map((f) => ({
+    scenarioName: f.scenarioName,
+    source:       f.source,
+    steps:        stepsByScenario.get(f.id) ?? [],
+  })));
 
   const created = await db.transaction(async (tx) => {
     const [execution] = await tx
@@ -56,7 +65,13 @@ export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedR
       .returning();
     if (!execution) throw new Error('rerunFailed: execution insert returned no row');
 
-    await tx.insert(scenarioResults).values(rows.map((r) => ({ ...r, executionId: execution.id })));
+    const inserted = await tx.insert(scenarioResults)
+      .values(rows.map((r) => ({ scenarioName: r.scenarioName, source: r.source, position: r.position, executionId: execution.id })))
+      .returning({ id: scenarioResults.id });
+
+    const stepRows = inserted.flatMap((sr, i) => buildStepRows(sr.id, rows[i]?.steps ?? []));
+    if (stepRows.length > 0) await tx.insert(scenarioResultSteps).values(stepRows);
+
     return execution;
   });
 

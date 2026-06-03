@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { scenarioResults } from '$lib/server/db/schema';
+import { scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/run/start';
 import { markScenario } from '$lib/server/executions/scenario/mark-scenario';
 import { finishExecution } from '$lib/server/executions/run/finish';
@@ -198,15 +198,43 @@ describe('rerunFailed', () => {
     if (!result.ok) return;
 
     const [rerunRow] = await db
-      .select({ steps: scenarioResults.steps })
+      .select({ id: scenarioResults.id })
       .from(scenarioResults)
       .where(eq(scenarioResults.executionId, result.value.id));
     if (!rerunRow) throw new Error('rerun: expected one scenario');
 
-    expect(rerunRow.steps).toEqual(seeded.steps);
-    expect(rerunRow.steps).toEqual([
+    const rerunSteps = await db
+      .select({ keyword: scenarioResultSteps.keyword, text: scenarioResultSteps.text, expected: scenarioResultSteps.expected })
+      .from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, rerunRow.id))
+      .orderBy(asc(scenarioResultSteps.position));
+
+    expect(rerunSteps).toEqual([
       { keyword: null, text: 'open the page', expected: 'page is visible' },
       { keyword: null, text: 'click submit',  expected: null },
     ]);
+  });
+
+  it('carries the parent failed scenario steps into the rerun, reset to PENDING', async () => {
+    const project = await mkProject({ name: `Rerun steps ${Date.now()}-${Math.random()}` });
+    const feature = await mkFeature(project.id, {
+      name: 'F', content: 'Feature: F\n  Scenario: S\n    Given a\n    Then b\n',
+    });
+    const parent = await startExecution({ featureId: feature.id, executedBy: 'tester' });
+    const [sc] = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, parent.id));
+    if (!sc) throw new Error('seed: expected one scenario');
+    await markScenario({ executionId: parent.id, scenarioResultId: sc.id, status: 'FAILED' });
+    await finishExecution(parent.id);
+
+    const res = await rerunFailed({ parentExecutionId: parent.id, executedBy: 'tester' });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    const [child] = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, res.value.id));
+    if (!child) throw new Error('rerun: expected one scenario');
+    const steps = await db.select().from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, child.id)).orderBy(asc(scenarioResultSteps.position));
+
+    expect(steps.map((s) => [s.text, s.verdict])).toEqual([['a', 'PENDING'], ['b', 'PENDING']]);
   });
 });
