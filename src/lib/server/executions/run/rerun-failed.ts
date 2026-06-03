@@ -69,7 +69,11 @@ export async function rerunFailed(input: RerunFailedInput): Promise<RerunFailedR
       .values(rows.map((r) => ({ scenarioName: r.scenarioName, source: r.source, position: r.position, executionId: execution.id })))
       .returning({ id: scenarioResults.id });
 
-    const stepRows = inserted.flatMap((sr, i) => buildStepRows(sr.id, rows[i]?.steps ?? []));
+    const stepRows = rows.flatMap((r, i) => {
+      const sr = inserted[i];
+      if (!sr) throw new Error('rerunFailed: scenario result insert/return mismatch');
+      return buildStepRows(sr.id, r.steps);
+    });
     if (stepRows.length > 0) await tx.insert(scenarioResultSteps).values(stepRows);
 
     return execution;

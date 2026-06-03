@@ -5,7 +5,6 @@
   import ReadonlyNotesBlock    from './ReadonlyNotesBlock.svelte';
   import ReadonlyEvidenceBlock from './ReadonlyEvidenceBlock.svelte';
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
-  import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
   import * as m from '$lib/paraglide/messages';
   import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
@@ -14,15 +13,14 @@
   type Attachment = RunData['attachmentsByScenario'][string][number];
 
   type Props = {
-    scenario:               Scenario;
-    attachments:            Attachment[];
-    featureContentAtStart:  string;
+    scenario:    Scenario;
+    attachments: Attachment[];
   };
 
-  let { scenario, attachments, featureContentAtStart }: Props = $props();
+  let { scenario, attachments }: Props = $props();
 
   const kind  = $derived(toStatusKind(scenario.status));
-  const steps = $derived(extractScenarioSteps(featureContentAtStart, scenario.scenarioName));
+  const steps = $derived(scenario.steps ?? []);
 </script>
 
 <div class="flex items-center gap-3 mb-3">
@@ -31,14 +29,14 @@
   <Pill {kind}>{scenario.status.toLowerCase()}</Pill>
 </div>
 
-{#if scenario.source === 'MANUAL'}
-  <p class="mb-4 text-[12px] text-ink-3 italic">
-    {m.manual_scenario_no_steps()}
-  </p>
-{:else if steps.length > 0}
+{#if steps.length > 0}
   <div class="mb-4">
     <ScenarioSteps {steps} scenarioStatus={scenario.status} />
   </div>
+{:else}
+  <p class="mb-4 text-[12px] text-ink-3 italic">
+    {m.manual_scenario_no_steps()}
+  </p>
 {/if}
 
 {#if scenario.errorMessage}
