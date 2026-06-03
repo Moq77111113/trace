@@ -206,12 +206,6 @@ export const executions = pgTable(
   (t) => [index('executions_feature_started_idx').on(t.featureId, sql`${t.startedAt} DESC`)],
 );
 
-export type ScenarioResultStep = {
-  keyword:  string | null;
-  text:     string;
-  expected: string | null;
-};
-
 export const scenarioResults = pgTable(
   'scenario_results',
   {
@@ -225,7 +219,6 @@ export const scenarioResults = pgTable(
     logs:         text('logs'),
     errorMessage: text('error_message'),
     notes:        text('notes'),
-    steps:        jsonb('steps').$type<ScenarioResultStep[]>().notNull().default(sql`'[]'::jsonb`),
     updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -235,10 +228,30 @@ export const scenarioResults = pgTable(
   ],
 );
 
+export const scenarioResultSteps = pgTable(
+  'scenario_result_steps',
+  {
+    id:               pk(),
+    scenarioResultId: uuid('scenario_result_id').notNull().references(() => scenarioResults.id, { onDelete: 'cascade' }),
+    position:         integer('position').notNull(),
+    keyword:          text('keyword'),
+    text:             text('text').notNull(),
+    expected:         text('expected'),
+    verdict:          scenarioStatus('verdict').notNull().default('PENDING'),
+    note:             text('note'),
+    updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('scenario_result_steps_result_position_unique').on(t.scenarioResultId, t.position),
+    check('scenario_result_steps_position_positive', sql`${t.position} >= 1`),
+  ],
+);
+
 export const attachments = pgTable('attachments', {
   id:               pk(),
   executionId:      uuid('execution_id').notNull().references(() => executions.id, { onDelete: 'cascade' }),
   scenarioResultId: uuid('scenario_result_id').references(() => scenarioResults.id, { onDelete: 'cascade' }),
+  scenarioResultStepId: uuid('scenario_result_step_id').references(() => scenarioResultSteps.id, { onDelete: 'cascade' }),
   filename:         text('filename').notNull(),
   mimeType:         text('mime_type').notNull(),
   sizeBytes:        bigint('size_bytes', { mode: 'number' }).notNull(),
