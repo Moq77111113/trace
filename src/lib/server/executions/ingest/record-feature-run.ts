@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db/client';
-import { executions, scenarioResults } from '$lib/server/db/schema';
+import { executions, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import { resolveFeature } from './matching/resolve-feature';
 import { formatFeatureCode } from '$lib/shared/lib/slug';
 import { formatTraceTag } from '$lib/features/feature-import/lib/trace-tag';
@@ -43,7 +43,8 @@ export function deriveFinalStatus(statuses: ScenarioStatus[]): ScenarioStatus {
 /** Inserts the scenario rows for one execution, in payload order. No-op when the feature run carried no scenarios. */
 async function insertScenarioResults(tx: IngestTx, executionId: string, featureContent: string, scenarios: IngestedFeatureRun['scenarios']) {
   if (!scenarios.length) return;
-  await tx.insert(scenarioResults).values(
+
+  const inserted = await tx.insert(scenarioResults).values(
     scenarios.map((s, i) => ({
       executionId,
       scenarioName: s.name,
@@ -52,9 +53,23 @@ async function insertScenarioResults(tx: IngestTx, executionId: string, featureC
       durationMs:   s.durationMs,
       logs:         s.logs,
       errorMessage: s.errorMessage,
-      steps:        extractScenarioSteps(featureContent, s.name).map((st) => ({ keyword: st.keyword, text: st.text, expected: null })),
     })),
-  );
+  ).returning({ id: scenarioResults.id });
+
+  const stepRows = inserted.flatMap((sr, i) => {
+    const s = scenarios[i];
+    if (!s) return [];
+    return extractScenarioSteps(featureContent, s.name).map((st, j) => ({
+      scenarioResultId: sr.id,
+      position:         j + 1,
+      keyword:          st.keyword,
+      text:             st.text,
+      expected:         null,
+      verdict:          s.status,
+    }));
+  });
+
+  if (stepRows.length > 0) await tx.insert(scenarioResultSteps).values(stepRows);
 }
 
 /** Persists one parsed feature run: resolves the feature, tags the campaign when the feature is a member, writes the execution and its scenarios. */

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { executions, scenarioResults } from '$lib/server/db/schema';
+import { executions, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import { ingestRun } from '$lib/server/executions/ingest/pipeline';
 import type { IngestedFeatureRun } from '$lib/server/executions/ingest/cucumber-json/types';
 import { mkFeature, mkProject } from '$testing/fixtures';
@@ -147,11 +147,47 @@ describe('ingestRun', () => {
       .select()
       .from(scenarioResults)
       .where(eq(scenarioResults.executionId, executionId));
-    expect(row?.steps).toEqual([
+    if (!row) throw new Error('expected a scenario result row');
+    const steps = await db
+      .select()
+      .from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, row.id))
+      .orderBy(asc(scenarioResultSteps.position));
+    expect(steps.map((s) => ({ keyword: s.keyword, text: s.text, expected: s.expected }))).toEqual([
       { keyword: 'Given', text: 'a', expected: null },
       { keyword: 'When',  text: 'b', expected: null },
       { keyword: 'Then',  text: 'c', expected: null },
     ]);
+  });
+
+  it('mirrors a PASSED scenario verdict onto all of its frozen step rows', async () => {
+    const project = await mkProject({ name: `Mirror ${Date.now()}-${Math.random()}` });
+    await mkFeature(project.id, {
+      name: 'Login',
+      content: 'Feature: Login\n\n  Scenario: X\n    Given a\n    When b\n',
+    });
+
+    const result = await ingestRun({
+      projectId:  project.id,
+      executedBy: 'ci',
+      parsed: [run('Login', [{ name: 'X', status: 'PASSED', durationMs: 10, logs: null, errorMessage: null }])],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const executionId = result.value.executions[0]?.executionId;
+    if (!executionId) throw new Error('expected an ingested execution id');
+
+    const [scenario] = await db
+      .select()
+      .from(scenarioResults)
+      .where(eq(scenarioResults.executionId, executionId));
+    if (!scenario) throw new Error('expected a scenario result row');
+
+    const steps = await db.select().from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, scenario.id)).orderBy(asc(scenarioResultSteps.position));
+    expect(steps.length).toBeGreaterThan(0);
+    expect(steps.every((s) => s.verdict === 'PASSED')).toBe(true);
   });
 
   it('assigns position 1..N to ingested scenarios in input order', async () => {
