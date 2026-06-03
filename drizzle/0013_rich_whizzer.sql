@@ -15,4 +15,19 @@ ALTER TABLE "attachments" ADD COLUMN "scenario_result_step_id" uuid;--> statemen
 ALTER TABLE "scenario_result_steps" ADD CONSTRAINT "scenario_result_steps_scenario_result_id_scenario_results_id_fk" FOREIGN KEY ("scenario_result_id") REFERENCES "public"."scenario_results"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "scenario_result_steps_result_position_unique" ON "scenario_result_steps" USING btree ("scenario_result_id","position");--> statement-breakpoint
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_scenario_result_step_id_scenario_result_steps_id_fk" FOREIGN KEY ("scenario_result_step_id") REFERENCES "public"."scenario_result_steps"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+INSERT INTO "scenario_result_steps"
+  ("id", "scenario_result_id", "position", "keyword", "text", "expected", "verdict", "note", "updated_at")
+SELECT
+  gen_random_uuid(),
+  sr."id",
+  (elem.ord)::int,
+  NULLIF(elem.value ->> 'keyword', ''),
+  elem.value ->> 'text',
+  elem.value ->> 'expected',
+  sr."status",
+  NULL,
+  now()
+FROM "scenario_results" sr
+CROSS JOIN LATERAL jsonb_array_elements(sr."steps") WITH ORDINALITY AS elem(value, ord)
+WHERE jsonb_typeof(sr."steps") = 'array' AND jsonb_array_length(sr."steps") > 0;--> statement-breakpoint
 ALTER TABLE "scenario_results" DROP COLUMN "steps";
