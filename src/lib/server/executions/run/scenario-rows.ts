@@ -14,12 +14,7 @@ export type ScenarioRowInput = {
 
 export type ScenarioRow = ScenarioRowInput & { position: number };
 
-/**
- * Renumbers positions starting at 1 within each `source` section. The unique
- * constraint on `(executionId, source, position)` requires per-source contiguous
- * positions; this pure shaper enforces it. Steps ride along untouched for the
- * caller to insert into `scenario_result_steps` once the row ids are known.
- */
+/** Renumbers positions from 1 within each source section; steps ride along untouched. */
 export function buildScenarioRows(items: ScenarioRowInput[]): ScenarioRow[] {
   let gherkinPos = 0;
   let manualPos  = 0;

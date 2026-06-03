@@ -18,13 +18,7 @@ export const markScenarioInput = z.object({
 
 export type MarkScenarioInput = z.infer<typeof markScenarioInput>;
 
-/**
- * Scenario-level fast-path: fills every PENDING step of the scenario with the
- * given verdict (already-marked steps are left untouched), persists the
- * scenario's duration/logs/error metadata, then derives the scenario status from
- * its steps. A scenario with no steps falls back to writing the status directly.
- * Refuses to write into a finished run or a scenario outside this run.
- */
+/** Fast-path: fills the scenario's PENDING steps with the verdict, then derives its status. */
 export async function markScenario(input: MarkScenarioInput) {
   const [run] = await db.select().from(executions).where(eq(executions.id, input.executionId));
   if (!run) throw new Error(`markScenario: run ${input.executionId} not found`);
