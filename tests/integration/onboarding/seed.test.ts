@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import {
 	projects,
@@ -7,6 +7,7 @@ import {
 	featureGroups,
 	executions,
 	scenarioResults,
+	scenarioResultSteps,
 	campaigns,
 	user,
 	manualScenarios,
@@ -96,11 +97,23 @@ describe('seedDemoProject', () => {
 		if (!run) throw new Error('expected the standalone demo run');
 
 		const sr = await db.select().from(scenarioResults).where(eq(scenarioResults.executionId, run.id));
-		expect(sr.some((r) => r.steps.length > 0)).toBe(true);
+		const allSteps = await db
+			.select()
+			.from(scenarioResultSteps)
+			.where(inArray(scenarioResultSteps.scenarioResultId, sr.map((r) => r.id)))
+			.orderBy(asc(scenarioResultSteps.position));
+		expect(allSteps.length).toBeGreaterThan(0);
 
 		const manual = sr.find((r) => r.scenarioName === 'Visual check of dashboard tiles');
-		expect(manual?.steps).toHaveLength(2);
-		expect(manual?.steps.every((s) => s.expected !== null)).toBe(true);
+		if (!manual) throw new Error('expected the manual visual scenario result');
+		const manualSteps = allSteps.filter((s) => s.scenarioResultId === manual.id);
+		expect(manualSteps).toHaveLength(2);
+		expect(manualSteps.every((s) => s.expected !== null)).toBe(true);
+		expect(manualSteps.every((s) => s.verdict === manual.status)).toBe(true);
+		expect(manualSteps.map((s) => s.text)).toEqual([
+			'Open the dashboard',
+			'Compare tile counts to the active filters',
+		]);
 	});
 
 	it('is idempotent — skips if a Trace Demo project already exists', async () => {

@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db/client';
-import { campaigns, campaignFeatures, executions, scenarioResults } from '$lib/server/db/schema';
+import { campaigns, campaignFeatures, executions, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import { extractScenarioSteps } from '$lib/shared/gherkin/steps';
 import campaignsFileJson from './demo/campaigns.json';
 
@@ -120,14 +120,19 @@ export async function seedDemoCampaigns(
 				.returning();
 			if (!run) throw new Error(`demo seed: campaign run insert failed (${seed.name} / ${member.featureFile})`);
 
-			await db.insert(scenarioResults).values({
+			const status = executionStatusToScenarioStatus(exec.status);
+			const [scRow] = await db.insert(scenarioResults).values({
 				executionId:  run.id,
 				scenarioName: firstScenarioName(content),
 				position:     1,
-				status:       executionStatusToScenarioStatus(exec.status),
+				status,
 				errorMessage: exec.errorMessage ?? null,
-				steps:        extractScenarioSteps(content, firstScenarioName(content)).map((st) => ({ keyword: st.keyword, text: st.text, expected: null })),
-			});
+			}).returning({ id: scenarioResults.id });
+			if (!scRow) throw new Error('demo seed: campaign scenario insert failed');
+			const stepRows = extractScenarioSteps(content, firstScenarioName(content)).map((st, j) => ({
+				scenarioResultId: scRow.id, position: j + 1, keyword: st.keyword, text: st.text, expected: null, verdict: status,
+			}));
+			if (stepRows.length > 0) await db.insert(scenarioResultSteps).values(stepRows);
 		}
 	}
 }
