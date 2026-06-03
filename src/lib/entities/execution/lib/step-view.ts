@@ -8,4 +8,5 @@ export type StepView = {
   keyword:   string | null;
   text:      string;
   expected?: string | null;
+  verdict?:  string | null;
 };
