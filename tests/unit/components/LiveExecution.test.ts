@@ -160,6 +160,39 @@ describe('LiveExecution', () => {
     expect(screen.getByText(/manual check\. no automated steps/i)).toBeInTheDocument();
   });
 
+  it('renders frozen steps on a selected MANUAL scenario', () => {
+    const baseScenario = fakeData.scenarios[0]!;
+    const manualRow = {
+      ...baseScenario,
+      id:           'sm1',
+      scenarioName: 'Manual one',
+      source:       'MANUAL' as const,
+      position:     1,
+      steps:        [
+        {
+          id:               'st1',
+          scenarioResultId: 'sm1',
+          position:         1,
+          keyword:          null,
+          text:             'open page',
+          expected:         'shown',
+          verdict:          'PENDING' as const,
+          note:             null,
+          updatedAt:        new Date(),
+        },
+      ],
+    };
+    const dataWithManual = {
+      ...fakeData,
+      scenarios: [baseScenario, manualRow],
+    };
+    render(LiveExecution, { props: { data: dataWithManual } });
+
+    fireEvent.click(screen.getByText('Manual one'));
+
+    expect(screen.getByText('open page')).toBeTruthy();
+  });
+
   it('renders Automated and Manual section headers when both kinds are present', () => {
     const baseScenario = fakeData.scenarios[0]!;
     const dataWithManual = {
@@ -176,7 +209,7 @@ describe('LiveExecution', () => {
       ],
     };
     render(LiveExecution, { props: { data: dataWithManual } });
-    expect(screen.getByText(/automated/i)).toBeInTheDocument();
+    expect(screen.getByText('Automated')).toBeInTheDocument();
     expect(screen.getByText(/manual checks/i)).toBeInTheDocument();
   });
 });

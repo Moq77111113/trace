@@ -7,7 +7,7 @@
   import EvidenceBlock           from './EvidenceBlock.svelte';
   import MarkingControls from './MarkingControls.svelte';
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
-  import { extractScenarioSteps, extractScenarioTags } from '$lib/shared/gherkin/steps';
+  import { extractScenarioTags } from '$lib/shared/gherkin/steps';
   import { formatScenarioDuration } from '$lib/entities/execution/lib/format';
   import { useSelection } from '../../model/context';
   import * as m from '$lib/paraglide/messages';
@@ -17,11 +17,7 @@
 
   const selection = useSelection();
 
-  const selectedSteps = $derived(
-    selection.selected
-      ? extractScenarioSteps(featureContentAtStart, selection.selected.scenarioName)
-      : []
-  );
+  const selectedSteps = $derived(selection.selected?.steps ?? []);
 
   const selectedTags = $derived(
     selection.selected
@@ -55,14 +51,12 @@
   </header>
 
   <section class="overflow-auto px-5 py-4 min-h-0 max-md:px-3.5">
-    {#if selection.selected.source === 'MANUAL'}
-      <p class="mb-3 text-[12px] text-ink-3 italic">
-        {m.manual_scenario_no_steps()}
-      </p>
-    {:else if selectedSteps.length > 0}
+    {#if selectedSteps.length > 0}
       <div class="mb-3">
         <ScenarioSteps steps={selectedSteps} scenarioStatus={selection.selected.status} />
       </div>
+    {:else}
+      <p class="mb-3 text-[12px] text-ink-3 italic">{m.manual_scenario_no_steps()}</p>
     {/if}
 
     {#if selection.selected.errorMessage}
