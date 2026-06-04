@@ -4,6 +4,7 @@ import { db } from '$lib/server/db/client';
 import { scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import { mkProject, mkFeature } from '$testing/fixtures';
 import { startExecution } from '$lib/server/executions/run/start';
+import { finishExecution } from '$lib/server/executions/run/finish';
 import { saveStepNote } from '$lib/server/executions/step/save-step-note';
 
 async function firstStep() {
@@ -36,5 +37,12 @@ describe('saveStepNote', () => {
 
     await saveStepNote({ executionId: run.id, scenarioResultStepId: step.id, note: '   ' });
     expect(await readNote(step.id)).toBeNull();
+  });
+
+  it('refuses to write into a finished run', async () => {
+    const { run, step } = await firstStep();
+    await finishExecution(run.id);
+    await expect(saveStepNote({ executionId: run.id, scenarioResultStepId: step.id, note: 'late' }))
+      .rejects.toThrow(/not RUNNING/);
   });
 });
