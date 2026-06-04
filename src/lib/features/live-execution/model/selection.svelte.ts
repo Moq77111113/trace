@@ -60,7 +60,7 @@ export class ScenarioSelection {
     this.scenarios = this.scenarios.map((s) => {
       if (!s.steps.some((st) => st.id === stepId)) return s;
       const steps  = s.steps.map((st) => (st.id === stepId ? { ...st, verdict } : st));
-      const status = deriveScenarioStatus(steps.map((st) => st.verdict as StepVerdict));
+      const status = deriveScenarioStatus(steps.map((st) => st.verdict));
       return { ...s, steps, status };
     });
   };
