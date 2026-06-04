@@ -80,8 +80,7 @@ describe('ScenarioBlock', () => {
   it('renders error message and inline image for failures', () => {
     render(ScenarioBlock, { props: failing });
     expect(screen.getByText('boom')).toBeInTheDocument();
-    const img = screen.getByAltText('screen.png') as HTMLImageElement;
-    expect(img.src).toContain('/api/attachments/a1');
+    expect(screen.getByAltText('screen.png').getAttribute('src')).toContain('/api/attachments/a1');
     expect(screen.getByText(/log\.txt/)).toBeInTheDocument();
   });
 

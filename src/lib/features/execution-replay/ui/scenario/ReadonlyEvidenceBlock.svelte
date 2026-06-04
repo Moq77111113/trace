@@ -2,6 +2,7 @@
   import Icon     from '$lib/shared/ui/Icon.svelte';
   import * as m   from '$lib/paraglide/messages';
   import { isImageMime } from '$lib/shared/lib/mime';
+  import { formatFileSize } from '$lib/shared/lib/bytes';
   import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
   type Attachment = NonNullable<ExecutionPageData>['attachmentsByScenario'][string][number];
@@ -35,7 +36,7 @@
             {/if}
             <div class="px-2 py-1.5 text-[11px]">
               <div class="font-medium truncate">{attachment.filename}</div>
-              <div class="text-ink-3 mt-0.5 tabular-nums">{(attachment.sizeBytes / 1024).toFixed(1)} KB</div>
+              <div class="text-ink-3 mt-0.5 tabular-nums">{formatFileSize(attachment.sizeBytes)}</div>
             </div>
           </a>
         </li>

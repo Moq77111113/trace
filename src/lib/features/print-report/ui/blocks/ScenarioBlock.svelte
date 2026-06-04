@@ -3,6 +3,8 @@
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
   import ScenarioSteps from '$lib/entities/execution/ui/ScenarioSteps.svelte';
   import { partitionAttachmentsByStep } from '$lib/entities/execution/lib/step-attachments';
+  import { isImageMime } from '$lib/shared/lib/mime';
+  import { formatFileSize } from '$lib/shared/lib/bytes';
   import type { StepView } from '$lib/entities/execution/lib/step-view';
 
   type Attachment = { id: string; scenarioResultStepId: string | null; filename: string; mimeType: string; sizeBytes: number };
@@ -13,8 +15,6 @@
 
   const partitioned = $derived(partitionAttachmentsByStep(attachments));
   const kind     = $derived(toStatusKind(scenario.status));
-  const isImage  = (mt: string) => mt.startsWith('image/');
-  const fmtSize  = (n: number) => `${(n / 1024).toFixed(1)} KB`;
 </script>
 
 <article class="border border-border rounded-md p-4 mb-3 break-inside-avoid">
@@ -33,10 +33,10 @@
     <ul class="mt-3 flex flex-col gap-2 list-none p-0 m-0">
       {#each partitioned.scenarioWide as att (att.id)}
         <li>
-          {#if isImage(att.mimeType)}
+          {#if isImageMime(att.mimeType)}
             <img src="/api/attachments/{att.id}" alt={att.filename} class="max-w-full border border-border rounded-md" />
           {:else}
-            <span class="text-[12px] font-mono text-ink-3">{att.filename}, {fmtSize(att.sizeBytes)}</span>
+            <span class="text-[12px] font-mono text-ink-3">{att.filename}, {formatFileSize(att.sizeBytes)}</span>
           {/if}
         </li>
       {/each}
