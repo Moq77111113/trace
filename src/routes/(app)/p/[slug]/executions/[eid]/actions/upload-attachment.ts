@@ -9,6 +9,8 @@ export async function uploadAttachmentAction({ request, params, locals }: Reques
   await requireExecution(locals.authz, params.eid, 'execution.run');
   const form             = await request.formData();
   const scenarioResultId = form.get('scenarioResultId');
+  const scenarioResultStepId = form.get('scenarioResultStepId');
+  const stepId = typeof scenarioResultStepId === 'string' && scenarioResultStepId.length > 0 ? scenarioResultStepId : null;
   const files            = form.getAll('files').filter((v): v is File => v instanceof File && v.size > 0);
 
   if (typeof scenarioResultId !== 'string') return fail(400, { error: 'scenarioResultId required' });
@@ -20,6 +22,7 @@ export async function uploadAttachmentAction({ request, params, locals }: Reques
       const row = await uploadAttachment({
         executionId:      params.eid,
         scenarioResultId,
+        scenarioResultStepId: stepId,
         filename:         file.name,
         mimeType:         file.type || 'application/octet-stream',
         body:             Buffer.from(await file.arrayBuffer()),
