@@ -94,10 +94,12 @@ describe('ScenarioBlock', () => {
   });
 
   it('renders a step note and pins step-scoped evidence under the step', () => {
-    render(ScenarioBlock, { props: perStepEvidence });
+    const { container } = render(ScenarioBlock, { props: perStepEvidence });
     expect(screen.getByText('looked wrong here')).toBeInTheDocument();
-    const img = screen.getByAltText('step-shot.png') as HTMLImageElement;
-    expect(img.src).toContain('/api/attachments/ev1');
+    const stepList = container.querySelector('ol');
+    const img = screen.getByAltText('step-shot.png');
+    expect(stepList).not.toBeNull();
+    expect(stepList?.contains(img)).toBe(true);
   });
 
   it('renders each step with its own frozen verdict', () => {
