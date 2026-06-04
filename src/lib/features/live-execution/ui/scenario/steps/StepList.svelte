@@ -1,6 +1,5 @@
 <script lang="ts">
-  import StepRow from './StepRow.svelte';
-  type Step = { id: string; scenarioResultId: string; keyword: string | null; text: string; expected: string | null; verdict: string; note: string | null };
+  import StepRow, { type Step } from './StepRow.svelte';
   type Props = { steps: Step[] };
   let { steps }: Props = $props();
 </script>

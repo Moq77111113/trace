@@ -1,3 +1,15 @@
+<script lang="ts" module>
+  export type Step = {
+    id:               string;
+    scenarioResultId: string;
+    keyword:          string | null;
+    text:             string;
+    expected:         string | null;
+    verdict:          string;
+    note:             string | null;
+  };
+</script>
+
 <script lang="ts">
   import { enhance } from '$app/forms';
   import Button from '$lib/shared/ui/Button.svelte';
@@ -12,15 +24,6 @@
   import StepNote     from './StepNote.svelte';
   import StepEvidence from './StepEvidence.svelte';
 
-  type Step = {
-    id:               string;
-    scenarioResultId: string;
-    keyword:          string | null;
-    text:             string;
-    expected:         string | null;
-    verdict:          string;
-    note:             string | null;
-  };
   type Props = { step: Step };
   let { step }: Props = $props();
 
@@ -97,6 +100,7 @@
     <button
       type="button"
       class="text-[11.5px] text-ink-3 underline hover:text-ink-2"
+      aria-expanded={open}
       onclick={() => (open = !open)}
     >
       {open ? '−' : '+'}
