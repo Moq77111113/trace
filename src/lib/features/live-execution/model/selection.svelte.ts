@@ -1,3 +1,4 @@
+import { deriveScenarioStatus, type StepVerdict } from '$lib/entities/execution/lib/derive-scenario-status';
 import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
 type RunData  = NonNullable<ExecutionPageData>;
@@ -53,6 +54,16 @@ export class ScenarioSelection {
   };
 
   replace = (next: Scenario[]): void => { this.scenarios = next; };
+
+  /** Optimistically applies a step verdict and rederives the owning scenario's status. */
+  markStepLocal = (stepId: string, verdict: StepVerdict): void => {
+    this.scenarios = this.scenarios.map((s) => {
+      if (!s.steps.some((st) => st.id === stepId)) return s;
+      const steps  = s.steps.map((st) => (st.id === stepId ? { ...st, verdict } : st));
+      const status = deriveScenarioStatus(steps.map((st) => st.verdict));
+      return { ...s, steps, status };
+    });
+  };
 
   pickNextPending(currentId: string): string {
     const idx = this.scenarios.findIndex((s) => s.id === currentId);

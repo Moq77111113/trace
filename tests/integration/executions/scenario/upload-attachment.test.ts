@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { scenarioResults } from '$lib/server/db/schema';
+import { attachments, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import { startExecution } from '$lib/server/executions/run/start';
 import { markScenario } from '$lib/server/executions/scenario/mark-scenario';
 import { uploadAttachment } from '$lib/server/executions/scenario/upload-attachment';
@@ -52,6 +52,29 @@ describe('uploadAttachment', () => {
     expect(row.filename).toBe('logs.txt');
     expect(row.sizeBytes).toBe(11);
     expect(row.storageKey).toMatch(new RegExp(`^executions/${run.id}/${scenario.id}/.+-logs\\.txt$`));
+  });
+
+  it('pins an attachment to a step when scenarioResultStepId is given', async () => {
+    const { run, scenario } = await seedRun();
+
+    const [step] = await db.select().from(scenarioResultSteps)
+      .where(eq(scenarioResultSteps.scenarioResultId, scenario.id))
+      .orderBy(asc(scenarioResultSteps.position));
+    if (!step) throw new Error('seed: scenario step row missing');
+
+    const row = await uploadAttachment({
+      executionId:          run.id,
+      scenarioResultId:     scenario.id,
+      scenarioResultStepId: step.id,
+      filename:             'shot.png',
+      mimeType:             'image/png',
+      body:                 Buffer.from('x'),
+    });
+
+    const [saved] = await db.select().from(attachments).where(eq(attachments.id, row.id));
+    if (!saved) throw new Error('attachment row missing');
+
+    expect(saved.scenarioResultStepId).toBe(step.id);
   });
 
   it('refuses files over the size limit', async () => {

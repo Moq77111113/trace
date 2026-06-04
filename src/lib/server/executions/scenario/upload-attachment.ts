@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
-import { attachments, executions, scenarioResults } from '$lib/server/db/schema';
+import { attachments, executions, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
 import { putObject } from '$lib/server/storage/s3';
 
 export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
@@ -10,6 +10,7 @@ export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 export const uploadAttachmentMetadata = z.object({
   executionId:      z.uuid({ version: 'v7' }),
   scenarioResultId: z.uuid({ version: 'v7' }),
+  scenarioResultStepId: z.uuid({ version: 'v7' }).nullable().optional(),
   filename:         z.string().min(1),
   mimeType:         z.string().min(1),
 });
@@ -36,13 +37,23 @@ export async function uploadAttachment(input: UploadAttachmentInput) {
 
   if (!scenario) throw new Error(`uploadAttachment: scenario ${input.scenarioResultId} not found in run ${input.executionId}`);
 
-  const storageKey = `executions/${input.executionId}/${input.scenarioResultId}/${randomUUID()}-${input.filename}`;
+  const stepId = input.scenarioResultStepId ?? null;
+  if (stepId) {
+    const [step] = await db.select({ id: scenarioResultSteps.id })
+      .from(scenarioResultSteps)
+      .where(and(eq(scenarioResultSteps.id, stepId), eq(scenarioResultSteps.scenarioResultId, input.scenarioResultId)));
+    if (!step) throw new Error(`uploadAttachment: step ${stepId} not in scenario ${input.scenarioResultId}`);
+  }
+
+  const stepSegment = stepId ? `${stepId}/` : '';
+  const storageKey = `executions/${input.executionId}/${input.scenarioResultId}/${stepSegment}${randomUUID()}-${input.filename}`;
 
   await putObject(storageKey, input.body, input.mimeType);
 
   const [row] = await db.insert(attachments).values({
     executionId:            input.executionId,
     scenarioResultId: input.scenarioResultId,
+    scenarioResultStepId: stepId,
     filename:         input.filename,
     mimeType:         input.mimeType,
     sizeBytes:        input.body.byteLength,

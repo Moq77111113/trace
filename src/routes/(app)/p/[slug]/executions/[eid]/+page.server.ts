@@ -10,6 +10,8 @@ import { setStatus } from './actions/set-status';
 import { saveNotes } from './actions/save-notes';
 import { abort } from './actions/abort';
 import { uploadAttachmentAction } from './actions/upload-attachment';
+import { markStepAction } from './actions/mark-step';
+import { saveStepNoteAction } from './actions/save-step-note';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load = (async ({ params, parent, locals }) => {
@@ -50,4 +52,6 @@ export const actions = {
   saveNotes,
   abort,
   uploadAttachment: uploadAttachmentAction,
+  markStep:     markStepAction,
+  saveStepNote: saveStepNoteAction,
 } satisfies Actions;
