@@ -37,5 +37,6 @@ export async function saveStepNote(input: SaveStepNoteInput) {
     .set({ note: normalised, updatedAt: new Date() })
     .where(eq(scenarioResultSteps.id, input.scenarioResultStepId))
     .returning();
+  if (!updated) throw new Error(`saveStepNote: update returned no row for step ${input.scenarioResultStepId}`);
   return updated;
 }

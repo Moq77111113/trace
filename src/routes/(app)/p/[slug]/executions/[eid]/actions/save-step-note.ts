@@ -11,7 +11,7 @@ export async function saveStepNoteAction({ request, params, locals }: RequestEve
   const parsed = saveStepNoteInput.safeParse({ executionId: params.eid, ...stringFields(await request.formData()) });
   if (!parsed.success) return fail(400, { error: 'invalid-input' });
   try {
-    return { step: await saveStepNote(parsed.data) };
+    return { note: (await saveStepNote(parsed.data)).note };
   } catch (e) {
     return failureFor(e);
   }
