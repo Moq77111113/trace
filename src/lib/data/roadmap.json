@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "stamp": "2026-05-28",
+    "stamp": "2026-06-04",
     "items": [
         {
             "id": "gherkin-editor",
@@ -152,7 +152,8 @@
         {
             "id": "live-exec-per-step",
             "title": "Keep each step's verdict, not just the whole test's",
-            "status": "later",
+            "status": "shipped",
+            "new": true,
             "summary": "When you walk through a test in the live cockpit, your pass or fail on each step is kept for the record. Works for both automated and manual tests, so a half-failed test shows exactly where it broke."
         },
         {
