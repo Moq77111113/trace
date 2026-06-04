@@ -11,7 +11,8 @@ export async function markStepAction({ request, params, locals }: RequestEvent<P
   const parsed = markStepInput.safeParse({ executionId: params.eid, ...stringFields(await request.formData()) });
   if (!parsed.success) return fail(400, { error: 'invalid-input' });
   try {
-    return { step: await markStep(parsed.data) };
+    const { step } = await markStep(parsed.data);
+    return { step };
   } catch (e) {
     return failureFor(e);
   }

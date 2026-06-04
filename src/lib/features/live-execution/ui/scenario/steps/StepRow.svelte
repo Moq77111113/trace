@@ -22,7 +22,7 @@
   import { optimisticMarkStep }         from '../../../model/scenario-marking';
   import { failureMessage } from '$lib/shared/forms/action-result';
   import StepNote     from './StepNote.svelte';
-  import StepEvidence from './StepEvidence.svelte';
+  import StepEvidenceUpload from './StepEvidenceUpload.svelte';
 
   type Props = { step: Step };
   let { step }: Props = $props();
@@ -114,7 +114,7 @@
   {#if open}
     <div class="ml-[22px] mt-1.5 flex flex-col gap-2">
       <StepNote {step} />
-      <StepEvidence {step} />
+      <StepEvidenceUpload {step} />
     </div>
   {/if}
 </li>
