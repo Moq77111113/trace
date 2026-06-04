@@ -2,10 +2,10 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '$lib/server/db/client';
 import { executions, scenarioResults, scenarioResultSteps } from '$lib/server/db/schema';
+import type { StepVerdict } from '$lib/entities/execution/lib/derive-scenario-status';
 import { recomputeScenarioStatus } from '../scenario/recompute-status';
 
-export const stepVerdict = z.enum(['PENDING', 'PASSED', 'FAILED', 'SKIPPED']);
-export type StepVerdict  = z.infer<typeof stepVerdict>;
+export const stepVerdict: z.ZodType<StepVerdict> = z.enum(['PENDING', 'PASSED', 'FAILED', 'SKIPPED']);
 
 export const markStepInput = z.object({
   executionId:          z.uuid({ version: 'v7' }),
