@@ -34,8 +34,23 @@ const passing = {
 const failing = {
   scenario: { ...passing.scenario, id: 's2', name: 'User fails', status: 'FAILED', errorMessage: 'boom' },
   attachments: [
-    { id: 'a1', filename: 'screen.png', mimeType: 'image/png',  sizeBytes: 1024 },
-    { id: 'a2', filename: 'log.txt',    mimeType: 'text/plain', sizeBytes:  512 },
+    { id: 'a1', scenarioResultStepId: null, filename: 'screen.png', mimeType: 'image/png',  sizeBytes: 1024 },
+    { id: 'a2', scenarioResultStepId: null, filename: 'log.txt',    mimeType: 'text/plain', sizeBytes:  512 },
+  ],
+};
+
+const perStepEvidence = {
+  scenario: {
+    id: 's5',
+    name: 'Step with note and evidence',
+    status: 'FAILED',
+    steps: [
+      { id: 'st5-1', keyword: 'Given', text: 'a checked step', verdict: 'FAILED', note: 'looked wrong here' },
+    ],
+    errorMessage: null,
+  },
+  attachments: [
+    { id: 'ev1', scenarioResultStepId: 'st5-1', filename: 'step-shot.png', mimeType: 'image/png', sizeBytes: 2048 },
   ],
 };
 
@@ -76,6 +91,13 @@ describe('ScenarioBlock', () => {
     expect(screen.getByText('check the hero banner')).toBeInTheDocument();
     expect(screen.getByText('banner is centered')).toBeInTheDocument();
     expect(screen.getByText('Expected')).toBeInTheDocument();
+  });
+
+  it('renders a step note and pins step-scoped evidence under the step', () => {
+    render(ScenarioBlock, { props: perStepEvidence });
+    expect(screen.getByText('looked wrong here')).toBeInTheDocument();
+    const img = screen.getByAltText('step-shot.png') as HTMLImageElement;
+    expect(img.src).toContain('/api/attachments/ev1');
   });
 
   it('renders each step with its own frozen verdict', () => {

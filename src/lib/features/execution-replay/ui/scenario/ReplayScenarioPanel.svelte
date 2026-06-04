@@ -5,6 +5,7 @@
   import ReadonlyNotesBlock    from './ReadonlyNotesBlock.svelte';
   import ReadonlyEvidenceBlock from './ReadonlyEvidenceBlock.svelte';
   import { toStatusKind } from '$lib/shared/ui/Status.svelte';
+  import { partitionAttachmentsByStep } from '$lib/entities/execution/lib/step-attachments';
   import * as m from '$lib/paraglide/messages';
   import type { ExecutionPageData } from '$lib/server/executions/read/queries';
 
@@ -19,8 +20,9 @@
 
   let { scenario, attachments }: Props = $props();
 
-  const kind  = $derived(toStatusKind(scenario.status));
-  const steps = $derived(scenario.steps ?? []);
+  const kind        = $derived(toStatusKind(scenario.status));
+  const steps       = $derived(scenario.steps ?? []);
+  const partitioned = $derived(partitionAttachmentsByStep(attachments));
 </script>
 
 <div class="flex items-center gap-3 mb-3">
@@ -31,7 +33,7 @@
 
 {#if steps.length > 0}
   <div class="mb-4">
-    <ScenarioSteps {steps} scenarioStatus={scenario.status} />
+    <ScenarioSteps {steps} scenarioStatus={scenario.status} attachmentsByStep={partitioned.byStep} />
   </div>
 {:else}
   <p class="mb-4 text-[12px] text-ink-3 italic">
@@ -55,5 +57,5 @@
 
 <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 pt-4 border-t border-dashed border-border max-md:grid-cols-1">
   <ReadonlyNotesBlock    notes={scenario.notes} />
-  <ReadonlyEvidenceBlock {attachments} />
+  <ReadonlyEvidenceBlock attachments={partitioned.scenarioWide} />
 </div>
