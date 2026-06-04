@@ -2,7 +2,7 @@
   import Pill          from '$lib/shared/ui/Pill.svelte';
   import Status        from '$lib/shared/ui/Status.svelte';
   import Tag           from '$lib/shared/ui/Tag.svelte';
-  import ScenarioSteps from '$lib/entities/execution/ui/ScenarioSteps.svelte';
+  import StepList from './steps/StepList.svelte';
   import NotesBlock              from './NotesBlock.svelte';
   import EvidenceBlock           from './EvidenceBlock.svelte';
   import MarkingControls from './MarkingControls.svelte';
@@ -53,7 +53,7 @@
   <section class="overflow-auto px-5 py-4 min-h-0 max-md:px-3.5">
     {#if selectedSteps.length > 0}
       <div class="mb-3">
-        <ScenarioSteps steps={selectedSteps} scenarioStatus={selection.selected.status} />
+        <StepList steps={selectedSteps} />
       </div>
     {:else}
       <p class="mb-3 text-[12px] text-ink-3 italic">{m.manual_scenario_no_steps()}</p>

@@ -193,6 +193,25 @@ describe('LiveExecution', () => {
     expect(screen.getByText('open page')).toBeTruthy();
   });
 
+  it('shows per-step marking controls in the live panel', () => {
+    const base = fakeData.scenarios[0];
+    if (!base) throw new Error('fixture missing');
+    const stepped = {
+      ...base,
+      id:           'sg1',
+      scenarioName: 'Stepped',
+      source:       'GHERKIN' as const,
+      status:       'PENDING' as const,
+      steps: [
+        { id: 'sg1-1', scenarioResultId: 'sg1', position: 1, keyword: 'Given', text: 'a precondition', expected: null, verdict: 'PENDING' as const, note: null, updatedAt: new Date() },
+      ],
+    };
+    const data = { ...fakeData, scenarios: [stepped] };
+    render(LiveExecution, { props: { data } });
+
+    expect(screen.getAllByRole('button', { name: /pass/i }).length).toBeGreaterThanOrEqual(2);
+  });
+
   it('renders Automated and Manual section headers when both kinds are present', () => {
     const baseScenario = fakeData.scenarios[0]!;
     const dataWithManual = {
