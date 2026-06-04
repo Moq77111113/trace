@@ -45,9 +45,8 @@ export async function uploadAttachment(input: UploadAttachmentInput) {
     if (!step) throw new Error(`uploadAttachment: step ${stepId} not in scenario ${input.scenarioResultId}`);
   }
 
-  const storageKey = stepId
-    ? `executions/${input.executionId}/${input.scenarioResultId}/${stepId}/${randomUUID()}-${input.filename}`
-    : `executions/${input.executionId}/${input.scenarioResultId}/${randomUUID()}-${input.filename}`;
+  const stepSegment = stepId ? `${stepId}/` : '';
+  const storageKey = `executions/${input.executionId}/${input.scenarioResultId}/${stepSegment}${randomUUID()}-${input.filename}`;
 
   await putObject(storageKey, input.body, input.mimeType);
 
