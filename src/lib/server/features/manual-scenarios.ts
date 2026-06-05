@@ -17,24 +17,25 @@ export const reorderInput = z.object({ featureId, order: z.array(scenarioId).min
 
 export type ManualScenarioRow = typeof manualScenarios.$inferSelect;
 
-async function appendScenario(tx: DbTx, featureId: string, name: string): Promise<ManualScenarioRow> {
+/** Append an active manual scenario to a feature, guarding the name against gherkin and manual peers. */
+export async function appendManualScenario(tx: DbTx, featureId: string, name: string): Promise<ManualScenarioRow> {
   await assertNameAvailable(tx, { featureId, name });
   const [agg] = await tx
     .select({ next: sql<number>`coalesce(${max(manualScenarios.position)}, 0) + 1` })
     .from(manualScenarios)
     .where(and(eq(manualScenarios.featureId, featureId), eq(manualScenarios.archived, false)));
-  if (!agg) throw new Error('appendScenario: position aggregate returned no rows');
+  if (!agg) throw new Error('appendManualScenario: position aggregate returned no rows');
   const [row] = await tx
     .insert(manualScenarios)
     .values({ featureId, position: agg.next, name })
     .returning();
-  if (!row) throw new Error('appendScenario: insert returned no row');
+  if (!row) throw new Error('appendManualScenario: insert returned no row');
   return row;
 }
 
 export async function addManualScenario(input: z.infer<typeof addInput>): Promise<ManualScenarioRow> {
   const parsed = addInput.parse(input);
-  return db.transaction((tx) => appendScenario(tx, parsed.featureId, parsed.name));
+  return db.transaction((tx) => appendManualScenario(tx, parsed.featureId, parsed.name));
 }
 
 export const addWithStepInput = z.object({ featureId, name, action: stepAction, expected: stepExpected });
@@ -42,7 +43,7 @@ export const addWithStepInput = z.object({ featureId, name, action: stepAction, 
 export async function addManualScenarioWithStep(input: z.input<typeof addWithStepInput>): Promise<ManualScenarioRow> {
   const parsed = addWithStepInput.parse(input);
   return db.transaction(async (tx) => {
-    const scenario = await appendScenario(tx, parsed.featureId, parsed.name);
+    const scenario = await appendManualScenario(tx, parsed.featureId, parsed.name);
     await tx
       .insert(manualScenarioSteps)
       .values({ scenarioId: scenario.id, position: 1, action: parsed.action, expected: parsed.expected });
@@ -158,4 +159,25 @@ async function assertNameAvailable(
     .from(manualScenarios)
     .where(and(...peerConds));
   if (peer) throw new ManualScenarioNameTakenError('manual');
+}
+
+/** Return a scenario name free of gherkin and active manual collisions in the feature, suffixing as needed. */
+export async function findAvailableScenarioName(tx: DbTx, featureId: string, base: string): Promise<string> {
+  const [feature] = await tx.select({ content: features.content }).from(features).where(eq(features.id, featureId));
+  if (!feature) throw new Error(`findAvailableScenarioName: feature ${featureId} not found`);
+
+  const taken = new Set<string>(parse(feature.content).scenarios.map((s) => s.name.trim().toLowerCase()));
+  const manual = await tx
+    .select({ name: manualScenarios.name })
+    .from(manualScenarios)
+    .where(and(eq(manualScenarios.featureId, featureId), eq(manualScenarios.archived, false)));
+  for (const row of manual) taken.add(row.name.trim().toLowerCase());
+
+  const trimmed = base.trim();
+  if (!taken.has(trimmed.toLowerCase())) return trimmed;
+  for (let n = 2; n < 1000; n += 1) {
+    const candidate = `${trimmed} (${n})`;
+    if (!taken.has(candidate.toLowerCase())) return candidate;
+  }
+  throw new Error(`findAvailableScenarioName: no slot under "${trimmed}"`);
 }

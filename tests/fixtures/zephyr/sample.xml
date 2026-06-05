@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<project>
+    <projectId>10002</projectId>
+    <projectKey>DEMO</projectKey>
+    <exportDate>2026-06-05 05:29:47 UTC</exportDate>
+    <folders/>
+    <testCases>
+        <testCase id="1" key="DEMO-T1">
+            <component><![CDATA[Catalog]]></component>
+            <issues>
+                <issue><key>DEMO-100</key><summary><![CDATA[Search epic]]></summary></issue>
+            </issues>
+            <labels><label><![CDATA[smoke]]></label></labels>
+            <name><![CDATA[Search returns results]]></name>
+            <objective><![CDATA[<p>Results render correctly</p>]]></objective>
+            <testScript type="steps">
+                <steps>
+                    <step index="0">
+                        <description><![CDATA[<p>Open the app</p>]]></description>
+                        <expectedResult><![CDATA[<p>The home&nbsp;page loads</p>]]></expectedResult>
+                    </step>
+                    <step index="1">
+                        <description><![CDATA[<p>Submit the search</p>]]></description>
+                    </step>
+                </steps>
+            </testScript>
+        </testCase>
+        <testCase id="2" key="DEMO-T2">
+            <component><![CDATA[Checkout]]></component>
+            <issues/>
+            <labels/>
+            <name><![CDATA[Empty automated case]]></name>
+            <testScript type="steps"><steps/></testScript>
+        </testCase>
+    </testCases>
+</project>
