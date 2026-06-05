@@ -20,5 +20,14 @@ export type SourceId = 'csv' | 'zephyr-atm';
 /** Neutral representation every adapter emits; the only contract downstream code depends on. */
 export type ImportIR = { sourceId: SourceId; scenarios: ImportedScenario[] };
 
-/** Field used to map scenarios onto parent features. `fixed` = one user-named feature. */
-export type GroupingField = 'folder' | 'component' | 'issue' | 'fixed';
+/** Fields a scenario can be grouped onto a parent feature by. `fixed` = one user-named feature. */
+export const GROUPING_FIELDS = ['folder', 'component', 'issue', 'fixed'] as const;
+
+/** Field used to map scenarios onto parent features. */
+export type GroupingField = (typeof GROUPING_FIELDS)[number];
+
+/** Per-scenario import decisions. `overwrite` is intentionally excluded for v1. */
+export const SCENARIO_DECISIONS = ['import', 'skip', 'rename'] as const;
+
+/** What to do with one scenario at commit time. */
+export type ScenarioDecision = (typeof SCENARIO_DECISIONS)[number];

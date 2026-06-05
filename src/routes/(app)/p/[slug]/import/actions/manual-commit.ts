@@ -2,13 +2,13 @@ import { fail, type RequestEvent } from '@sveltejs/kit';
 import { z } from 'zod';
 import { requireProject } from '$lib/server/projects/authz';
 import { getManualPreview, dropManualPreview } from '$lib/server/import/manual/buffer';
-import { commitManualImport, scenarioDecisionSchema } from '$lib/server/import/manual/commit';
+import { commitManualImport, groupingFieldSchema, scenarioDecisionSchema } from '$lib/server/import/manual/commit';
 
 type Params = { slug: string };
 
 const bodySchema = z.object({
   previewId:        z.string().min(1),
-  groupingField:    z.enum(['folder', 'component', 'issue', 'fixed']),
+  groupingField:    groupingFieldSchema,
   fixedFeatureName: z.string().trim().min(1).max(200).optional(),
   decisions:        z.record(z.string(), scenarioDecisionSchema).default({}),
 });

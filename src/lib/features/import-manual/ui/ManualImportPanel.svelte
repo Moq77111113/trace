@@ -8,10 +8,8 @@
     type GroupingNode,
   } from '$lib/shared/import-manual/grouping';
   import { markCollisions, type ExistingCorpus } from '$lib/shared/import-manual/collisions';
-  import type { GroupingField, ImportIR, ImportedScenario, SourceId } from '$lib/shared/import-manual/ir';
+  import type { GroupingField, ImportIR, ImportedScenario, ScenarioDecision as Decision, SourceId } from '$lib/shared/import-manual/ir';
   import GroupingTree from './GroupingTree.svelte';
-
-  type Decision = 'import' | 'skip' | 'rename';
 
   type Outcome = {
     imported: number;

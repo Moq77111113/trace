@@ -9,16 +9,21 @@ import {
 } from '$lib/server/features/manual-scenarios';
 import { stepAction, stepExpected } from '$lib/server/features/manual-scenario-steps';
 import { resolveFeatureName } from '$lib/shared/import-manual/grouping';
-import type { ImportIR, ImportedScenario } from '$lib/shared/import-manual/ir';
+import { GROUPING_FIELDS, SCENARIO_DECISIONS } from '$lib/shared/import-manual/ir';
+import type { ImportIR, ImportedScenario, ScenarioDecision } from '$lib/shared/import-manual/ir';
 
-/** Per-scenario decision. `overwrite` is intentionally excluded for v1. */
-export const scenarioDecisionSchema = z.enum(['import', 'skip', 'rename']);
-export type ScenarioDecision = z.infer<typeof scenarioDecisionSchema>;
+export type { ScenarioDecision };
+
+/** Zod enum of per-scenario decisions, sourced from the shared tuple. */
+export const scenarioDecisionSchema = z.enum(SCENARIO_DECISIONS);
+
+/** Zod enum of grouping fields, sourced from the shared tuple. */
+export const groupingFieldSchema = z.enum(GROUPING_FIELDS);
 
 /** Validated input for a commit run, excluding the parsed IR. */
 export const commitInputSchema = z.object({
 	projectId: z.uuid(),
-	groupingField: z.enum(['folder', 'component', 'issue', 'fixed']),
+	groupingField: groupingFieldSchema,
 	fixedFeatureName: z.string().trim().min(1).max(200).optional(),
 	decisions: z.record(z.string(), scenarioDecisionSchema).default({}),
 });

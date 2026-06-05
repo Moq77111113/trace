@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { GroupingNode } from '$lib/shared/import-manual/grouping';
-
-  type Decision = 'import' | 'skip' | 'rename';
+  import type { ScenarioDecision as Decision } from '$lib/shared/import-manual/ir';
 
   type Props = {
     tree:       GroupingNode[];
