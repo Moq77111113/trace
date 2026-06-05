@@ -86,3 +86,26 @@ export async function findAvailableName(tx: DbTx, projectId: string, base: strin
 
   throw new Error(`findAvailableName: no slot under "${base}"`);
 }
+
+/** Find an active feature by case-insensitive name, or create an empty-content one for manual scenarios. */
+export async function findOrCreateFeature(tx: DbTx, projectId: string, name: string): Promise<string> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('findOrCreateFeature: empty name');
+
+  const existing = await tx.query.features.findFirst({
+    where: and(
+      eq(features.projectId, projectId),
+      eq(features.archived, false),
+      sql`LOWER(${features.name}) = LOWER(${trimmed})`,
+    ),
+  });
+  if (existing) return existing.id;
+
+  const codeSeq = await allocateCodeSeq(tx, projectId);
+  const [created] = await tx.insert(features)
+    .values({ projectId, name: trimmed, codeSeq })
+    .returning({ id: features.id });
+
+  if (!created) throw new Error('findOrCreateFeature: insert returned no row');
+  return created.id;
+}
