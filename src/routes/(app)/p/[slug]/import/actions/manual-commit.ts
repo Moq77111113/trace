@@ -19,11 +19,19 @@ export async function manualCommit({ request, params, locals }: RequestEvent<Par
 
   const raw = await request.formData();
   const decisionsRaw = raw.get('decisions');
+
+  let decisionsParsed: unknown;
+  try {
+    decisionsParsed = JSON.parse(typeof decisionsRaw === 'string' ? decisionsRaw : '{}');
+  } catch {
+    return fail(400, { error: 'decisions must be valid JSON' });
+  }
+
   const parsed = bodySchema.safeParse({
     previewId:        raw.get('previewId'),
     groupingField:    raw.get('groupingField'),
     fixedFeatureName: raw.get('fixedFeatureName') ?? undefined,
-    decisions:        JSON.parse(typeof decisionsRaw === 'string' ? decisionsRaw : '{}'),
+    decisions:        decisionsParsed,
   });
   if (!parsed.success) return fail(400, { error: 'invalid input' });
 
