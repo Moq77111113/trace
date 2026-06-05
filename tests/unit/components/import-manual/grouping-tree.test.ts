@@ -5,7 +5,7 @@ import type { GroupingNode } from '$lib/shared/import-manual/grouping';
 import type { ImportedScenario } from '$lib/shared/import-manual/ir';
 
 function scn(ref: string, name: string): ImportedScenario {
-  return { ref, externalKey: ref, name, description: null, steps: [{ action: 'a', expected: null }], grouping: { folder: null, component: null, issue: null } };
+  return { ref, externalKey: ref, name, description: null, steps: [{ action: 'Open the storefront', expected: 'The home page loads' }], grouping: { folder: null, component: null, issue: null } };
 }
 
 describe('GroupingTree', () => {
@@ -15,6 +15,17 @@ describe('GroupingTree', () => {
     const { getByText } = render(GroupingTree, { props: { tree, collisions: new Map([['k1', false], ['k2', false]]), decisions: { k1: 'import', k2: 'import' }, ondecision: () => {} } });
     expect(getByText('Catalog')).toBeInTheDocument();
     expect(getByText('Search returns results')).toBeInTheDocument();
+  });
+
+  it('renders each step action and expected', () => {
+    const { getAllByText } = render(GroupingTree, { props: { tree, collisions: new Map([['k1', false], ['k2', false]]), decisions: { k1: 'import', k2: 'import' }, ondecision: () => {} } });
+    expect(getAllByText('Open the storefront').length).toBeGreaterThan(0);
+    expect(getAllByText(/The home page loads/).length).toBeGreaterThan(0);
+  });
+
+  it('shows a totals line for features, scenarios and steps', () => {
+    const { getByText } = render(GroupingTree, { props: { tree, collisions: new Map([['k1', false], ['k2', false]]), decisions: { k1: 'import', k2: 'import' }, ondecision: () => {} } });
+    expect(getByText(/1 feature · 2 scenarios · 2 steps/)).toBeInTheDocument();
   });
 
   it('shows a collision badge on a colliding scenario', () => {

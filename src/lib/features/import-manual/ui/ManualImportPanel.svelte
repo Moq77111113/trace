@@ -4,6 +4,7 @@
   import { failureMessage } from '$lib/shared/forms/action-result';
   import {
     buildGroupingTree,
+    groupingOptionCounts,
     FALLBACK_FEATURE,
     type GroupingNode,
   } from '$lib/shared/import-manual/grouping';
@@ -64,12 +65,23 @@
     Object.values(effectiveDecisions).filter((d) => d !== 'skip').length,
   );
 
-  const FIELDS: { value: GroupingField; label: string }[] = [
-    { value: 'folder',    label: 'Folder'        },
-    { value: 'component', label: 'Component'     },
-    { value: 'issue',     label: 'Linked issue'  },
-    { value: 'fixed',     label: 'One feature'   },
-  ];
+  const FIELD_LABELS: Record<GroupingField, string> = {
+    folder:    'Folder',
+    component: 'Component',
+    issue:     'Linked issue',
+    fixed:     'One feature',
+  };
+
+  const EMPTY_NOUNS: Record<GroupingField, string> = {
+    folder:    'folders',
+    component: 'components',
+    issue:     'linked issues',
+    fixed:     '',
+  };
+
+  const groupingOptions = $derived(
+    ir ? groupingOptionCounts(ir, fixedFeatureName) : [],
+  );
 
   function onParsed(next: Parsed): void {
     parsed           = next;
@@ -141,11 +153,26 @@
       <legend class="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3 mb-1">
         Group scenarios by
       </legend>
-      <div class="flex items-center gap-4 flex-wrap text-[13px] text-ink">
-        {#each FIELDS as field (field.value)}
-          <label class="flex items-center gap-1.5 cursor-pointer">
-            <input type="radio" name="grouping" value={field.value} bind:group={groupingField} />
-            {field.label}
+      <div class="flex flex-col gap-1">
+        {#each groupingOptions as option (option.field)}
+          <label
+            class="flex items-center gap-2.5 text-[13px] rounded-md px-2 py-1.5 {option.available ? 'cursor-pointer text-ink hover:bg-surface-2' : 'cursor-not-allowed text-ink-3'}"
+          >
+            <input
+              type="radio"
+              name="grouping"
+              value={option.field}
+              bind:group={groupingField}
+              disabled={!option.available}
+            />
+            <span>{FIELD_LABELS[option.field]}</span>
+            <span class="ml-auto text-[11px] text-ink-3 tabular-nums">
+              {#if option.available}
+                {option.count} feature{option.count === 1 ? '' : 's'}
+              {:else}
+                no {EMPTY_NOUNS[option.field]} in this file
+              {/if}
+            </span>
           </label>
         {/each}
       </div>
