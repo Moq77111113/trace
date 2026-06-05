@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<project>
+    <projectId>10010</projectId>
+    <projectKey>DEMO</projectKey>
+    <exportDate>2026-06-05 09:00:00 UTC</exportDate>
+    <folders/>
+    <testCases>
+        <testCase id="1" key="DEMO-T1">
+            <component><![CDATA[Catalog]]></component>
+            <issues>
+                <issue><key>DEMO-100</key><summary><![CDATA[Search epic]]></summary></issue>
+            </issues>
+            <labels><label><![CDATA[smoke]]></label></labels>
+            <name><![CDATA[Search returns matching products]]></name>
+            <objective><![CDATA[<p>Results match the query</p>]]></objective>
+            <testScript type="steps">
+                <steps>
+                    <step index="0">
+                        <description><![CDATA[<p>Open the storefront</p>]]></description>
+                        <expectedResult><![CDATA[<p>The home&nbsp;page loads</p>]]></expectedResult>
+                    </step>
+                    <step index="1">
+                        <description><![CDATA[<p>Type a product name and submit</p>]]></description>
+                        <expectedResult><![CDATA[<p>Matching products are listed</p>]]></expectedResult>
+                    </step>
+                </steps>
+            </testScript>
+        </testCase>
+        <testCase id="2" key="DEMO-T2">
+            <component><![CDATA[Catalog]]></component>
+            <issues/>
+            <labels/>
+            <name><![CDATA[Filter products by category]]></name>
+            <objective><![CDATA[<p>Category filter narrows the list</p>]]></objective>
+            <testScript type="steps">
+                <steps>
+                    <step index="0">
+                        <description><![CDATA[<p>Open a category from the menu</p>]]></description>
+                        <expectedResult><![CDATA[<p>Only that category is shown</p>]]></expectedResult>
+                    </step>
+                </steps>
+            </testScript>
+        </testCase>
+        <testCase id="3" key="DEMO-T3">
+            <component><![CDATA[Checkout]]></component>
+            <issues/>
+            <labels/>
+            <name><![CDATA[Complete a purchase with a card]]></name>
+            <objective><![CDATA[<p>Order is placed</p>]]></objective>
+            <testScript type="steps">
+                <steps>
+                    <step index="0">
+                        <description><![CDATA[<p>Add an item to the cart and open checkout</p>]]></description>
+                        <expectedResult><![CDATA[<p>The checkout form is shown</p>]]></expectedResult>
+                    </step>
+                    <step index="1">
+                        <description><![CDATA[<p>Enter card details and confirm</p>]]></description>
+                        <expectedResult><![CDATA[<p>An order confirmation is shown</p>]]></expectedResult>
+                    </step>
+                </steps>
+            </testScript>
+        </testCase>
+    </testCases>
+</project>

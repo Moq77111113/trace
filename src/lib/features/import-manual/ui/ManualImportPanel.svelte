@@ -80,10 +80,29 @@
     decisions        = {};
     outcome          = null;
   }
+
+  let formEl   = $state<HTMLFormElement | null>(null);
+  let fileInput = $state<HTMLInputElement | null>(null);
+
+  const SAMPLE_URL  = '/samples/zephyr-sample.xml';
+  const SAMPLE_NAME = 'zephyr-sample.xml';
+
+  async function trySample(): Promise<void> {
+    if (!formEl || !fileInput) return;
+    error = null;
+    const response = await fetch(SAMPLE_URL);
+    const blob     = await response.blob();
+    const file     = new File([blob], SAMPLE_NAME, { type: 'application/xml' });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    fileInput.files = transfer.files;
+    formEl.requestSubmit();
+  }
 </script>
 
 <div class="flex flex-col gap-6">
   <form
+    bind:this={formEl}
     action="?/manualPreview"
     method="POST"
     enctype="multipart/form-data"
@@ -105,6 +124,7 @@
     class="flex items-center gap-3 flex-wrap"
   >
     <input
+      bind:this={fileInput}
       type="file"
       name="file"
       required
@@ -112,6 +132,9 @@
     />
     <Button type="submit" variant="secondary" disabled={uploading}>
       {uploading ? 'Reading…' : 'Preview import'}
+    </Button>
+    <Button type="button" variant="ghost" disabled={uploading} onclick={trySample}>
+      Try a sample
     </Button>
   </form>
 
