@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildGroupingTree, guessGroupingField, resolveFeatureName, FALLBACK_FEATURE } from '$lib/shared/import-manual/grouping';
+import { buildGroupingTree, guessGroupingField, resolveFeatureName, UNGROUPED_FEATURE } from '$lib/shared/import-manual/grouping';
 import type { ImportIR, ImportedScenario } from '$lib/shared/import-manual/ir';
 
 function scn(ref: string, grouping: Partial<ImportedScenario['grouping']>): ImportedScenario {
@@ -33,7 +33,7 @@ describe('resolveFeatureName', () => {
 	});
 
 	it('falls back when the chosen field is empty on a scenario', () => {
-		expect(resolveFeatureName(scn('a', {}), 'component', '')).toBe(FALLBACK_FEATURE);
+		expect(resolveFeatureName(scn('a', {}), 'component', '')).toBe(UNGROUPED_FEATURE);
 	});
 });
 

@@ -5,7 +5,7 @@
   import {
     buildGroupingTree,
     groupingOptionCounts,
-    FALLBACK_FEATURE,
+    FIXED_FEATURE_DEFAULT,
     type GroupingNode,
   } from '$lib/shared/import-manual/grouping';
   import { markCollisions, type ExistingCorpus } from '$lib/shared/import-manual/collisions';
@@ -36,7 +36,7 @@
 
   let parsed           = $state<Parsed | null>(null);
   let groupingField    = $state<GroupingField>('fixed');
-  let fixedFeatureName = $state(FALLBACK_FEATURE);
+  let fixedFeatureName = $state(FIXED_FEATURE_DEFAULT);
   let decisions        = $state<Record<string, Decision>>({});
   let outcome          = $state<Outcome | null>(null);
   let uploading        = $state(false);
@@ -86,7 +86,7 @@
   function onParsed(next: Parsed): void {
     parsed           = next;
     groupingField    = next.guessedGroupingField;
-    fixedFeatureName = FALLBACK_FEATURE;
+    fixedFeatureName = FIXED_FEATURE_DEFAULT;
     decisions        = {};
     outcome          = null;
   }

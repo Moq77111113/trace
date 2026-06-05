@@ -1,7 +1,10 @@
 import { GROUPING_FIELDS, type GroupingField, type ImportIR, type ImportedScenario } from './ir';
 
-/** Feature name used when a scenario has no value for the chosen grouping field. */
-export const FALLBACK_FEATURE = 'Imported scenarios';
+/** Feature name for scenarios that have no value for the chosen grouping field. */
+export const UNGROUPED_FEATURE = 'Ungrouped';
+
+/** Default name for the single feature when grouping by `fixed` (one feature). */
+export const FIXED_FEATURE_DEFAULT = 'Imported scenarios';
 
 /** Pick the grouping field with the best coverage: folder, then component, then issue, else fixed. */
 export function guessGroupingField(ir: ImportIR): GroupingField {
@@ -14,9 +17,8 @@ export function guessGroupingField(ir: ImportIR): GroupingField {
 
 /** Resolve the parent feature name for one scenario under the chosen grouping field. */
 export function resolveFeatureName(scenario: ImportedScenario, field: GroupingField, fixedName: string): string {
-	const fallback = fixedName.trim() || FALLBACK_FEATURE;
-	if (field === 'fixed') return fallback;
-	return scenario.grouping[field]?.trim() || fallback;
+	if (field === 'fixed') return fixedName.trim() || FIXED_FEATURE_DEFAULT;
+	return scenario.grouping[field]?.trim() || UNGROUPED_FEATURE;
 }
 
 /** One parent feature and the scenarios that land under it. */
