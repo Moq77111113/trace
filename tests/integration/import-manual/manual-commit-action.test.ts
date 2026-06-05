@@ -24,7 +24,7 @@ it('returns 400 when decisions is malformed JSON', async () => {
   const p = await mkProject({ name: `ManualCommit ${Date.now()}-${Math.random()}` });
   await grantAnyUserBlanket(p.id);
 
-  const event = buildEvent(p, { previewId: 'preview-1', groupingField: 'folder', decisions: 'not json{' });
+  const event = buildEvent(p, { previewId: 'preview-1', groupingField: 'component', decisions: 'not json{' });
   const result = await manualCommit(event);
 
   expect(result).toMatchObject({ status: 400 });

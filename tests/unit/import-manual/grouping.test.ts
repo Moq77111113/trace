@@ -3,18 +3,18 @@ import { buildGroupingTree, guessGroupingField, resolveFeatureName, UNGROUPED_FE
 import type { ImportIR, ImportedScenario } from '$lib/shared/import-manual/ir';
 
 function scn(ref: string, grouping: Partial<ImportedScenario['grouping']>): ImportedScenario {
-	return { ref, externalKey: null, name: ref, description: null, steps: [], grouping: { folder: null, component: null, issue: null, ...grouping } };
+	return { ref, externalKey: null, name: ref, description: null, steps: [], grouping: { component: null, issue: null, ...grouping } };
 }
 
 describe('guessGroupingField', () => {
-	it('prefers folder when any scenario has one', () => {
-		const ir: ImportIR = { sourceId: 'zephyr-atm', scenarios: [scn('a', { folder: 'F', component: 'C' })] };
-		expect(guessGroupingField(ir)).toBe('folder');
-	});
-
-	it('falls back to component when no folders exist', () => {
+	it('prefers component when any scenario has one', () => {
 		const ir: ImportIR = { sourceId: 'zephyr-atm', scenarios: [scn('a', { component: 'Catalog' })] };
 		expect(guessGroupingField(ir)).toBe('component');
+	});
+
+	it('falls back to issue when no components exist', () => {
+		const ir: ImportIR = { sourceId: 'zephyr-atm', scenarios: [scn('a', { issue: 'Search epic' })] };
+		expect(guessGroupingField(ir)).toBe('issue');
 	});
 
 	it('falls back to fixed when nothing groups', () => {

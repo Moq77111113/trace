@@ -67,7 +67,6 @@ function scenarioFrom(testCase: Record<string, unknown>, index: number): Importe
     description: htmlField(testCase.objective),
     steps:       stepsFrom(testCase.testScript as Record<string, unknown> | undefined),
     grouping: {
-      folder:    null,
       component: text(testCase.component),
       issue:     issueSummary(testCase),
     },

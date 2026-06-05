@@ -5,7 +5,7 @@ import type { GroupingNode } from '$lib/shared/import-manual/grouping';
 import type { ImportedScenario } from '$lib/shared/import-manual/ir';
 
 function scn(ref: string, name: string): ImportedScenario {
-  return { ref, externalKey: ref, name, description: null, steps: [{ action: 'Open the storefront', expected: 'The home page loads' }], grouping: { folder: null, component: null, issue: null } };
+  return { ref, externalKey: ref, name, description: null, steps: [{ action: 'Open the storefront', expected: 'The home page loads' }], grouping: { component: null, issue: null } };
 }
 
 describe('GroupingTree', () => {

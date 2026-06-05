@@ -2,7 +2,7 @@
 export type ImportedStep = { action: string; expected: string | null };
 
 /** Candidate grouping values carried per scenario; any may be null. */
-export type ImportGrouping = { folder: string | null; component: string | null; issue: string | null };
+export type ImportGrouping = { component: string | null; issue: string | null };
 
 /** One scenario in the neutral import shape, before it is mapped onto a trace feature. */
 export type ImportedScenario = {
@@ -21,7 +21,7 @@ export type SourceId = 'csv' | 'zephyr-atm';
 export type ImportIR = { sourceId: SourceId; scenarios: ImportedScenario[] };
 
 /** Fields a scenario can be grouped onto a parent feature by. `fixed` = one user-named feature. */
-export const GROUPING_FIELDS = ['folder', 'component', 'issue', 'fixed'] as const;
+export const GROUPING_FIELDS = ['component', 'issue', 'fixed'] as const;
 
 /** Field used to map scenarios onto parent features. */
 export type GroupingField = (typeof GROUPING_FIELDS)[number];

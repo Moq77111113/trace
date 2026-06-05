@@ -66,21 +66,13 @@
   );
 
   const FIELD_LABELS: Record<GroupingField, string> = {
-    folder:    'Folder',
     component: 'Component',
     issue:     'Linked issue',
     fixed:     'One feature',
   };
 
-  const EMPTY_NOUNS: Record<GroupingField, string> = {
-    folder:    'folders',
-    component: 'components',
-    issue:     'linked issues',
-    fixed:     '',
-  };
-
   const groupingOptions = $derived(
-    ir ? groupingOptionCounts(ir, fixedFeatureName) : [],
+    ir ? groupingOptionCounts(ir, fixedFeatureName).filter((option) => option.available) : [],
   );
 
   function onParsed(next: Parsed): void {
@@ -155,23 +147,11 @@
       </legend>
       <div class="flex flex-col gap-1">
         {#each groupingOptions as option (option.field)}
-          <label
-            class="flex items-center gap-2.5 text-[13px] rounded-md px-2 py-1.5 {option.available ? 'cursor-pointer text-ink hover:bg-surface-2' : 'cursor-not-allowed text-ink-3'}"
-          >
-            <input
-              type="radio"
-              name="grouping"
-              value={option.field}
-              bind:group={groupingField}
-              disabled={!option.available}
-            />
+          <label class="flex items-center gap-2.5 text-[13px] rounded-md px-2 py-1.5 cursor-pointer text-ink hover:bg-surface-2">
+            <input type="radio" name="grouping" value={option.field} bind:group={groupingField} />
             <span>{FIELD_LABELS[option.field]}</span>
             <span class="ml-auto text-[11px] text-ink-3 tabular-nums">
-              {#if option.available}
-                {option.count} feature{option.count === 1 ? '' : 's'}
-              {:else}
-                no {EMPTY_NOUNS[option.field]} in this file
-              {/if}
+              {option.count} feature{option.count === 1 ? '' : 's'}
             </span>
           </label>
         {/each}

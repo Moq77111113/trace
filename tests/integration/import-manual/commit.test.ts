@@ -8,7 +8,7 @@ import { mkFeature, mkProject } from '$testing/fixtures';
 import type { ImportIR, ImportedScenario } from '$lib/shared/import-manual/ir';
 
 function scn(ref: string, name: string, component: string, steps: ImportedScenario['steps'] = []): ImportedScenario {
-	return { ref, externalKey: ref, name, description: null, steps, grouping: { folder: null, component, issue: null } };
+	return { ref, externalKey: ref, name, description: null, steps, grouping: { component, issue: null } };
 }
 
 async function project() {

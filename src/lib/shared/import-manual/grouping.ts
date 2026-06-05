@@ -6,10 +6,9 @@ export const UNGROUPED_FEATURE = 'Ungrouped';
 /** Default name for the single feature when grouping by `fixed` (one feature). */
 export const FIXED_FEATURE_DEFAULT = 'Imported scenarios';
 
-/** Pick the grouping field with the best coverage: folder, then component, then issue, else fixed. */
+/** Pick the grouping field with the best coverage: component, then issue, else fixed. */
 export function guessGroupingField(ir: ImportIR): GroupingField {
-	const has = (f: 'folder' | 'component' | 'issue') => ir.scenarios.some((s) => s.grouping[f]);
-	if (has('folder')) return 'folder';
+	const has = (f: 'component' | 'issue') => ir.scenarios.some((s) => s.grouping[f]);
 	if (has('component')) return 'component';
 	if (has('issue')) return 'issue';
 	return 'fixed';

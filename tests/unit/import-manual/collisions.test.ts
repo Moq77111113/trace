@@ -4,7 +4,7 @@ import type { GroupingNode } from '$lib/shared/import-manual/grouping';
 import type { ImportedScenario } from '$lib/shared/import-manual/ir';
 
 function scn(ref: string, name: string): ImportedScenario {
-  return { ref, externalKey: null, name, description: null, steps: [], grouping: { folder: null, component: null, issue: null } };
+  return { ref, externalKey: null, name, description: null, steps: [], grouping: { component: null, issue: null } };
 }
 
 describe('markCollisions', () => {

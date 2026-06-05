@@ -48,7 +48,6 @@ describe('zephyrAtmAdapter.parse', () => {
   it('extracts component and linked issue summary as grouping candidates', () => {
     expect(first.grouping.component).toBe('Catalog');
     expect(first.grouping.issue).toBe('Search epic');
-    expect(first.grouping.folder).toBeNull();
   });
 
   it('imports a stepless case as a scenario with zero steps', () => {
