@@ -159,8 +159,9 @@
         {
             "id": "manual-scenarios-import",
             "title": "Bring your existing manual tests in",
-            "status": "later",
-            "summary": "Pull manual tests or a spreadsheet straight into trace. No retyping, no copy-paste marathon."
+            "status": "shipped",
+            "new": true,
+            "summary": "Pull your existing manual tests from Jira straight into trace, grouped into features automatically. No retyping, no copy-paste marathon."
         },
         {
             "id": "run-diff",
