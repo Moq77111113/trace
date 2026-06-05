@@ -1,12 +1,22 @@
 <script lang="ts">
   import type { GroupingNode } from '$lib/shared/import-manual/grouping';
 
+  type Decision = 'import' | 'skip' | 'rename';
+
   type Props = {
     tree:       GroupingNode[];
     collisions: Map<string, boolean>;
+    decisions:  Record<string, Decision>;
+    ondecision: (ref: string, decision: Decision) => void;
   };
 
-  let { tree, collisions }: Props = $props();
+  let { tree, collisions, decisions, ondecision }: Props = $props();
+
+  const DECISION_OPTIONS: { value: Decision; label: string }[] = [
+    { value: 'import', label: 'Import' },
+    { value: 'skip',   label: 'Skip'   },
+    { value: 'rename', label: 'Rename' },
+  ];
 </script>
 
 <ul class="flex flex-col gap-3">
@@ -24,6 +34,15 @@
               {#if collisions.get(scenario.ref)}
                 <span class="rounded-md bg-flake-soft px-1.5 py-0.5 text-flake-ink">name already exists</span>
               {/if}
+              <select
+                value={decisions[scenario.ref]}
+                onchange={(event) => ondecision(scenario.ref, event.currentTarget.value as Decision)}
+                class="h-[26px] px-2 text-[12px] rounded-md bg-surface text-ink border border-border hover:border-border-strong focus:border-accent focus:outline-none cursor-pointer"
+              >
+                {#each DECISION_OPTIONS as option (option.value)}
+                  <option value={option.value}>{option.label}</option>
+                {/each}
+              </select>
             </span>
           </li>
         {/each}

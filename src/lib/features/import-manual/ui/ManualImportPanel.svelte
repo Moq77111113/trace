@@ -11,6 +11,14 @@
   import type { GroupingField, ImportIR, ImportedScenario, SourceId } from '$lib/shared/import-manual/ir';
   import GroupingTree from './GroupingTree.svelte';
 
+  type Decision = 'import' | 'skip' | 'rename';
+
+  type Outcome = {
+    imported: number;
+    skipped:  number;
+    failed:   { ref: string; name: string; reason: string }[];
+  };
+
   type Parsed = {
     previewId:            string;
     sourceId:             SourceId;
@@ -23,10 +31,15 @@
     return typeof data === 'object' && data !== null && 'manualPreview' in data;
   }
 
+  function isCommitted(data: unknown): data is { manualOutcome: Outcome } {
+    return typeof data === 'object' && data !== null && 'manualOutcome' in data;
+  }
+
   let parsed           = $state<Parsed | null>(null);
   let groupingField    = $state<GroupingField>('fixed');
   let fixedFeatureName = $state(FALLBACK_FEATURE);
-  let decisions        = $state<Record<string, 'import' | 'skip'>>({});
+  let decisions        = $state<Record<string, Decision>>({});
+  let outcome          = $state<Outcome | null>(null);
   let uploading        = $state(false);
   let committing       = $state(false);
   let error            = $state<string | null>(null);
@@ -41,8 +54,16 @@
     ir ? buildGroupingTree(ir, groupingField, fixedFeatureName) : [],
   );
   const collisions = $derived(markCollisions(tree, existingCorpus));
+  const effectiveDecisions = $derived<Record<string, Decision>>(
+    Object.fromEntries(
+      (parsed?.scenarios ?? []).map((s) => [
+        s.ref,
+        decisions[s.ref] ?? (collisions.get(s.ref) ? 'rename' : 'import'),
+      ]),
+    ),
+  );
   const keptCount = $derived(
-    parsed ? parsed.scenarios.filter((s) => decisions[s.ref] !== 'skip').length : 0,
+    Object.values(effectiveDecisions).filter((d) => d !== 'skip').length,
   );
 
   const FIELDS: { value: GroupingField; label: string }[] = [
@@ -57,6 +78,7 @@
     groupingField    = next.guessedGroupingField;
     fixedFeatureName = FALLBACK_FEATURE;
     decisions        = {};
+    outcome          = null;
   }
 </script>
 
@@ -116,7 +138,12 @@
       {/if}
     </fieldset>
 
-    <GroupingTree {tree} {collisions} />
+    <GroupingTree
+      {tree}
+      {collisions}
+      decisions={effectiveDecisions}
+      ondecision={(ref, d) => { decisions = { ...decisions, [ref]: d }; }}
+    />
 
     <form
       action="?/manualCommit"
@@ -130,6 +157,9 @@
             error = failureMessage(result, 'Import failed');
             return;
           }
+          if (result.type === 'success' && isCommitted(result.data)) {
+            outcome = result.data.manualOutcome;
+          }
           await update();
         };
       }}
@@ -138,11 +168,29 @@
       <input type="hidden" name="previewId"        value={parsed.previewId} />
       <input type="hidden" name="groupingField"    value={groupingField} />
       <input type="hidden" name="fixedFeatureName" value={fixedFeatureName} />
-      <input type="hidden" name="decisions"        value={JSON.stringify(decisions)} />
+      <input type="hidden" name="decisions"        value={JSON.stringify(effectiveDecisions)} />
       <Button type="submit" variant="primary" disabled={committing || keptCount === 0}>
         Import {keptCount} scenario{keptCount === 1 ? '' : 's'}
       </Button>
     </form>
+  {/if}
+
+  {#if outcome}
+    <div class="bg-surface border border-border rounded-xl px-4 py-3 flex flex-col gap-2">
+      <p class="text-[12.5px] font-medium text-ink tabular-nums">
+        Imported {outcome.imported}, skipped {outcome.skipped}
+      </p>
+      {#if outcome.failed.length}
+        <ul class="flex flex-col gap-1.5">
+          {#each outcome.failed as fail (fail.ref)}
+            <li class="rounded-md bg-fail-soft px-2.5 py-1.5 text-[12px] text-fail-ink">
+              <span class="font-medium">{fail.name}</span>
+              <span class="text-fail-ink/80"> {fail.reason}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    </div>
   {/if}
 
   {#if error}
