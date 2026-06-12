@@ -6,10 +6,10 @@ and the maintainer will keep them moving.
 ## Setup
 
 ```sh
-docker compose up -d db
+cp .env.example .env                              # set TRACE_AUTH_SECRET (openssl rand -hex 32)
+docker compose up -d postgres minio minio-init    # dev deps: Postgres + S3
 pnpm install
-pnpm db:push
-pnpm dev
+pnpm dev                                          # migrations apply on boot
 ```
 
 Requires **Node 24+**
