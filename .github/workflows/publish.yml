@@ -26,30 +26,7 @@ env:
 
 jobs:
   test:
-    name: Test & typecheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.28.1
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Compile Paraglide messages
-        run: pnpm exec paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
-
-      - name: Type check
-        run: pnpm check
-
-      - name: Unit & integration tests
-        run: pnpm test
+    uses: ./.github/workflows/ci.yml
 
   build-and-push:
     name: Build & push image
