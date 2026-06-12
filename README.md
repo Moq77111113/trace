@@ -13,17 +13,28 @@ License: [MIT](./LICENSE).
 
 ## Quickstart
 
+Self-host with one compose file — no clone needed:
+
 ```sh
-cp .env.example .env                              # fill TRACE_AUTH_SECRET (openssl rand -hex 32)
-docker compose up -d postgres minio minio-init    # dev deps: pg + S3
-pnpm install && pnpm dev
+curl -O https://moq77111113.github.io/trace.io/compose.yml
 ```
 
-The app applies database migrations on boot — no `db:push` needed.
+Create a `.env` next to it:
 
-Set `TRACE_BOOTSTRAP_ADMIN_EMAIL` in `.env` — the first sign-up with that address
-becomes admin. From there, open a signup window in instance settings to invite the
-rest of the team. See [`.env.example`](./.env.example) for the full list of variables.
+```sh
+TRACE_AUTH_SECRET=$(openssl rand -hex 32)
+TRACE_BOOTSTRAP_ADMIN_EMAIL=you@example.com   # first sign-up with this address becomes admin
+```
+
+```sh
+docker compose up -d    # → http://localhost:7777
+```
+
+The app applies database migrations on boot. Once you've claimed the admin account,
+open a signup window in instance settings to invite the rest of the team. The
+[compose file](https://moq77111113.github.io/trace.io/compose.yml) documents every variable.
+
+Hacking on trace itself? The dev-loop lives in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ## CI ingest
 
