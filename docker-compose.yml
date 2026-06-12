@@ -48,9 +48,7 @@ services:
 
   app:
     profiles: ['app']
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/moq77111113/trace:${TRACE_VERSION:-latest}
     container_name: trace-app
     restart: unless-stopped
     depends_on:
